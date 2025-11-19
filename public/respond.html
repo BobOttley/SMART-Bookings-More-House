@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tour Booking Response - More House School</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --blazer-navy: #091825;
+      --award-gold: #FF9F1C;
+      --sport-blue: #034674;
+      --text-primary: #2C3E50;
+      --white: #FFFFFF;
+      --light-grey: #F8FAFC;
+      --border-grey: #E5E7EB;
+      --success: #10B981;
+      --danger: #EF4444;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--light-grey);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header {
+      background: var(--blazer-navy);
+      color: white;
+      padding: 2rem;
+      border-bottom: 3px solid var(--award-gold);
+      text-align: center;
+    }
+
+    .header h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .header p {
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 3rem auto;
+      padding: 0 2rem;
+      flex: 1;
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 2.5rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .card h2 {
+      font-family: 'Playfair Display', serif;
+      color: var(--blazer-navy);
+      margin-bottom: 1.5rem;
+      font-size: 1.75rem;
+    }
+
+    .booking-details {
+      background: var(--light-grey);
+      padding: 1.5rem;
+      border-radius: 8px;
+      margin-bottom: 2rem;
+    }
+
+    .booking-details h3 {
+      color: var(--blazer-navy);
+      margin-bottom: 1rem;
+      font-size: 1.1rem;
+    }
+
+    .detail-row {
+      display: flex;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border-grey);
+    }
+
+    .detail-row:last-child {
+      border-bottom: none;
+    }
+
+    .detail-label {
+      font-weight: 600;
+      width: 150px;
+      color: var(--text-primary);
+    }
+
+    .detail-value {
+      flex: 1;
+      color: #6B7280;
+    }
+
+    .alternatives-section {
+      margin-top: 2rem;
+    }
+
+    .alternatives-section h3 {
+      color: var(--blazer-navy);
+      margin-bottom: 1rem;
+    }
+
+    .alternative-option {
+      background: white;
+      border: 2px solid var(--border-grey);
+      border-radius: 8px;
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .alternative-option:hover {
+      border-color: var(--award-gold);
+      box-shadow: 0 2px 8px rgba(255, 159, 28, 0.2);
+    }
+
+    .alternative-option.selected {
+      border-color: var(--award-gold);
+      background: rgba(255, 159, 28, 0.05);
+    }
+
+    .alternative-option input[type="radio"] {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+      accent-color: var(--award-gold);
+    }
+
+    .alternative-content {
+      flex: 1;
+    }
+
+    .alternative-date {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--blazer-navy);
+      margin-bottom: 0.25rem;
+    }
+
+    .alternative-time {
+      color: #6B7280;
+    }
+
+    .btn {
+      background: var(--award-gold);
+      color: var(--blazer-navy);
+      border: none;
+      padding: 1rem 2.5rem;
+      font-size: 1rem;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      width: 100%;
+      margin-top: 1.5rem;
+    }
+
+    .btn:hover {
+      background: var(--blazer-navy);
+      color: white;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(9, 24, 37, 0.3);
+    }
+
+    .btn:disabled {
+      background: #D1D5DB;
+      color: #9CA3AF;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 3rem;
+      color: #6B7280;
+    }
+
+    .error {
+      background: #FEE2E2;
+      color: #991B1B;
+      padding: 1.5rem;
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+      border-left: 4px solid #991B1B;
+    }
+
+    .success {
+      text-align: center;
+      padding: 2rem;
+    }
+
+    .success h2 {
+      color: var(--success);
+      margin-bottom: 1rem;
+    }
+
+    .success p {
+      color: #6B7280;
+      line-height: 1.6;
+    }
+
+    .checkmark {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: var(--success);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1.5rem;
+      font-size: 2rem;
+      color: white;
+    }
+
+    .footer {
+      text-align: center;
+      padding: 2rem;
+      color: #9CA3AF;
+      font-size: 0.875rem;
+    }
+
+    .powered-by {
+      color: var(--award-gold);
+      font-weight: 600;
+    }
+
+    .request-new-btn {
+      background: transparent;
+      border: 2px solid var(--sport-blue);
+      color: var(--sport-blue);
+      margin-top: 1rem;
+    }
+
+    .request-new-btn:hover {
+      background: var(--sport-blue);
+      color: white;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      margin-top: 1rem;
+    }
+
+    .status-declined {
+      background: #FEE2E2;
+      color: #991B1B;
+    }
+
+    .status-confirmed {
+      background: #D1FAE5;
+      color: #065F46;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <div class="header">
+    <h1><span style="color: var(--award-gold);">SMART</span> Booking</h1>
+    <p>Tour Booking Response</p>
+  </div>
+
+  <!-- Main Content -->
+  <div class="container">
+    <div class="card" id="content">
+      <div class="loading" id="loading">
+        Loading your booking details...
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    Powered by <span class="powered-by">bSMART</span> ai
+  </div>
+
+  <script>
+    const API_URL = window.location.origin;
+    let bookingData = null;
+    let selectedDate = null;
+    let selectedTime = null;
+
+    async function loadBookingDetails() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const token = urlParams.get('token');
+
+      if (!token) {
+        showError('Invalid or missing booking token. Please use the link from your email.');
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_URL}/api/bookings/by-token/${token}`);
+        const data = await res.json();
+
+        if (!res.ok) {
+          showError('Booking not found. The link may have expired or is invalid.');
+          return;
+        }
+
+        bookingData = data.booking;
+        renderBookingDetails();
+      } catch (error) {
+        console.error('Load booking error:', error);
+        showError('Failed to load booking details. Please try again later.');
+      }
+    }
+
+    function renderBookingDetails() {
+      const content = document.getElementById('content');
+
+      // If already confirmed, show success message
+      if (bookingData.status === 'confirmed') {
+        const scheduledDate = new Date(bookingData.scheduled_date).toLocaleDateString('en-GB', {
+          weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+        });
+
+        content.innerHTML = `
+          <div class="success">
+            <div class="checkmark">✓</div>
+            <h2>Tour Confirmed</h2>
+            <p>Your private tour is already confirmed for:</p>
+            <div style="font-size: 1.25rem; font-weight: 600; color: var(--blazer-navy); margin: 1.5rem 0;">
+              ${scheduledDate} at ${bookingData.scheduled_time}
+            </div>
+            <p style="margin-top: 1rem;">We look forward to welcoming you to More House School!</p>
+          </div>
+        `;
+        return;
+      }
+
+      // If not declined, show error
+      if (bookingData.status !== 'declined') {
+        showError('This booking is not awaiting a response.');
+        return;
+      }
+
+      // Parse alternative dates
+      let alternatives = [];
+      try {
+        alternatives = typeof bookingData.alternative_dates === 'string'
+          ? JSON.parse(bookingData.alternative_dates)
+          : bookingData.alternative_dates || [];
+      } catch (e) {
+        console.error('Parse alternatives error:', e);
+        alternatives = [];
+      }
+
+      content.innerHTML = `
+        <h2>Tour Booking Response</h2>
+
+        <div class="booking-details">
+          <h3>Your Booking Details</h3>
+          <div class="detail-row">
+            <div class="detail-label">Parent Name:</div>
+            <div class="detail-value">${bookingData.parent_first_name} ${bookingData.parent_last_name}</div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-label">Email:</div>
+            <div class="detail-value">${bookingData.email}</div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-label">Attendees:</div>
+            <div class="detail-value">${bookingData.num_attendees}</div>
+          </div>
+          ${bookingData.student_first_name ? `
+            <div class="detail-row">
+              <div class="detail-label">Student:</div>
+              <div class="detail-value">${bookingData.student_first_name} ${bookingData.student_last_name || ''}</div>
+            </div>
+          ` : ''}
+          <div class="detail-row">
+            <div class="detail-label">Status:</div>
+            <div class="detail-value"><span class="status-badge status-declined">Request Declined</span></div>
+          </div>
+        </div>
+
+        ${bookingData.decline_reason ? `
+          <div class="booking-details">
+            <h3>Reason</h3>
+            <p style="color: #6B7280; line-height: 1.6;">${bookingData.decline_reason}</p>
+          </div>
+        ` : ''}
+
+        ${alternatives.length > 0 ? `
+          <div class="alternatives-section">
+            <h3>Alternative Dates Available</h3>
+            <p style="color: #6B7280; margin-bottom: 1.5rem;">Please select one of the following alternative dates for your tour:</p>
+            <div id="alternatives-list"></div>
+            <button class="btn" id="accept-btn" onclick="acceptAlternative()" disabled>Accept Selected Date</button>
+            <button class="btn request-new-btn" onclick="requestNewDate()">Request a Different Date</button>
+          </div>
+        ` : `
+          <div style="text-align: center; padding: 2rem 0;">
+            <p style="color: #6B7280; margin-bottom: 1rem;">Unfortunately, we don't have alternative dates available at the moment.</p>
+            <button class="btn" onclick="requestNewDate()">Request a New Date</button>
+          </div>
+        `}
+      `;
+
+      if (alternatives.length > 0) {
+        renderAlternatives(alternatives);
+      }
+    }
+
+    function renderAlternatives(alternatives) {
+      const container = document.getElementById('alternatives-list');
+
+      container.innerHTML = alternatives.map((alt, index) => {
+        const dateObj = new Date(alt.date);
+        const formattedDate = dateObj.toLocaleDateString('en-GB', {
+          weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+        });
+
+        return `
+          <label class="alternative-option" for="alt-${index}">
+            <input
+              type="radio"
+              name="alternative"
+              id="alt-${index}"
+              value="${index}"
+              onchange="selectAlternative('${alt.date}', '${alt.time}', this)"
+            >
+            <div class="alternative-content">
+              <div class="alternative-date">${formattedDate}</div>
+              <div class="alternative-time">at ${alt.time}</div>
+            </div>
+          </label>
+        `;
+      }).join('');
+    }
+
+    function selectAlternative(date, time, radioEl) {
+      selectedDate = date;
+      selectedTime = time;
+
+      // Update UI
+      document.querySelectorAll('.alternative-option').forEach(opt => {
+        opt.classList.remove('selected');
+      });
+      radioEl.closest('.alternative-option').classList.add('selected');
+
+      // Enable accept button
+      document.getElementById('accept-btn').disabled = false;
+    }
+
+    async function acceptAlternative() {
+      if (!selectedDate || !selectedTime) {
+        alert('Please select a date first');
+        return;
+      }
+
+      const btn = document.getElementById('accept-btn');
+      btn.disabled = true;
+      btn.textContent = 'Processing...';
+
+      try {
+        const res = await fetch(`${API_URL}/api/bookings/accept-alternative`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            token: bookingData.response_token,
+            selected_date: selectedDate,
+            selected_time: selectedTime
+          })
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          showSuccess();
+        } else {
+          const error = await res.json();
+          alert('Failed to accept date: ' + (error.error || 'Unknown error'));
+          btn.disabled = false;
+          btn.textContent = 'Accept Selected Date';
+        }
+      } catch (error) {
+        console.error('Accept alternative error:', error);
+        alert('Failed to accept date. Please try again.');
+        btn.disabled = false;
+        btn.textContent = 'Accept Selected Date';
+      }
+    }
+
+    function requestNewDate() {
+      window.location.href = '/book.html?request=private';
+    }
+
+    function showSuccess() {
+      const content = document.getElementById('content');
+      const scheduledDate = new Date(selectedDate).toLocaleDateString('en-GB', {
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+      });
+
+      content.innerHTML = `
+        <div class="success">
+          <div class="checkmark">✓</div>
+          <h2>Tour Confirmed!</h2>
+          <p>Thank you for accepting the alternative date.</p>
+          <div style="font-size: 1.25rem; font-weight: 600; color: var(--blazer-navy); margin: 1.5rem 0;">
+            ${scheduledDate} at ${selectedTime}
+          </div>
+          <p style="margin-top: 1rem;">You will receive a confirmation email shortly. We look forward to welcoming you to More House School!</p>
+        </div>
+      `;
+    }
+
+    function showError(message) {
+      const content = document.getElementById('content');
+      content.innerHTML = `
+        <div class="error">
+          <strong>Error:</strong> ${message}
+        </div>
+        <p style="color: #6B7280; text-align: center;">If you continue to experience issues, please contact us directly at bob.ottley@morehousemail.org.uk</p>
+      `;
+    }
+
+    // Load booking details on page load
+    window.addEventListener('DOMContentLoaded', loadBookingDetails);
+  </script>
+</body>
+</html>

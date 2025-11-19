@@ -1,0 +1,1401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Feedback Analytics</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --blazer-navy: #091825;
+      --award-gold: #FF9F1C;
+      --sport-blue: #034674;
+      --text-primary: #2C3E50;
+      --white: #FFFFFF;
+      --light-grey: #F8FAFC;
+      --border-grey: #E5E7EB;
+      --success: #10B981;
+      --danger: #EF4444;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--light-grey);
+      color: var(--text-primary);
+      padding: 2rem;
+    }
+
+    .container {
+      max-width: 98%;
+      margin: 0 auto;
+    }
+
+    .header {
+      margin-bottom: 2rem;
+    }
+
+    .header h1 {
+      font-family: 'Playfair Display', serif;
+      color: var(--blazer-navy);
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .header .gold {
+      color: var(--award-gold);
+    }
+
+    .header p {
+      color: #6B7280;
+      font-size: 0.95rem;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: 8px;
+      padding: 1.5rem;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      border-left: 4px solid var(--award-gold);
+    }
+
+    .stat-card.blue {
+      border-left-color: var(--sport-blue);
+    }
+
+    .stat-card.green {
+      border-left-color: var(--success);
+    }
+
+    .stat-card.navy {
+      border-left-color: var(--blazer-navy);
+    }
+
+    .stat-label {
+      font-size: 0.85rem;
+      color: #6B7280;
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 600;
+    }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--blazer-navy);
+    }
+
+    .stat-subtext {
+      font-size: 0.875rem;
+      color: #6B7280;
+      margin-top: 0.25rem;
+    }
+
+    .card {
+      background: white;
+      border-radius: 8px;
+      padding: 2rem;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      margin-bottom: 1.5rem;
+    }
+
+    .card h2 {
+      font-family: 'Playfair Display', serif;
+      color: var(--blazer-navy);
+      font-size: 1.5rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .card h2::before {
+      content: '';
+      width: 4px;
+      height: 24px;
+      background: var(--award-gold);
+      border-radius: 2px;
+    }
+
+    .question-analytics {
+      margin-bottom: 2rem;
+      padding-bottom: 2rem;
+      border-bottom: 2px solid var(--border-grey);
+    }
+
+    .question-analytics:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .question-text {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--blazer-navy);
+      margin-bottom: 1rem;
+    }
+
+    .rating-visual {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .stars {
+      display: flex;
+      gap: 0.25rem;
+      font-size: 1.5rem;
+    }
+
+    .star {
+      color: #D1D5DB;
+    }
+
+    .star.filled {
+      color: var(--award-gold);
+    }
+
+    .rating-breakdown {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+
+    .rating-bar {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .rating-bar-label {
+      font-size: 0.875rem;
+      color: #6B7280;
+      min-width: 60px;
+    }
+
+    .rating-bar-fill {
+      flex: 1;
+      height: 24px;
+      background: var(--light-grey);
+      border-radius: 4px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .rating-bar-progress {
+      height: 100%;
+      background: var(--award-gold);
+      transition: width 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding-right: 0.5rem;
+    }
+
+    .rating-bar-count {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--blazer-navy);
+      min-width: 40px;
+      text-align: right;
+    }
+
+    .text-responses {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .text-response-item {
+      background: var(--light-grey);
+      padding: 1rem;
+      border-radius: 6px;
+      border-left: 3px solid var(--sport-blue);
+    }
+
+    .text-response-meta {
+      font-size: 0.75rem;
+      color: #6B7280;
+      margin-bottom: 0.5rem;
+    }
+
+    .text-response-content {
+      color: var(--text-primary);
+      line-height: 1.6;
+    }
+
+    .conversion-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+
+    .conversion-table th,
+    .conversion-table td {
+      padding: 0.75rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border-grey);
+    }
+
+    .conversion-table th {
+      background: var(--light-grey);
+      font-weight: 600;
+      color: var(--blazer-navy);
+      font-size: 0.875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      user-select: none;
+      position: relative;
+      padding-right: 1.5rem;
+    }
+
+    .conversion-table th:hover {
+      background: #E5E7EB;
+    }
+
+    .conversion-table th::after {
+      content: '↕';
+      position: absolute;
+      right: 0.5rem;
+      opacity: 0.3;
+      font-size: 0.75rem;
+    }
+
+    .conversion-table th.sort-asc::after {
+      content: '↑';
+      opacity: 1;
+    }
+
+    .conversion-table th.sort-desc::after {
+      content: '↓';
+      opacity: 1;
+    }
+
+    .conversion-table tr:hover {
+      background: var(--light-grey);
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .status-interested {
+      background: #DBEAFE;
+      color: #1E40AF;
+    }
+
+    .status-applied {
+      background: #FEF3C7;
+      color: #92400E;
+    }
+
+    .status-enrolled {
+      background: #D1FAE5;
+      color: #065F46;
+    }
+
+    .status-declined {
+      background: #FEE2E2;
+      color: #991B1B;
+    }
+
+    .status-no_response {
+      background: #F3F4F6;
+      color: #6B7280;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 3rem;
+      color: #6B7280;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem;
+      color: #6B7280;
+    }
+
+    .empty-state h3 {
+      color: var(--blazer-navy);
+      margin-bottom: 0.5rem;
+    }
+
+    .chart-container {
+      margin-top: 1.5rem;
+      padding: 1.5rem;
+      background: var(--light-grey);
+      border-radius: 8px;
+    }
+
+    .progress-ring {
+      transform: rotate(-90deg);
+    }
+
+    .filters {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .filter-label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--blazer-navy);
+    }
+
+    .filter-select {
+      padding: 0.5rem;
+      border: 2px solid var(--border-grey);
+      border-radius: 6px;
+      font-family: 'Inter', sans-serif;
+      min-width: 200px;
+    }
+
+    .filter-select:focus {
+      outline: none;
+      border-color: var(--award-gold);
+    }
+
+    .clickable-name {
+      color: var(--sport-blue);
+      cursor: pointer;
+      text-decoration: underline;
+      font-weight: 500;
+    }
+
+    .clickable-name:hover {
+      color: var(--award-gold);
+    }
+
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.6);
+      z-index: 9999;
+      overflow-y: auto;
+      padding: 2rem;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 8px;
+      max-width: 1000px;
+      width: 100%;
+      margin: 2rem auto;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+      position: relative;
+    }
+
+    .modal-header {
+      background: var(--blazer-navy);
+      color: white;
+      padding: 1.5rem 2rem;
+      border-radius: 8px 8px 0 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 3px solid var(--award-gold);
+    }
+
+    .modal-header h2 {
+      margin: 0;
+      font-family: 'Playfair Display', serif;
+      font-size: 1.75rem;
+    }
+
+    .modal-close {
+      background: transparent;
+      border: none;
+      color: white;
+      font-size: 2rem;
+      cursor: pointer;
+      padding: 0;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+      transition: background 0.2s;
+    }
+
+    .modal-close:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .modal-body {
+      padding: 2rem;
+      max-height: 70vh;
+      overflow-y: auto;
+    }
+
+    .btn {
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 4px;
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: var(--sport-blue);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--blazer-navy);
+    }
+
+    .btn-sm {
+      padding: 0.375rem 0.75rem;
+      font-size: 0.875rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <h1><span class="gold">SMART</span> Feedback Analytics</h1>
+      <p>Track survey responses and conversion outcomes</p>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters">
+      <div class="filter-group">
+        <label class="filter-label">Date Range</label>
+        <select class="filter-select" id="dateFilter" onchange="loadAnalytics()">
+          <option value="all">All Time</option>
+          <option value="7">Last 7 Days</option>
+          <option value="30" selected>Last 30 Days</option>
+          <option value="90">Last 90 Days</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Tour Type</label>
+        <select class="filter-select" id="typeFilter" onchange="loadAnalytics()">
+          <option value="all">All Types</option>
+          <option value="open_day">Open Day</option>
+          <option value="private_tour">Private Tour</option>
+          <option value="taster_day">Taster Day</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Entry Year</label>
+        <select class="filter-select" id="entryYearFilter" onchange="loadAnalytics()">
+          <option value="all">All Years</option>
+          <option value="2026">2026</option>
+          <option value="2027">2027</option>
+          <option value="2028">2028</option>
+          <option value="2029">2029</option>
+          <option value="2030">2030</option>
+          <option value="2031">2031</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Conversion Status</label>
+        <select class="filter-select" id="outcomeFilter" onchange="loadAnalytics()">
+          <option value="all">All Statuses</option>
+          <option value="interested">Interested</option>
+          <option value="applied">Applied</option>
+          <option value="enrolled">Enrolled</option>
+          <option value="declined">Declined</option>
+          <option value="no_response">No Response</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Key Stats -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Response Rate</div>
+        <div class="stat-value" id="responseRate">-</div>
+        <div class="stat-subtext" id="responseCount">-</div>
+      </div>
+      <div class="stat-card blue">
+        <div class="stat-label">Average Rating</div>
+        <div class="stat-value" id="avgRating">-</div>
+        <div class="stat-subtext">out of 5.0</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-label">Conversion Rate</div>
+        <div class="stat-value" id="conversionRate">-</div>
+        <div class="stat-subtext" id="conversionCount">-</div>
+      </div>
+      <div class="stat-card navy">
+        <div class="stat-label">Total Responses</div>
+        <div class="stat-value" id="totalResponses">-</div>
+        <div class="stat-subtext">surveys completed</div>
+      </div>
+    </div>
+
+    <!-- Question Analytics -->
+    <div class="card">
+      <h2>Survey Questions</h2>
+      <div id="questionsContainer" class="loading">
+        Loading analytics...
+      </div>
+    </div>
+
+    <!-- Conversion Outcomes -->
+    <div class="card">
+      <h2>Conversion Outcomes</h2>
+      <div id="outcomesContainer" class="loading">
+        Loading outcomes...
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = window.parent.location.origin;
+
+    window.addEventListener('DOMContentLoaded', loadAnalytics);
+
+    async function loadAnalytics() {
+      const dateFilter = document.getElementById('dateFilter').value;
+      const typeFilter = document.getElementById('typeFilter').value;
+      const entryYearFilter = document.getElementById('entryYearFilter').value;
+      const outcomeFilter = document.getElementById('outcomeFilter').value;
+
+      try {
+        const params = new URLSearchParams({
+          days: dateFilter === 'all' ? '999999' : dateFilter,
+          type: typeFilter,
+          entryYear: entryYearFilter,
+          outcome: outcomeFilter
+        });
+
+        const [statsRes, questionsRes, outcomesRes] = await Promise.all([
+          fetch(`${API_URL}/api/analytics/feedback-stats?${params}`, { credentials: 'include' }),
+          fetch(`${API_URL}/api/analytics/feedback-questions?${params}`, { credentials: 'include' }),
+          fetch(`${API_URL}/api/analytics/conversion-outcomes?${params}`, { credentials: 'include' })
+        ]);
+
+        const stats = await statsRes.json();
+        const questions = await questionsRes.json();
+        const outcomes = await outcomesRes.json();
+
+        renderStats(stats);
+        renderQuestions(questions);
+        renderOutcomes(outcomes);
+      } catch (error) {
+        console.error('Load analytics error:', error);
+        document.getElementById('questionsContainer').innerHTML = `
+          <div class="empty-state">
+            <h3>Failed to Load Analytics</h3>
+            <p>Please try refreshing the page</p>
+          </div>
+        `;
+      }
+    }
+
+    function renderStats(data) {
+      const stats = data.stats || {};
+
+      document.getElementById('responseRate').textContent =
+        stats.response_rate ? `${Math.round(stats.response_rate)}%` : '0%';
+      document.getElementById('responseCount').textContent =
+        `${stats.responses_count || 0} of ${stats.total_bookings || 0} bookings`;
+
+      document.getElementById('avgRating').textContent =
+        stats.avg_rating ? parseFloat(stats.avg_rating).toFixed(1) : '0.0';
+
+      document.getElementById('conversionRate').textContent =
+        stats.conversion_rate ? `${Math.round(stats.conversion_rate)}%` : '0%';
+      document.getElementById('conversionCount').textContent =
+        `${stats.enrolled_count || 0} enrolled`;
+
+      document.getElementById('totalResponses').textContent =
+        stats.responses_count || 0;
+    }
+
+    function renderQuestions(data) {
+      const container = document.getElementById('questionsContainer');
+      const openDayQuestions = data.openDayQuestions || [];
+      const privateTourQuestions = data.privateTourQuestions || [];
+      const tasterDayQuestions = data.tasterDayQuestions || [];
+
+      if (openDayQuestions.length === 0 && privateTourQuestions.length === 0 && tasterDayQuestions.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <h3>No Feedback Data Yet</h3>
+            <p>Survey responses will appear here once parents complete the feedback form</p>
+          </div>
+        `;
+        return;
+      }
+
+      let html = '';
+
+      // Open Day Section
+      if (openDayQuestions.length > 0) {
+        html += `
+          <div style="margin-bottom: 20px;">
+            <div onclick="toggleSection('openDaySection')" style="background: #2563eb; padding: 10px 15px; border-radius: 4px; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+              <h3 style="color: white; margin: 0; font-size: 1rem; font-weight: 600;">Open Day Feedback</h3>
+              <span id="openDayToggle" style="color: white; font-size: 1.2rem;">▶</span>
+            </div>
+            <div id="openDaySection" style="margin-top: 10px; display: none;">
+              ${openDayQuestions.map(q => {
+                if (q.question_type === 'rating') {
+                  return renderRatingQuestion(q);
+                } else if (q.question_type === 'text') {
+                  return renderTextQuestion(q);
+                }
+                return '';
+              }).join('')}
+            </div>
+          </div>
+        `;
+      }
+
+      // Private Tour Section
+      if (privateTourQuestions.length > 0) {
+        html += `
+          <div style="margin-bottom: 20px;">
+            <div onclick="toggleSection('privateTourSection')" style="background: #059669; padding: 10px 15px; border-radius: 4px; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+              <h3 style="color: white; margin: 0; font-size: 1rem; font-weight: 600;">Private Tour Feedback</h3>
+              <span id="privateTourToggle" style="color: white; font-size: 1.2rem;">▶</span>
+            </div>
+            <div id="privateTourSection" style="margin-top: 10px; display: none;">
+              ${privateTourQuestions.map(q => {
+                if (q.question_type === 'rating') {
+                  return renderRatingQuestion(q);
+                } else if (q.question_type === 'text') {
+                  return renderTextQuestion(q);
+                }
+                return '';
+              }).join('')}
+            </div>
+          </div>
+        `;
+      }
+
+      // Taster Day Section
+      if (tasterDayQuestions.length > 0) {
+        html += `
+          <div style="margin-bottom: 20px;">
+            <div onclick="toggleSection('tasterDaySection')" style="background: #9b59b6; padding: 10px 15px; border-radius: 4px; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+              <h3 style="color: white; margin: 0; font-size: 1rem; font-weight: 600;">Taster Day Feedback</h3>
+              <span id="tasterDayToggle" style="color: white; font-size: 1.2rem;">▶</span>
+            </div>
+            <div id="tasterDaySection" style="margin-top: 10px; display: none;">
+              ${tasterDayQuestions.map(q => {
+                if (q.question_type === 'rating') {
+                  return renderRatingQuestion(q);
+                } else if (q.question_type === 'text') {
+                  return renderTextQuestion(q);
+                }
+                return '';
+              }).join('')}
+            </div>
+          </div>
+        `;
+      }
+
+      container.innerHTML = html;
+    }
+
+    function toggleSection(sectionId) {
+      const section = document.getElementById(sectionId);
+      const toggleIcon = document.getElementById(sectionId.replace('Section', 'Toggle'));
+
+      if (section.style.display === 'none') {
+        section.style.display = 'block';
+        toggleIcon.textContent = '▼';
+      } else {
+        section.style.display = 'none';
+        toggleIcon.textContent = '▶';
+      }
+    }
+
+    function renderRatingQuestion(q) {
+      const avg = parseFloat(q.avg_rating || 0);
+      const fullStars = Math.floor(avg);
+      const hasHalf = avg % 1 >= 0.5;
+
+      let starsHTML = '';
+      for (let i = 1; i <= 5; i++) {
+        if (i <= fullStars) {
+          starsHTML += '<span class="star filled">★</span>';
+        } else if (i === fullStars + 1 && hasHalf) {
+          starsHTML += '<span class="star filled">★</span>';
+        } else {
+          starsHTML += '<span class="star">★</span>';
+        }
+      }
+
+      const breakdown = q.rating_breakdown || {};
+      const total = Object.values(breakdown).reduce((sum, val) => sum + val, 0);
+
+      let breakdownHTML = '';
+      for (let rating = 5; rating >= 1; rating--) {
+        const count = breakdown[rating] || 0;
+        const percentage = total > 0 ? (count / total) * 100 : 0;
+        breakdownHTML += `
+          <div class="rating-bar">
+            <div class="rating-bar-label">${rating} stars</div>
+            <div class="rating-bar-fill">
+              <div class="rating-bar-progress" style="width: ${percentage}%"></div>
+            </div>
+            <div class="rating-bar-count">${count}</div>
+          </div>
+        `;
+      }
+
+      return `
+        <div class="question-analytics">
+          <div class="question-text">${q.question_text}</div>
+          <div class="rating-visual">
+            <div class="stars">${starsHTML}</div>
+            <div style="font-size: 1.25rem; font-weight: 600; color: var(--blazer-navy);">
+              ${avg.toFixed(1)} <span style="font-size: 0.875rem; color: #6B7280;">/ 5.0</span>
+            </div>
+            <div style="font-size: 0.875rem; color: #6B7280;">
+              (${q.response_count || 0} responses)
+            </div>
+          </div>
+          <div class="rating-breakdown">
+            ${breakdownHTML}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderTextQuestion(q) {
+      const responses = q.responses || [];
+
+      if (responses.length === 0) {
+        return `
+          <div class="question-analytics">
+            <div class="question-text">${q.question_text}</div>
+            <div style="color: #6B7280; font-size: 0.875rem; margin-top: 0.5rem;">
+              No responses yet
+            </div>
+          </div>
+        `;
+      }
+
+      return `
+        <div class="question-analytics">
+          <div class="question-text">${q.question_text}</div>
+          <div style="color: #6B7280; font-size: 0.875rem; margin-top: 0.5rem; margin-bottom: 1rem;">
+            ${responses.length} response${responses.length !== 1 ? 's' : ''}
+          </div>
+          <div class="text-responses">
+            ${responses.slice(0, 10).map(r => `
+              <div class="text-response-item">
+                <div class="text-response-meta">
+                  ${new Date(r.submitted_at).toLocaleDateString('en-GB')} -
+                  ${r.parent_name || 'Anonymous'}
+                </div>
+                <div class="text-response-content">${r.response_value || ''}</div>
+              </div>
+            `).join('')}
+            ${responses.length > 10 ? `
+              <div style="text-align: center; color: #6B7280; font-size: 0.875rem;">
+                Showing 10 of ${responses.length} responses
+              </div>
+            ` : ''}
+          </div>
+        </div>
+      `;
+    }
+
+    let currentOutcomes = [];
+    let sortColumn = null;
+    let sortDirection = 'asc';
+
+    function renderOutcomes(data) {
+      const container = document.getElementById('outcomesContainer');
+      currentOutcomes = data.outcomes || [];
+
+      if (currentOutcomes.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <h3>No Conversion Data Yet</h3>
+            <p>Conversion outcomes can be tracked in the booking management section</p>
+          </div>
+        `;
+        return;
+      }
+
+      const summary = data.summary || {};
+
+      renderOutcomesTable(summary);
+    }
+
+    function renderOutcomesTable(summary) {
+      const container = document.getElementById('outcomesContainer');
+
+      container.innerHTML = `
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+          <div style="text-align: center; padding: 1rem; background: var(--light-grey); border-radius: 6px;">
+            <div style="font-size: 1.5rem; font-weight: 700; color: #1E40AF;">${summary.interested || 0}</div>
+            <div style="font-size: 0.875rem; color: #6B7280;">Interested</div>
+          </div>
+          <div style="text-align: center; padding: 1rem; background: var(--light-grey); border-radius: 6px;">
+            <div style="font-size: 1.5rem; font-weight: 700; color: #92400E;">${summary.applied || 0}</div>
+            <div style="font-size: 0.875rem; color: #6B7280;">Applied</div>
+          </div>
+          <div style="text-align: center; padding: 1rem; background: var(--light-grey); border-radius: 6px;">
+            <div style="font-size: 1.5rem; font-weight: 700; color: #065F46;">${summary.enrolled || 0}</div>
+            <div style="font-size: 0.875rem; color: #6B7280;">Enrolled</div>
+          </div>
+          <div style="text-align: center; padding: 1rem; background: var(--light-grey); border-radius: 6px;">
+            <div style="font-size: 1.5rem; font-weight: 700; color: #991B1B;">${summary.declined || 0}</div>
+            <div style="font-size: 0.875rem; color: #6B7280;">Declined</div>
+          </div>
+        </div>
+
+        <table class="conversion-table">
+          <thead>
+            <tr>
+              <th data-column="parent_name">Parent Name</th>
+              <th data-column="student_name">Student Name</th>
+              <th data-column="tour_date">Tour Date</th>
+              <th data-column="event_tour">Event/Tour</th>
+              <th data-column="guide_name">Guide Assigned</th>
+              <th data-column="outcome_status">Status</th>
+              <th data-column="entry_year">Entry Year</th>
+              <th data-column="feedback_submitted">Survey Completed</th>
+              <th data-column="avg_rating">Avg Rating</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${currentOutcomes.map(o => `
+              <tr>
+                <td>
+                  ${o.parent_name ? `<span class="clickable-name" onclick="showBookingModal(${o.id})">${o.parent_name}</span>` : '-'}
+                </td>
+                <td>
+                  ${o.student_name ? `<span class="clickable-name" onclick="showBookingModal(${o.id})">${o.student_name}</span>` : '-'}
+                </td>
+                <td>${o.tour_date ? new Date(o.tour_date).toLocaleDateString('en-GB') : '-'}</td>
+                <td>${o.booking_type === 'open_day' ? (o.event_title || 'Open Day') : o.booking_type === 'taster_day' ? 'Taster Day' : 'Private Tour'}</td>
+                <td>${o.guide_name || '-'}</td>
+                <td>
+                  <span class="status-badge status-${o.outcome_status || 'no_response'}">
+                    ${(o.outcome_status || 'no response').replace('_', ' ')}
+                  </span>
+                </td>
+                <td>${o.entry_year || '-'}</td>
+                <td>${o.feedback_submitted ? 'Yes' : '-'}</td>
+                <td>${o.avg_rating ? o.avg_rating + '/5' : '-'}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+
+      // Add click handlers to table headers for sorting
+      const headers = container.querySelectorAll('.conversion-table th[data-column]');
+      headers.forEach(header => {
+        header.addEventListener('click', () => {
+          const column = header.dataset.column;
+          handleSort(column, summary);
+        });
+      });
+    }
+
+    function handleSort(column, summary) {
+      // Toggle sort direction if clicking same column
+      if (sortColumn === column) {
+        sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+      } else {
+        sortColumn = column;
+        sortDirection = 'asc';
+      }
+
+      // Sort the outcomes array
+      currentOutcomes.sort((a, b) => {
+        let aVal, bVal;
+
+        switch (column) {
+          case 'parent_name':
+            aVal = a.parent_name || '';
+            bVal = b.parent_name || '';
+            break;
+          case 'student_name':
+            aVal = a.student_name || '';
+            bVal = b.student_name || '';
+            break;
+          case 'tour_date':
+            aVal = a.tour_date ? new Date(a.tour_date).getTime() : 0;
+            bVal = b.tour_date ? new Date(b.tour_date).getTime() : 0;
+            break;
+          case 'event_tour':
+            aVal = a.booking_type === 'open_day' ? (a.event_title || 'Open Day') : a.booking_type === 'taster_day' ? 'Taster Day' : 'Private Tour';
+            bVal = b.booking_type === 'open_day' ? (b.event_title || 'Open Day') : b.booking_type === 'taster_day' ? 'Taster Day' : 'Private Tour';
+            break;
+          case 'guide_name':
+            aVal = a.guide_name || '';
+            bVal = b.guide_name || '';
+            break;
+          case 'outcome_status':
+            aVal = a.outcome_status || 'no response';
+            bVal = b.outcome_status || 'no response';
+            break;
+          case 'entry_year':
+            aVal = parseInt(a.entry_year) || 0;
+            bVal = parseInt(b.entry_year) || 0;
+            break;
+          case 'feedback_submitted':
+            aVal = a.feedback_submitted ? 1 : 0;
+            bVal = b.feedback_submitted ? 1 : 0;
+            break;
+          case 'avg_rating':
+            aVal = parseFloat(a.avg_rating) || 0;
+            bVal = parseFloat(b.avg_rating) || 0;
+            break;
+          default:
+            return 0;
+        }
+
+        // Handle numeric vs string comparison
+        if (typeof aVal === 'number' && typeof bVal === 'number') {
+          return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
+        } else {
+          const comparison = String(aVal).localeCompare(String(bVal));
+          return sortDirection === 'asc' ? comparison : -comparison;
+        }
+      });
+
+      // Re-render the table with sorted data
+      renderOutcomesTable(summary);
+
+      // Update visual indicators
+      const container = document.getElementById('outcomesContainer');
+      const headers = container.querySelectorAll('.conversion-table th[data-column]');
+      headers.forEach(header => {
+        header.classList.remove('sort-asc', 'sort-desc');
+        if (header.dataset.column === sortColumn) {
+          header.classList.add(sortDirection === 'asc' ? 'sort-asc' : 'sort-desc');
+        }
+      });
+    }
+
+    // Modal functions
+    function showBookingModal(bookingId) {
+      const modal = document.getElementById('bookingModal');
+      modal.classList.add('active');
+      loadBookingDetails(bookingId);
+    }
+
+    function closeBookingModal() {
+      const modal = document.getElementById('bookingModal');
+      modal.classList.remove('active');
+    }
+
+    async function loadBookingDetails(bookingId) {
+      const modalBody = document.getElementById('modalBody');
+      modalBody.innerHTML = '<div style="text-align: center; padding: 2rem; color: #6B7280;">Loading booking details...</div>';
+
+      try {
+        const schoolId = new URLSearchParams(window.location.search).get('schoolId') || '2';
+        const response = await fetch(`/api/bookings?schoolId=${schoolId}`);
+        const data = await response.json();
+
+        const booking = data.bookings.find(b => b.id === bookingId);
+
+        if (!booking) {
+          modalBody.innerHTML = '<div style="text-align: center; padding: 2rem; color: #EF4444;">Booking not found</div>';
+          return;
+        }
+
+        // Update modal header
+        document.getElementById('modalTitle').textContent = `${booking.parent_name || 'Booking'} - ${booking.student_first_name} ${booking.student_last_name}`;
+
+        // Render booking details
+        modalBody.innerHTML = renderBookingDetailsModal(booking);
+
+        // Load CRM data
+        await loadBookingCRMData(bookingId);
+      } catch (error) {
+        console.error('Error loading booking:', error);
+        modalBody.innerHTML = '<div style="text-align: center; padding: 2rem; color: #EF4444;">Error loading booking details</div>';
+      }
+    }
+
+    function renderBookingDetailsModal(b) {
+      // Build interests arrays
+      const subjectInterests = [];
+      if (b.sciences) subjectInterests.push('Sciences');
+      if (b.mathematics) subjectInterests.push('Mathematics');
+      if (b.english) subjectInterests.push('English');
+      if (b.languages) subjectInterests.push('Languages');
+      if (b.humanities) subjectInterests.push('Humanities');
+      if (b.business) subjectInterests.push('Business');
+      if (b.drama) subjectInterests.push('Drama');
+      if (b.music) subjectInterests.push('Music');
+      if (b.art) subjectInterests.push('Art');
+      if (b.creative_writing) subjectInterests.push('Creative Writing');
+      if (b.sport) subjectInterests.push('Sport');
+
+      const priorities = [];
+      if (b.leadership) priorities.push('Leadership');
+      if (b.community_service) priorities.push('Community Service');
+      if (b.outdoor_education) priorities.push('Outdoor Education');
+      if (b.academic_excellence) priorities.push('Academic Excellence');
+      if (b.pastoral_care) priorities.push('Pastoral Care');
+      if (b.university_preparation) priorities.push('University Preparation');
+      if (b.personal_development) priorities.push('Personal Development');
+      if (b.career_guidance) priorities.push('Career Guidance');
+      if (b.extracurricular_opportunities) priorities.push('Extracurricular Opportunities');
+
+      return `
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; font-size: 0.875rem;">
+          <div>
+            <h4 style="margin: 0 0 0.75rem 0; color: #555; border-bottom: 2px solid #e0e0e0; padding-bottom: 0.5rem; font-size: 1rem;">Contact Details</h4>
+            <div style="display: grid; gap: 0.5rem;">
+              <div><strong>Email:</strong> ${b.email || '-'}</div>
+              <div><strong>Phone:</strong> ${b.phone || '-'}</div>
+              ${b.entry_year ? `<div><strong>Entry Year:</strong> ${b.entry_year}</div>` : ''}
+            </div>
+          </div>
+
+          <div>
+            <h4 style="margin: 0 0 0.75rem 0; color: #555; border-bottom: 2px solid #e0e0e0; padding-bottom: 0.5rem; font-size: 1rem;">Booking Details</h4>
+            <div style="display: grid; gap: 0.5rem;">
+              <div><strong>Type:</strong> ${b.booking_type === 'open_day' ? 'Open Day' : b.booking_type === 'taster_day' ? 'Taster Day' : 'Private Tour'}</div>
+              ${(b.booking_type === 'private_tour' || b.booking_type === 'taster_day') && b.scheduled_date ? `
+                <div><strong>Scheduled:</strong> ${new Date(b.scheduled_date).toLocaleDateString('en-GB')} at ${b.scheduled_time}</div>
+              ` : ''}
+              ${b.guide_name ? `<div><strong>Tour Guide:</strong> ${b.guide_name}</div>` : ''}
+              <div><strong>Status:</strong> <span style="text-transform: capitalize;">${b.status}</span></div>
+            </div>
+          </div>
+
+          <div>
+            <h4 style="margin: 0 0 0.75rem 0; color: #555; border-bottom: 2px solid #e0e0e0; padding-bottom: 0.5rem; font-size: 1rem;">Timeline</h4>
+            <div style="display: grid; gap: 0.5rem;">
+              <div><strong>Booked:</strong> ${new Date(b.booked_at).toLocaleString('en-GB')}</div>
+              ${b.checked_in_at ? `<div><strong>Checked In:</strong> ${new Date(b.checked_in_at).toLocaleString('en-GB')}</div>` : ''}
+              ${b.cancelled_at ? `<div><strong>Cancelled:</strong> ${new Date(b.cancelled_at).toLocaleString('en-GB')}</div>` : ''}
+              ${b.no_show_at ? `<div><strong>Marked No Show:</strong> ${new Date(b.no_show_at).toLocaleString('en-GB')}</div>` : ''}
+            </div>
+          </div>
+        </div>
+
+        ${subjectInterests.length > 0 ? `
+          <div style="margin-top: 1.5rem;">
+            <h4 style="margin: 0 0 0.75rem 0; color: #555; border-bottom: 2px solid #e0e0e0; padding-bottom: 0.5rem; font-size: 1rem;">Subject Interests</h4>
+            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+              ${subjectInterests.map(interest => `<span style="background: #e3f2fd; color: #1976d2; padding: 0.4rem 0.8rem; border-radius: 20px; font-size: 0.875rem;">${interest}</span>`).join('')}
+            </div>
+          </div>
+        ` : ''}
+
+        ${priorities.length > 0 ? `
+          <div style="margin-top: 1.5rem;">
+            <h4 style="margin: 0 0 0.75rem 0; color: #555; border-bottom: 2px solid #e0e0e0; padding-bottom: 0.5rem; font-size: 1rem;">Priorities & Values</h4>
+            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+              ${priorities.map(priority => `<span style="background: #e3f2fd; color: #034674; padding: 0.4rem 0.8rem; border-radius: 20px; font-size: 0.875rem;">${priority}</span>`).join('')}
+            </div>
+          </div>
+        ` : ''}
+
+        ${b.special_requirements ? `
+          <div style="margin-top: 1.5rem;">
+            <h4 style="margin: 0 0 0.75rem 0; color: #555; border-bottom: 2px solid #e0e0e0; padding-bottom: 0.5rem; font-size: 1rem;">Special Requirements</h4>
+            <p style="margin: 0; padding: 0.75rem; background: #f8f9fa; border-radius: 4px; font-size: 0.875rem;">${b.special_requirements}</p>
+          </div>
+        ` : ''}
+
+        <div style="margin-top: 1.5rem;">
+          <h4 style="margin: 0 0 0.75rem 0; color: #555; border-bottom: 2px solid #e0e0e0; padding-bottom: 0.5rem; font-size: 1rem;">
+            Admin Notes
+          </h4>
+          <div id="booking-${b.id}-notes-container" style="min-height: 50px;">
+            <div style="text-align: center; padding: 1rem; color: #999;">Loading notes...</div>
+          </div>
+          <div style="margin-top: 1rem;">
+            <textarea id="booking-${b.id}-new-note" placeholder="Add a new note..." style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-family: inherit; min-height: 60px;"></textarea>
+            <button class="btn btn-sm btn-primary" style="margin-top: 0.5rem;" onclick="addBookingNote(${b.id})">Add Note</button>
+          </div>
+        </div>
+
+        <div style="margin-top: 1.5rem;">
+          <h4 style="margin: 0 0 0.75rem 0; color: #555; border-bottom: 2px solid #e0e0e0; padding-bottom: 0.5rem; font-size: 1rem;">
+            Email History
+          </h4>
+          <div id="booking-${b.id}-emails-container" style="min-height: 50px;">
+            <div style="text-align: center; padding: 1rem; color: #999;">Loading email history...</div>
+          </div>
+        </div>
+
+        <div style="margin-top: 1.5rem;">
+          <h4 style="margin: 0 0 0.75rem 0; color: #555; border-bottom: 2px solid #e0e0e0; padding-bottom: 0.5rem; font-size: 1rem;">
+            Prospectus Viewing History
+          </h4>
+          <div id="booking-${b.id}-sessions-container" style="min-height: 50px;">
+            <div style="text-align: center; padding: 1rem; color: #999;">Loading session history...</div>
+          </div>
+        </div>
+
+        <div style="margin-top: 1.5rem;">
+          <h4 style="margin: 0 0 0.75rem 0; color: #555; border-bottom: 2px solid #FF9F1C; padding-bottom: 0.5rem; font-size: 1rem;">
+            📝 <span style="color: #FF9F1C; font-weight: 600;">SMART</span> Feedback
+          </h4>
+          <div id="booking-${b.id}-feedback-container" style="min-height: 50px;">
+            <div style="text-align: center; padding: 1rem; color: #999;">Loading SMART feedback...</div>
+          </div>
+        </div>
+      `;
+    }
+
+    async function loadBookingCRMData(bookingId) {
+      await Promise.all([
+        loadBookingNotes(bookingId),
+        loadBookingEmails(bookingId),
+        loadBookingSessions(bookingId),
+        loadBookingTourFeedback(bookingId)
+      ]);
+    }
+
+    async function loadBookingNotes(bookingId) {
+      const container = document.getElementById(`booking-${bookingId}-notes-container`);
+      try {
+        const res = await fetch(`/api/bookings/${bookingId}/notes`);
+        const data = await res.json();
+
+        if (data.success) {
+          if (data.notes.length === 0) {
+            container.innerHTML = '<div style="text-align: center; padding: 1rem; color: #999;">No notes yet</div>';
+          } else {
+            container.innerHTML = data.notes.map(note => `
+              <div style="background: #f8f9fa; padding: 0.75rem; border-left: 3px solid #034674; margin-bottom: 0.75rem; border-radius: 4px;">
+                <div style="font-size: 0.875rem; color: #333;">${note.content.replace(/\n/g, '<br>')}</div>
+                <div style="margin-top: 0.5rem; font-size: 0.75rem; color: #666;">
+                  <strong>${note.admin_email || 'Admin'}</strong> • ${new Date(note.created_at).toLocaleString('en-GB')}
+                </div>
+              </div>
+            `).join('');
+          }
+        }
+      } catch (error) {
+        console.error('Error loading notes:', error);
+        container.innerHTML = '<div style="text-align: center; padding: 1rem; color: #EF4444;">Error loading notes</div>';
+      }
+    }
+
+    async function loadBookingEmails(bookingId) {
+      const container = document.getElementById(`booking-${bookingId}-emails-container`);
+      try {
+        const res = await fetch(`/api/bookings/${bookingId}/email-history`);
+        const data = await res.json();
+
+        if (data.success) {
+          if (data.emails.length === 0) {
+            container.innerHTML = '<div style="text-align: center; padding: 1rem; color: #999;">No emails sent yet</div>';
+          } else {
+            container.innerHTML = data.emails.map(email => `
+              <div style="background: #f8f9fa; padding: 0.75rem; border-left: 3px solid #FF9F1C; margin-bottom: 0.75rem; border-radius: 4px;">
+                <div style="font-size: 0.875rem; color: #333; margin-bottom: 0.5rem;"><strong>${email.subject}</strong></div>
+                <div style="font-size: 0.75rem; color: #666;">
+                  Sent ${new Date(email.sent_at).toLocaleString('en-GB')}
+                </div>
+              </div>
+            `).join('');
+          }
+        }
+      } catch (error) {
+        console.error('Error loading emails:', error);
+        container.innerHTML = '<div style="text-align: center; padding: 1rem; color: #EF4444;">Error loading emails</div>';
+      }
+    }
+
+    async function loadBookingSessions(bookingId) {
+      const container = document.getElementById(`booking-${bookingId}-sessions-container`);
+      try {
+        const res = await fetch(`/api/bookings/${bookingId}/sessions`);
+        const data = await res.json();
+
+        if (data.success) {
+          if (data.sessions.length === 0) {
+            container.innerHTML = '<div style="text-align: center; padding: 1rem; color: #999;">No viewing sessions yet</div>';
+          } else {
+            container.innerHTML = data.sessions.map(session => `
+              <div style="background: #f8f9fa; padding: 0.75rem; border-left: 3px solid #10B981; margin-bottom: 0.75rem; border-radius: 4px;">
+                <div style="font-size: 0.875rem; color: #333;">
+                  Duration: ${Math.round(session.duration / 60)} minutes
+                </div>
+                <div style="font-size: 0.75rem; color: #666;">
+                  ${new Date(session.started_at).toLocaleString('en-GB')}
+                </div>
+              </div>
+            `).join('');
+          }
+        }
+      } catch (error) {
+        console.error('Error loading sessions:', error);
+        container.innerHTML = '<div style="text-align: center; padding: 1rem; color: #EF4444;">Error loading sessions</div>';
+      }
+    }
+
+    async function loadBookingTourFeedback(bookingId) {
+      const container = document.getElementById(`booking-${bookingId}-feedback-container`);
+      try {
+        const res = await fetch(`/api/bookings/${bookingId}/tour-feedback`);
+        const data = await res.json();
+
+        if (data.success) {
+          if (data.feedback.length === 0) {
+            container.innerHTML = '<div style="text-align: center; padding: 1rem; color: #999;">No SMART feedback submitted yet</div>';
+          } else {
+            container.innerHTML = data.feedback.map(feedback => {
+              const responses = feedback.responses;
+              const submittedDate = new Date(feedback.submitted_at).toLocaleString('en-GB');
+
+              return `
+                <div style="background: #f8f9fa; padding: 1rem; border-left: 3px solid #FF9F1C; margin-bottom: 1rem; border-radius: 4px;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; padding-bottom: 0.75rem; border-bottom: 2px solid #e0e0e0;">
+                    <div>
+                      <strong style="color: #FF9F1C; font-size: 1rem;">Submission #${feedback.submission_number}</strong>
+                      <div style="font-size: 0.75rem; color: #666; margin-top: 0.25rem;">
+                        By ${feedback.guide_name || 'Tour Guide'} • ${submittedDate}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style="display: grid; gap: 0.75rem;">
+                    ${Object.entries(responses).map(([key, value]) => {
+                      const label = key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+                      let displayValue = value;
+
+                      // Format arrays (checkboxes)
+                      if (Array.isArray(value)) {
+                        displayValue = value.join(', ');
+                      }
+
+                      // Format ratings
+                      if (key.includes('rating') && !isNaN(value)) {
+                        displayValue = '⭐'.repeat(parseInt(value)) + ` (${value}/5)`;
+                      }
+
+                      return `
+                        <div style="padding: 0.5rem 0; border-bottom: 1px solid #e0e0e0;">
+                          <div style="font-weight: 600; color: #555; font-size: 0.85rem; margin-bottom: 0.25rem;">${label}</div>
+                          <div style="color: #333; font-size: 0.875rem;">${displayValue || '-'}</div>
+                        </div>
+                      `;
+                    }).join('')}
+                  </div>
+                </div>
+              `;
+            }).join('');
+          }
+        }
+      } catch (error) {
+        console.error('Load tour feedback error:', error);
+        container.innerHTML = '<div style="text-align: center; padding: 1rem; color: #EF4444;">Failed to load SMART feedback</div>';
+      }
+    }
+
+    async function addBookingNote(bookingId) {
+      const textarea = document.getElementById(`booking-${bookingId}-new-note`);
+      const note = textarea.value.trim();
+
+      if (!note) {
+        alert('Please enter a note');
+        return;
+      }
+
+      try {
+        console.log('Adding note for booking:', bookingId, 'Note:', note);
+        const res = await fetch(`/api/bookings/${bookingId}/notes`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ note })
+        });
+
+        console.log('Response status:', res.status);
+        const data = await res.json();
+        console.log('Response data:', data);
+
+        if (data.success) {
+          textarea.value = '';
+          await loadBookingNotes(bookingId);
+          alert('Note added successfully!');
+        } else {
+          alert('Error adding note: ' + (data.error || 'Unknown error'));
+        }
+      } catch (error) {
+        console.error('Error adding note:', error);
+        alert('Error adding note: ' + error.message);
+      }
+    }
+
+    // Make functions globally accessible
+    window.showBookingModal = showBookingModal;
+    window.closeBookingModal = closeBookingModal;
+    window.addBookingNote = addBookingNote;
+
+    // Close modal when clicking outside
+    document.addEventListener('DOMContentLoaded', () => {
+      const modal = document.getElementById('bookingModal');
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+          closeBookingModal();
+        }
+      });
+    });
+  </script>
+
+  <!-- Booking Details Modal -->
+  <div id="bookingModal" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modalTitle">Booking Details</h2>
+        <button class="modal-close" onclick="closeBookingModal()">&times;</button>
+      </div>
+      <div class="modal-body" id="modalBody">
+        <div style="text-align: center; padding: 2rem; color: #6B7280;">Loading...</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tour Guide Feedback Settings</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --blazer-navy: #091825;
+      --award-gold: #FF9F1C;
+      --sport-blue: #034674;
+      --taster-purple: #9b59b6;
+      --text-primary: #2C3E50;
+      --white: #FFFFFF;
+      --light-grey: #F8FAFC;
+      --border-grey: #E5E7EB;
+      --success: #10B981;
+      --danger: #EF4444;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--light-grey);
+      color: var(--text-primary);
+      padding: 2rem;
+    }
+
+    .container {
+      max-width: 98%;
+      margin: 0 auto;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+    }
+
+    .header h1 {
+      font-family: 'Playfair Display', serif;
+      color: var(--blazer-navy);
+      font-size: 2rem;
+    }
+
+    .header .gold {
+      color: var(--award-gold);
+    }
+
+    .btn {
+      background: var(--award-gold);
+      color: var(--blazer-navy);
+      border: none;
+      padding: 0.75rem 1.5rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .btn:hover {
+      background: var(--blazer-navy);
+      color: white;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(9, 24, 37, 0.3);
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: #DC2626;
+    }
+
+    .btn-secondary {
+      background: #6B7280;
+      color: white;
+    }
+
+    .btn-secondary:hover {
+      background: #4B5563;
+    }
+
+    .btn-small {
+      padding: 0.5rem 1rem;
+      font-size: 0.8rem;
+    }
+
+    .btn-sport-blue {
+      background: var(--sport-blue);
+      color: white;
+    }
+
+    .btn-sport-blue:hover {
+      background: #02578c;
+      color: white;
+    }
+
+    .btn-taster-purple {
+      background: var(--taster-purple);
+      color: white;
+    }
+
+    .btn-taster-purple:hover {
+      background: #8e44ad;
+      color: white;
+    }
+
+    .card {
+      background: white;
+      border-radius: 8px;
+      padding: 2rem;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      margin-bottom: 1.5rem;
+    }
+
+    .card h2 {
+      font-family: 'Playfair Display', serif;
+      color: var(--blazer-navy);
+      font-size: 1.5rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .card h2::before {
+      content: '';
+      width: 4px;
+      height: 24px;
+      background: var(--award-gold);
+      border-radius: 2px;
+    }
+
+    .card.sport-blue-accent h2::before {
+      background: var(--sport-blue);
+    }
+
+    .card.taster-purple-accent h2::before {
+      background: var(--taster-purple);
+    }
+
+    .fields-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .field-item {
+      background: var(--light-grey);
+      border: 2px solid var(--border-grey);
+      border-radius: 8px;
+      padding: 1rem;
+      cursor: move;
+      transition: all 0.2s;
+    }
+
+    .field-item:hover {
+      border-color: var(--award-gold);
+      box-shadow: 0 2px 8px rgba(255, 159, 28, 0.2);
+    }
+
+    .field-item.sport-blue-hover:hover {
+      border-color: var(--sport-blue);
+      box-shadow: 0 2px 8px rgba(3, 70, 116, 0.2);
+    }
+
+    .field-item.taster-purple-hover:hover {
+      border-color: var(--taster-purple);
+      box-shadow: 0 2px 8px rgba(155, 89, 182, 0.2);
+    }
+
+    .field-item.dragging {
+      opacity: 0.5;
+    }
+
+    .field-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+    }
+
+    .field-label {
+      font-weight: 600;
+      color: var(--blazer-navy);
+      font-size: 1rem;
+    }
+
+    .field-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .field-meta {
+      display: flex;
+      gap: 1.5rem;
+      font-size: 0.85rem;
+      color: #6B7280;
+    }
+
+    .field-badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .badge-required {
+      background: #FEE2E2;
+      color: #991B1B;
+    }
+
+    .badge-optional {
+      background: #DBEAFE;
+      color: #1E40AF;
+    }
+
+    .type-badge {
+      background: #E5E7EB;
+      color: #374151;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem;
+      color: #6B7280;
+    }
+
+    .empty-state h3 {
+      color: var(--blazer-navy);
+      margin-bottom: 0.5rem;
+    }
+
+    /* Modal Styles */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.6);
+      z-index: 9999;
+      overflow-y: auto;
+      padding: 2rem;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 8px;
+      max-width: 600px;
+      width: 100%;
+      margin: 2rem auto;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    }
+
+    .modal-header {
+      background: var(--blazer-navy);
+      color: white;
+      padding: 1.5rem 2rem;
+      border-radius: 8px 8px 0 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 3px solid var(--award-gold);
+    }
+
+    .modal-header.sport-blue-accent {
+      border-bottom-color: var(--sport-blue);
+    }
+
+    .modal-header.taster-purple-accent {
+      border-bottom-color: var(--taster-purple);
+    }
+
+    .modal-header h2 {
+      margin: 0;
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5rem;
+      color: white;
+    }
+
+    .modal-header h2::before {
+      display: none;
+    }
+
+    .modal-close {
+      background: transparent;
+      border: none;
+      color: white;
+      font-size: 2rem;
+      cursor: pointer;
+      padding: 0;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+      transition: background 0.2s;
+    }
+
+    .modal-close:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .modal-body {
+      padding: 2rem;
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .form-group label {
+      display: block;
+      font-weight: 600;
+      color: var(--blazer-navy);
+      margin-bottom: 0.5rem;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 0.75rem;
+      border: 2px solid var(--border-grey);
+      border-radius: 6px;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.95rem;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: var(--award-gold);
+    }
+
+    .form-group textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .checkbox-group input[type="checkbox"] {
+      width: auto;
+    }
+
+    .options-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .option-item {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .option-item input {
+      flex: 1;
+    }
+
+    .btn-add-option {
+      background: var(--success);
+      color: white;
+      padding: 0.5rem 1rem;
+      font-size: 0.85rem;
+    }
+
+    .btn-add-option:hover {
+      background: #059669;
+    }
+
+    .info-box {
+      background: #DBEAFE;
+      border-left: 4px solid #3B82F6;
+      padding: 1rem;
+      border-radius: 4px;
+      margin-bottom: 1.5rem;
+      font-size: 0.9rem;
+    }
+
+    .info-box.sport-blue {
+      background: rgba(3, 70, 116, 0.1);
+      border-left-color: var(--sport-blue);
+    }
+
+    .info-box.taster-purple {
+      background: rgba(155, 89, 182, 0.1);
+      border-left-color: var(--taster-purple);
+    }
+
+    .modal-footer {
+      padding: 1.5rem 2rem;
+      border-top: 1px solid var(--border-grey);
+      display: flex;
+      justify-content: flex-end;
+      gap: 1rem;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .form-label {
+      display: block;
+      font-weight: 600;
+      color: var(--blazer-navy);
+      margin-bottom: 0.5rem;
+      font-size: 0.95rem;
+    }
+
+    .form-select {
+      width: 100%;
+      padding: 0.75rem;
+      border: 2px solid var(--border-grey);
+      border-radius: 6px;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.95rem;
+      transition: border-color 0.2s;
+    }
+
+    .form-select:focus {
+      outline: none;
+      border-color: var(--award-gold);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <h1><span class="gold">Tour Guide</span> Feedback Form</h1>
+    </div>
+
+    <!-- Info Box -->
+    <div class="info-box">
+      <strong>Mobile-Friendly Form:</strong> Tour guides will receive a link in their assignment email to submit feedback after each tour. The form can be filled out on mobile or desktop.
+    </div>
+
+    <!-- Form Type Selector -->
+    <div class="card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <div style="flex: 1;">
+          <label class="form-label">Form Type Selector</label>
+          <select class="form-select" id="tour-type-selector" onchange="handleTourTypeChange()" style="max-width: 400px;">
+            <option value="private_tour">Private Tour & Open Day Feedback</option>
+            <option value="taster_day">Taster Day Feedback</option>
+          </select>
+        </div>
+        <div>
+          <button class="btn" id="add-field-btn" onclick="showAddFieldModal()">+ Add Field</button>
+        </div>
+      </div>
+      <div id="tour-type-info" style="display: block; padding: 1rem; background: var(--light-grey); border-radius: 6px;">
+        <div style="font-size: 0.875rem; color: #6B7280;">
+          <strong id="tour-type-description">Private Tour & Open Day Feedback:</strong> <span id="tour-type-count">Feedback fields for private tours and open day events (9 fields)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Fields List -->
+    <div class="card" id="fields-card">
+      <h2 id="fields-heading">Private Tour Feedback Fields</h2>
+      <div id="fieldsList" class="fields-list">
+        <div class="empty-state">
+          <h3>Loading fields...</h3>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add/Edit Field Modal -->
+  <div id="fieldModal" class="modal-overlay">
+    <div class="modal-content">
+      <div id="modalHeader" class="modal-header">
+        <h2 id="modalTitle">Add Field</h2>
+        <button class="modal-close" onclick="closeFieldModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="editFieldId">
+        <input type="hidden" id="fieldTourType">
+
+        <div class="form-group">
+          <label>Field Label *</label>
+          <input type="text" id="fieldLabel" placeholder="e.g., Student Engagement Level">
+        </div>
+
+        <div class="form-group">
+          <label>Field Type *</label>
+          <select id="fieldType" onchange="handleFieldTypeChange()">
+            <option value="text">Text Input</option>
+            <option value="textarea">Text Area</option>
+            <option value="rating">Star Rating</option>
+            <option value="radio">Radio Buttons (Single Choice)</option>
+            <option value="checkbox">Checkboxes (Multiple Choice)</option>
+            <option value="select">Dropdown</option>
+          </select>
+        </div>
+
+        <div class="form-group" id="optionsGroup" style="display: none;">
+          <label>Options *</label>
+          <div class="options-list" id="optionsList">
+            <div class="option-item">
+              <input type="text" placeholder="Option 1" class="option-input">
+              <button class="btn btn-danger btn-small" onclick="removeOption(this)">Remove</button>
+            </div>
+          </div>
+          <button class="btn btn-add-option btn-small" onclick="addOption()">+ Add Option</button>
+        </div>
+
+        <div class="form-group">
+          <label>Placeholder Text</label>
+          <input type="text" id="fieldPlaceholder" placeholder="e.g., Enter your observations...">
+        </div>
+
+        <div class="form-group">
+          <label>Help Text</label>
+          <textarea id="fieldHelpText" placeholder="Optional help text to guide the tour guide"></textarea>
+        </div>
+
+        <div class="form-group">
+          <div class="checkbox-group">
+            <input type="checkbox" id="fieldRequired">
+            <label for="fieldRequired">Required Field</label>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeFieldModal()">Cancel</button>
+        <button class="btn" onclick="saveField()">Save Field</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = window.location.origin;
+    let privateTourFields = [];
+    let tasterDayFields = [];
+    let currentTourType = 'private_tour';
+    let draggedElement = null;
+
+    // Load fields on page load
+    window.addEventListener('DOMContentLoaded', () => {
+      loadFields('private_tour');
+      loadFields('taster_day');
+    });
+
+    function handleTourTypeChange() {
+      const selector = document.getElementById('tour-type-selector');
+      currentTourType = selector.value;
+      updateUIForTourType();
+      renderFields(currentTourType);
+    }
+
+    function updateUIForTourType() {
+      const fieldsCard = document.getElementById('fields-card');
+      const fieldsHeading = document.getElementById('fields-heading');
+      const tourTypeDescription = document.getElementById('tour-type-description');
+      const tourTypeCount = document.getElementById('tour-type-count');
+      const addFieldBtn = document.getElementById('add-field-btn');
+
+      if (currentTourType === 'private_tour') {
+        fieldsCard.className = 'card sport-blue-accent';
+        fieldsHeading.textContent = 'Private Tour Feedback Fields';
+        tourTypeDescription.textContent = 'Private Tour & Open Day Feedback:';
+        tourTypeCount.textContent = 'Feedback fields for private tours and open day events (9 fields)';
+        addFieldBtn.className = 'btn btn-sport-blue';
+      } else if (currentTourType === 'taster_day') {
+        fieldsCard.className = 'card taster-purple-accent';
+        fieldsHeading.textContent = 'Taster Day Feedback Fields';
+        tourTypeDescription.textContent = 'Taster Day Feedback:';
+        tourTypeCount.textContent = 'Feedback fields for taster day events (16 fields)';
+        addFieldBtn.className = 'btn btn-taster-purple';
+      }
+    }
+
+    async function loadFields(tourType) {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const schoolId = params.get('schoolId') || '2';
+
+        const response = await fetch(`${API_URL}/api/tour-feedback-fields?schoolId=${schoolId}&tourType=${tourType}`);
+        const data = await response.json();
+
+        if (data.success) {
+          if (tourType === 'private_tour') {
+            privateTourFields = data.fields;
+            if (currentTourType === 'private_tour') {
+              renderFields('private_tour');
+            }
+          } else if (tourType === 'taster_day') {
+            tasterDayFields = data.fields;
+            if (currentTourType === 'taster_day') {
+              renderFields('taster_day');
+            }
+          }
+        }
+      } catch (error) {
+        console.error(`Error loading ${tourType} fields:`, error);
+        const container = document.getElementById('fieldsList');
+        container.innerHTML = `
+          <div class="empty-state">
+            <h3>Error loading fields</h3>
+            <p>Please refresh the page</p>
+          </div>
+        `;
+      }
+    }
+
+    function renderFields(tourType) {
+      const fields = tourType === 'private_tour' ? privateTourFields : tasterDayFields;
+      const container = document.getElementById('fieldsList');
+      const hoverClass = tourType === 'private_tour' ? 'sport-blue-hover' : 'taster-purple-hover';
+
+      if (fields.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <h3>No Fields Yet</h3>
+            <p>Click "Add Field" to create your first feedback form field</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = fields.map((field, index) => `
+        <div class="field-item ${hoverClass}" draggable="true" data-id="${field.id}" data-index="${index}" data-tour-type="${tourType}">
+          <div class="field-header">
+            <div>
+              <div class="field-label">${field.field_label}</div>
+              <div class="field-meta">
+                <span class="field-badge type-badge">${field.field_type}</span>
+                <span class="field-badge ${field.is_required ? 'badge-required' : 'badge-optional'}">
+                  ${field.is_required ? 'Required' : 'Optional'}
+                </span>
+              </div>
+            </div>
+            <div class="field-actions">
+              <button class="btn btn-secondary btn-small" onclick="editField(${field.id}, '${tourType}')">Edit</button>
+              <button class="btn btn-danger btn-small" onclick="deleteField(${field.id}, '${tourType}')">Delete</button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      // Initialize drag and drop
+      initializeDragAndDrop(tourType);
+    }
+
+    function initializeDragAndDrop(tourType) {
+      const fieldItems = document.querySelectorAll('#fieldsList .field-item');
+
+      fieldItems.forEach(item => {
+        item.addEventListener('dragstart', handleDragStart);
+        item.addEventListener('dragend', handleDragEnd);
+        item.addEventListener('dragover', handleDragOver);
+        item.addEventListener('drop', handleDrop);
+      });
+    }
+
+    function handleDragStart(e) {
+      draggedElement = this;
+      this.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    }
+
+    function handleDragEnd(e) {
+      this.classList.remove('dragging');
+    }
+
+    function handleDragOver(e) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      return false;
+    }
+
+    function handleDrop(e) {
+      e.preventDefault();
+
+      if (draggedElement !== this) {
+        const tourType = this.dataset.tourType;
+        const allItems = [...document.querySelectorAll('#fieldsList .field-item')];
+        const draggedIndex = allItems.indexOf(draggedElement);
+        const targetIndex = allItems.indexOf(this);
+
+        // Get the correct fields array
+        const fields = tourType === 'private_tour' ? privateTourFields : tasterDayFields;
+
+        // Reorder fields array
+        const [removed] = fields.splice(draggedIndex, 1);
+        fields.splice(targetIndex, 0, removed);
+
+        // Update the correct array
+        if (tourType === 'private_tour') {
+          privateTourFields = fields;
+        } else {
+          tasterDayFields = fields;
+        }
+
+        // Update display order
+        updateFieldOrder(tourType);
+      }
+
+      return false;
+    }
+
+    async function updateFieldOrder(tourType) {
+      try {
+        const fields = tourType === 'private_tour' ? privateTourFields : tasterDayFields;
+        const updates = fields.map((field, index) => ({
+          id: field.id,
+          display_order: index
+        }));
+
+        const response = await fetch(`${API_URL}/api/tour-feedback-fields/reorder`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ updates })
+        });
+
+        if (response.ok) {
+          renderFields(tourType);
+        }
+      } catch (error) {
+        console.error('Error updating order:', error);
+        alert('Error updating field order');
+      }
+    }
+
+    function showAddFieldModal() {
+      const tourType = currentTourType;
+      document.getElementById('modalTitle').textContent = 'Add Field';
+      document.getElementById('editFieldId').value = '';
+      document.getElementById('fieldTourType').value = tourType;
+      document.getElementById('fieldLabel').value = '';
+      document.getElementById('fieldType').value = 'text';
+      document.getElementById('fieldPlaceholder').value = '';
+      document.getElementById('fieldHelpText').value = '';
+      document.getElementById('fieldRequired').checked = false;
+      document.getElementById('optionsGroup').style.display = 'none';
+
+      // Update modal header accent color
+      const modalHeader = document.getElementById('modalHeader');
+      modalHeader.classList.remove('sport-blue-accent', 'taster-purple-accent');
+      if (tourType === 'private_tour') {
+        modalHeader.classList.add('sport-blue-accent');
+      } else {
+        modalHeader.classList.add('taster-purple-accent');
+      }
+
+      document.getElementById('fieldModal').classList.add('active');
+    }
+
+    function editField(id, tourType) {
+      const fields = tourType === 'private_tour' ? privateTourFields : tasterDayFields;
+      const field = fields.find(f => f.id === id);
+      if (!field) return;
+
+      document.getElementById('modalTitle').textContent = 'Edit Field';
+      document.getElementById('editFieldId').value = field.id;
+      document.getElementById('fieldTourType').value = tourType;
+      document.getElementById('fieldLabel').value = field.field_label;
+      document.getElementById('fieldType').value = field.field_type;
+      document.getElementById('fieldPlaceholder').value = field.placeholder || '';
+      document.getElementById('fieldHelpText').value = field.help_text || '';
+      document.getElementById('fieldRequired').checked = field.is_required;
+
+      // Handle options for radio, checkbox, select
+      if (['radio', 'checkbox', 'select'].includes(field.field_type) && field.field_options) {
+        const options = JSON.parse(field.field_options);
+        if (options.options) {
+          const optionsList = document.getElementById('optionsList');
+          optionsList.innerHTML = options.options.map(opt => `
+            <div class="option-item">
+              <input type="text" value="${opt}" class="option-input">
+              <button class="btn btn-danger btn-small" onclick="removeOption(this)">Remove</button>
+            </div>
+          `).join('');
+          document.getElementById('optionsGroup').style.display = 'block';
+        }
+      }
+
+      // Update modal header accent color
+      const modalHeader = document.getElementById('modalHeader');
+      modalHeader.classList.remove('sport-blue-accent', 'taster-purple-accent');
+      if (tourType === 'private_tour') {
+        modalHeader.classList.add('sport-blue-accent');
+      } else {
+        modalHeader.classList.add('taster-purple-accent');
+      }
+
+      document.getElementById('fieldModal').classList.add('active');
+    }
+
+    function closeFieldModal() {
+      document.getElementById('fieldModal').classList.remove('active');
+    }
+
+    function handleFieldTypeChange() {
+      const fieldType = document.getElementById('fieldType').value;
+      const optionsGroup = document.getElementById('optionsGroup');
+
+      if (['radio', 'checkbox', 'select'].includes(fieldType)) {
+        optionsGroup.style.display = 'block';
+        if (document.getElementById('optionsList').children.length === 0) {
+          addOption();
+        }
+      } else {
+        optionsGroup.style.display = 'none';
+      }
+    }
+
+    function addOption() {
+      const optionsList = document.getElementById('optionsList');
+      const optionItem = document.createElement('div');
+      optionItem.className = 'option-item';
+      optionItem.innerHTML = `
+        <input type="text" placeholder="Option ${optionsList.children.length + 1}" class="option-input">
+        <button class="btn btn-danger btn-small" onclick="removeOption(this)">Remove</button>
+      `;
+      optionsList.appendChild(optionItem);
+    }
+
+    function removeOption(button) {
+      button.parentElement.remove();
+    }
+
+    async function saveField() {
+      const fieldId = document.getElementById('editFieldId').value;
+      const tourType = document.getElementById('fieldTourType').value;
+      const fieldLabel = document.getElementById('fieldLabel').value.trim();
+      const fieldType = document.getElementById('fieldType').value;
+      const fieldPlaceholder = document.getElementById('fieldPlaceholder').value.trim();
+      const fieldHelpText = document.getElementById('fieldHelpText').value.trim();
+      const fieldRequired = document.getElementById('fieldRequired').checked;
+
+      if (!fieldLabel) {
+        alert('Please enter a field label');
+        return;
+      }
+
+      if (!tourType) {
+        alert('Tour type is missing');
+        return;
+      }
+
+      let fieldOptions = null;
+      if (['radio', 'checkbox', 'select'].includes(fieldType)) {
+        const optionInputs = document.querySelectorAll('.option-input');
+        const options = Array.from(optionInputs)
+          .map(input => input.value.trim())
+          .filter(val => val);
+
+        if (options.length === 0) {
+          alert('Please add at least one option');
+          return;
+        }
+
+        fieldOptions = JSON.stringify({ options });
+      } else if (fieldType === 'rating') {
+        fieldOptions = JSON.stringify({ max: 5 });
+      }
+
+      const fieldData = {
+        field_label: fieldLabel,
+        field_name: fieldLabel.toLowerCase().replace(/[^a-z0-9]+/g, '_'),
+        field_type: fieldType,
+        field_options: fieldOptions,
+        placeholder: fieldPlaceholder || null,
+        help_text: fieldHelpText || null,
+        is_required: fieldRequired,
+        tour_type: tourType,
+        school_id: 2
+      };
+
+      try {
+        const url = fieldId
+          ? `${API_URL}/api/tour-feedback-fields/${fieldId}`
+          : `${API_URL}/api/tour-feedback-fields`;
+
+        const method = fieldId ? 'PUT' : 'POST';
+
+        const response = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(fieldData)
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          closeFieldModal();
+          loadFields(tourType);
+        } else {
+          alert('Error saving field: ' + (data.error || 'Unknown error'));
+        }
+      } catch (error) {
+        console.error('Error saving field:', error);
+        alert('Error saving field');
+      }
+    }
+
+    async function deleteField(id, tourType) {
+      if (!confirm('Are you sure you want to delete this field?')) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_URL}/api/tour-feedback-fields/${id}`, {
+          method: 'DELETE'
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          loadFields(tourType);
+        } else {
+          alert('Error deleting field: ' + (data.error || 'Unknown error'));
+        }
+      } catch (error) {
+        console.error('Error deleting field:', error);
+        alert('Error deleting field');
+      }
+    }
+
+    // Close modal when clicking outside
+    document.getElementById('fieldModal').addEventListener('click', (e) => {
+      if (e.target.id === 'fieldModal') {
+        closeFieldModal();
+      }
+    });
+  </script>
+</body>
+</html>

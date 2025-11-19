@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tour Feedback - More House School</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --blazer-navy: #091825;
+      --award-gold: #FF9F1C;
+      --sport-blue: #034674;
+      --text-primary: #2C3E50;
+      --white: #FFFFFF;
+      --light-grey: #F8FAFC;
+      --border-grey: #E5E7EB;
+      --success: #10B981;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--light-grey);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header {
+      background: var(--blazer-navy);
+      color: white;
+      padding: 2rem;
+      border-bottom: 3px solid var(--award-gold);
+      text-align: center;
+    }
+
+    .header h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .header p {
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    .container {
+      max-width: 700px;
+      margin: 3rem auto;
+      padding: 0 2rem;
+      flex: 1;
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 2.5rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .card h2 {
+      font-family: 'Playfair Display', serif;
+      color: var(--blazer-navy);
+      margin-bottom: 1.5rem;
+      font-size: 1.75rem;
+    }
+
+    .question {
+      margin-bottom: 2.5rem;
+    }
+
+    .question-label {
+      display: block;
+      font-weight: 600;
+      color: var(--blazer-navy);
+      margin-bottom: 1rem;
+      font-size: 1.05rem;
+    }
+
+    .rating-group {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .rating-btn {
+      width: 50px;
+      height: 50px;
+      border: 2px solid var(--border-grey);
+      background: white;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      transition: all 0.2s;
+    }
+
+    .rating-btn:hover {
+      border-color: var(--award-gold);
+      transform: translateY(-2px);
+    }
+
+    .rating-btn.selected {
+      background: var(--award-gold);
+      border-color: var(--award-gold);
+      color: var(--blazer-navy);
+    }
+
+    .textarea {
+      width: 100%;
+      min-height: 120px;
+      padding: 1rem;
+      border: 2px solid var(--border-grey);
+      border-radius: 8px;
+      font-family: 'Inter', sans-serif;
+      font-size: 1rem;
+      resize: vertical;
+    }
+
+    .textarea:focus {
+      outline: none;
+      border-color: var(--award-gold);
+    }
+
+    .btn {
+      background: var(--award-gold);
+      color: var(--blazer-navy);
+      border: none;
+      padding: 1rem 2.5rem;
+      font-size: 1rem;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      width: 100%;
+      margin-top: 1.5rem;
+    }
+
+    .btn:hover {
+      background: var(--blazer-navy);
+      color: white;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(9, 24, 37, 0.3);
+    }
+
+    .btn:disabled {
+      background: #D1D5DB;
+      color: #9CA3AF;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 3rem;
+      color: #6B7280;
+    }
+
+    .error {
+      background: #FEE2E2;
+      color: #991B1B;
+      padding: 1.5rem;
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+      border-left: 4px solid #991B1B;
+    }
+
+    .success {
+      text-align: center;
+      padding: 2rem;
+    }
+
+    .success h2 {
+      color: var(--success);
+      margin-bottom: 1rem;
+    }
+
+    .success p {
+      color: #6B7280;
+      line-height: 1.6;
+    }
+
+    .checkmark {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: var(--success);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1.5rem;
+      font-size: 2rem;
+      color: white;
+    }
+
+    .footer {
+      text-align: center;
+      padding: 2rem;
+      color: #9CA3AF;
+      font-size: 0.875rem;
+    }
+
+    .powered-by {
+      color: var(--award-gold);
+      font-weight: 600;
+    }
+
+    .rating-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 0.5rem;
+      font-size: 0.85rem;
+      color: #6B7280;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <div class="header">
+    <h1><span style="color: var(--award-gold);">SMART</span> Feedback</h1>
+    <p>Help us improve your experience</p>
+  </div>
+
+  <!-- Main Content -->
+  <div class="container">
+    <div class="card" id="content">
+      <div class="loading" id="loading">
+        Loading feedback form...
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    Powered by <span class="powered-by">bSMART</span> ai
+  </div>
+
+  <script>
+    const API_URL = window.location.origin;
+    let feedbackData = null;
+    let questions = [];
+    const responses = {};
+
+    async function loadFeedbackForm() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const token = urlParams.get('token');
+      const formId = urlParams.get('form_id');
+      const isPreview = formId && !token;
+
+      // Preview mode: load questions for specific form without booking
+      if (isPreview) {
+        try {
+          const questionsRes = await fetch(`${API_URL}/api/admin/feedback-questions?form_id=${formId}`);
+          const questionsData = await questionsRes.json();
+
+          if (!questionsRes.ok) {
+            showError('Failed to load preview. Please try again.');
+            return;
+          }
+
+          feedbackData = {
+            parent_first_name: 'Preview',
+            parent_last_name: 'User',
+            student_first_name: 'Student',
+            booking_type: 'preview'
+          };
+          questions = questionsData.questions;
+
+          // Add preview banner
+          const header = document.querySelector('.header');
+          const banner = document.createElement('div');
+          banner.style.cssText = 'background: var(--award-gold); color: var(--blazer-navy); padding: 0.75rem; text-align: center; font-weight: 600; margin-top: 1rem;';
+          banner.textContent = '🔍 PREVIEW MODE - This is how the questionnaire will appear to parents';
+          header.appendChild(banner);
+
+          renderFeedbackForm();
+        } catch (error) {
+          console.error('Preview error:', error);
+          showError('Failed to load preview. Please try again.');
+        }
+        return;
+      }
+
+      // Normal mode: require token
+      if (!token) {
+        showError('Invalid or missing feedback link. Please use the link from your email.');
+        return;
+      }
+
+      try {
+        // Get booking details and questions
+        const [bookingRes, questionsRes] = await Promise.all([
+          fetch(`${API_URL}/api/feedback/booking/${token}`),
+          fetch(`${API_URL}/api/feedback/questions?token=${token}`)
+        ]);
+
+        const bookingData = await bookingRes.json();
+        const questionsData = await questionsRes.json();
+
+        if (!bookingRes.ok) {
+          showError('Feedback form not found or has already been submitted.');
+          return;
+        }
+
+        feedbackData = bookingData.booking;
+        questions = questionsData.questions;
+
+        renderFeedbackForm();
+      } catch (error) {
+        console.error('Load feedback error:', error);
+        showError('Failed to load feedback form. Please try again later.');
+      }
+    }
+
+    function renderFeedbackForm() {
+      const content = document.getElementById('content');
+
+      if (feedbackData.feedback_submitted) {
+        content.innerHTML = `
+          <div class="success">
+            <div class="checkmark">✓</div>
+            <h2>Thank You!</h2>
+            <p>You have already submitted feedback for this tour.</p>
+            <p style="margin-top: 1rem;">We appreciate your time and insights!</p>
+          </div>
+        `;
+        return;
+      }
+
+      let questionsHTML = questions.map((q, index) => {
+        if (q.question_type === 'rating') {
+          return `
+            <div class="question">
+              <label class="question-label">${q.question_text}</label>
+              <div class="rating-group" id="question-${q.id}">
+                ${[1, 2, 3, 4, 5].map(rating => `
+                  <button type="button" class="rating-btn" data-question="${q.id}" data-rating="${rating}" onclick="selectRating(${q.id}, ${rating})">
+                    ${rating}
+                  </button>
+                `).join('')}
+              </div>
+              <div class="rating-labels">
+                <span>Poor</span>
+                <span>Excellent</span>
+              </div>
+            </div>
+          `;
+        } else if (q.question_type === 'text') {
+          return `
+            <div class="question">
+              <label class="question-label">${q.question_text}</label>
+              <textarea
+                class="textarea"
+                id="question-${q.id}"
+                data-question="${q.id}"
+                placeholder="Share your thoughts..."
+                onchange="updateTextResponse(${q.id}, this.value)"
+              ></textarea>
+            </div>
+          `;
+        }
+      }).join('');
+
+      content.innerHTML = `
+        <h2>Tour Feedback</h2>
+        <p style="color: #6B7280; margin-bottom: 2rem;">
+          Thank you for visiting More House School. Your feedback helps us improve our tours and better serve future families.
+        </p>
+
+        <form id="feedback-form" onsubmit="submitFeedback(event)">
+          ${questionsHTML}
+          <button type="submit" class="btn" id="submit-btn">Submit Feedback</button>
+        </form>
+      `;
+    }
+
+    function selectRating(questionId, rating) {
+      // Update UI
+      const container = document.getElementById(`question-${questionId}`);
+      container.querySelectorAll('.rating-btn').forEach(btn => {
+        btn.classList.remove('selected');
+      });
+      container.querySelector(`[data-rating="${rating}"]`).classList.add('selected');
+
+      // Store response
+      responses[questionId] = { type: 'rating', value: rating };
+    }
+
+    function updateTextResponse(questionId, value) {
+      responses[questionId] = { type: 'text', value: value };
+    }
+
+    async function submitFeedback(e) {
+      e.preventDefault();
+
+      // Block submission in preview mode
+      const urlParams = new URLSearchParams(window.location.search);
+      const formId = urlParams.get('form_id');
+      const token = urlParams.get('token');
+      if (formId && !token) {
+        alert('⚠️ This is preview mode only. Responses cannot be submitted.\n\nParents will submit their responses using the unique link sent to their email.');
+        return;
+      }
+
+      // Validate all rating questions answered
+      const ratingQuestions = questions.filter(q => q.question_type === 'rating');
+      const answeredRatings = Object.keys(responses).filter(qId =>
+        responses[qId].type === 'rating'
+      );
+
+      if (answeredRatings.length < ratingQuestions.length) {
+        alert('Please answer all rating questions before submitting.');
+        return;
+      }
+
+      const btn = document.getElementById('submit-btn');
+      btn.disabled = true;
+      btn.textContent = 'Submitting...';
+
+      try {
+        const token = urlParams.get('token');
+
+        const res = await fetch(`${API_URL}/api/feedback/submit`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            token: token,
+            responses: responses
+          })
+        });
+
+        if (res.ok) {
+          showSuccess();
+        } else {
+          const error = await res.json();
+          alert('Failed to submit feedback: ' + (error.error || 'Unknown error'));
+          btn.disabled = false;
+          btn.textContent = 'Submit Feedback';
+        }
+      } catch (error) {
+        console.error('Submit feedback error:', error);
+        alert('Failed to submit feedback. Please try again.');
+        btn.disabled = false;
+        btn.textContent = 'Submit Feedback';
+      }
+    }
+
+    function showSuccess() {
+      const content = document.getElementById('content');
+      content.innerHTML = `
+        <div class="success">
+          <div class="checkmark">✓</div>
+          <h2>Thank You!</h2>
+          <p>Your feedback has been submitted successfully.</p>
+          <p style="margin-top: 1rem;">We appreciate your time and insights. They help us provide better experiences for all our visitors!</p>
+        </div>
+      `;
+    }
+
+    function showError(message) {
+      const content = document.getElementById('content');
+      content.innerHTML = `
+        <div class="error">
+          <strong>Error:</strong> ${message}
+        </div>
+        <p style="color: #6B7280; text-align: center;">If you continue to experience issues, please contact us directly at bob.ottley@morehousemail.org.uk</p>
+      `;
+    }
+
+    // Load feedback form on page load
+    window.addEventListener('DOMContentLoaded', loadFeedbackForm);
+  </script>
+</body>
+</html>

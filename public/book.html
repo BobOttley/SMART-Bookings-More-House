@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SMART Booking - More House School</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --blazer-navy: #091825;
+      --award-gold: #FF9F1C;
+      --sport-blue: #034674;
+      --text-primary: #2C3E50;
+      --white: #FFFFFF;
+      --light-grey: #F8FAFC;
+      --border-grey: #E5E7EB;
+      --success: #10B981;
+      --danger: #EF4444;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, var(--blazer-navy) 0%, var(--sport-blue) 100%);
+      min-height: 100vh;
+      padding: 2rem 1rem;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .header {
+      text-align: center;
+      color: white;
+      margin-bottom: 3rem;
+    }
+
+    .header h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+
+    .header p {
+      font-size: 1.125rem;
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    .tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .tab-btn {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.1);
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      padding: 1rem;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: all 0.3s;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .tab-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+      border-color: var(--award-gold);
+    }
+
+    .tab-btn.active {
+      background: white;
+      color: var(--blazer-navy);
+      border-color: var(--award-gold);
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 2.5rem;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    .events-grid {
+      display: grid;
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .event-card {
+      border: 2px solid var(--border-grey);
+      border-radius: 8px;
+      padding: 1.5rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .event-card:hover {
+      border-color: var(--award-gold);
+      box-shadow: 0 4px 12px rgba(255, 159, 28, 0.2);
+    }
+
+    .event-card.selected {
+      border-color: var(--award-gold);
+      background: rgba(255, 159, 28, 0.05);
+    }
+
+    .event-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--blazer-navy);
+      margin-bottom: 0.5rem;
+    }
+
+    .event-details {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-top: 1rem;
+      font-size: 0.875rem;
+      color: #6B7280;
+    }
+
+    .event-detail {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .badge-available {
+      background: #D1FAE5;
+      color: #065F46;
+    }
+
+    .badge-limited {
+      background: #FEF3C7;
+      color: #92400E;
+    }
+
+    .badge-full {
+      background: #FEE2E2;
+      color: #991B1B;
+    }
+
+    .form-section {
+      margin-top: 2rem;
+      padding-top: 2rem;
+      border-top: 2px solid var(--light-grey);
+    }
+
+    .form-section h3 {
+      font-size: 1.25rem;
+      color: var(--blazer-navy);
+      margin-bottom: 1.5rem;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 0.5rem;
+    }
+
+    .form-input, .form-select, .form-textarea {
+      width: 100%;
+      padding: 0.75rem;
+      border: 2px solid var(--border-grey);
+      border-radius: 6px;
+      font-size: 1rem;
+      font-family: 'Inter', sans-serif;
+      transition: all 0.2s;
+    }
+
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      outline: none;
+      border-color: var(--award-gold);
+      box-shadow: 0 0 0 3px rgba(255, 159, 28, 0.1);
+    }
+
+    .form-textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+
+    .btn {
+      padding: 1rem 2rem;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-size: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      width: 100%;
+      margin-top: 1rem;
+    }
+
+    .btn-primary {
+      background: var(--blazer-navy);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--award-gold);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(255, 159, 28, 0.3);
+    }
+
+    .btn-primary:disabled {
+      background: #9CA3AF;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .alert {
+      padding: 1rem;
+      border-radius: 6px;
+      margin-bottom: 1.5rem;
+      font-size: 0.875rem;
+    }
+
+    .alert-error {
+      background: #FEE2E2;
+      color: #991B1B;
+      border: 1px solid #FCA5A5;
+    }
+
+    .alert-success {
+      background: #D1FAE5;
+      color: #065F46;
+      border: 1px solid #6EE7B7;
+    }
+
+    .alert-info {
+      background: #DBEAFE;
+      color: #1E40AF;
+      border: 1px solid #93C5FD;
+    }
+
+    .loading-spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem;
+      color: #6B7280;
+    }
+
+    .success-message {
+      text-align: center;
+      padding: 3rem;
+    }
+
+    .success-message h2 {
+      color: var(--success);
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+
+    @media (max-width: 768px) {
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+
+      .header h1 {
+        font-size: 2rem;
+      }
+
+      .tabs {
+        flex-direction: column;
+      }
+    }
+
+    /* Footer Badge */
+    .footer-badge {
+      text-align: center;
+      padding: 2rem 1rem;
+      font-size: 0.875rem;
+      color: white;
+      opacity: 0.9;
+    }
+
+    .footer-badge span {
+      color: var(--award-gold);
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1><span style="color: var(--award-gold);">SMART</span> Booking</h1>
+      <p>Join us for an open day or schedule a private tour</p>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="open-days">Open Days</button>
+      <button class="tab-btn" data-tab="private-tour">Private Tour</button>
+    </div>
+
+    <div class="card">
+      <!-- Open Days Tab -->
+      <div class="tab-content active" id="open-days-tab">
+        <div id="alert-container"></div>
+
+        <div id="events-container">
+          <h3 style="color: var(--blazer-navy); margin-bottom: 1.5rem;">Select an Open Day</h3>
+          <div class="events-grid" id="events-list"></div>
+        </div>
+
+        <form id="openday-form" style="display: none;">
+          <div class="form-section">
+            <h3>Parent/Guardian Information</h3>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">First Name *</label>
+                <input type="text" class="form-input" name="parent_first_name" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Last Name *</label>
+                <input type="text" class="form-input" name="parent_last_name" required>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Email *</label>
+                <input type="email" class="form-input" name="email" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Phone</label>
+                <input type="tel" class="form-input" name="phone">
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h3>Student Information</h3>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Student First Name</label>
+                <input type="text" class="form-input" name="student_first_name">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Student Last Name</label>
+                <input type="text" class="form-input" name="student_last_name">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Age Group <span style="color: #EF4444;">*</span></label>
+                <select class="form-select" name="age_group" required>
+                  <option value="">Select age group</option>
+                  <option value="9-11">9-11 years</option>
+                  <option value="11-16">11-16 years (Senior School)</option>
+                  <option value="16+">16+ years (Sixth Form)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h3>Booking Details</h3>
+            <div class="form-group">
+              <label class="form-label">Number of Attendees *</label>
+              <input type="number" class="form-input" name="num_attendees" value="1" min="1" max="10" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Special Requirements or Dietary Needs</label>
+              <textarea class="form-textarea" name="special_requirements"></textarea>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary" id="submit-btn">Complete Booking</button>
+          <button type="button" class="btn" onclick="resetForm()" style="background: #6B7280; color: white; margin-top: 0.5rem;">Back to Events</button>
+        </form>
+
+        <div id="success-container" style="display: none;">
+          <div class="success-message">
+            <h2>Booking Confirmed!</h2>
+            <p>Thank you for booking. You will receive a confirmation email shortly with all the details.</p>
+            <p style="margin-top: 1rem;">We look forward to seeing you!</p>
+            <button class="btn btn-primary" onclick="location.reload()">Book Another Visit</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Private Tour Tab -->
+      <div class="tab-content" id="private-tour-tab">
+        <div id="tour-alert-container"></div>
+
+        <h3 style="color: var(--blazer-navy); margin-bottom: 1.5rem;">Request a Private Tour</h3>
+        <p style="color: #6B7280; margin-bottom: 2rem;">
+          Fill out the form below and we'll contact you to schedule a private tour at your convenience.
+        </p>
+
+        <form id="private-tour-form">
+          <div class="form-section">
+            <h3>Parent/Guardian Information</h3>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">First Name *</label>
+                <input type="text" class="form-input" name="parent_first_name" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Last Name *</label>
+                <input type="text" class="form-input" name="parent_last_name" required>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Email *</label>
+                <input type="email" class="form-input" name="email" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Phone *</label>
+                <input type="tel" class="form-input" name="phone" required>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h3>Student Information</h3>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Student First Name</label>
+                <input type="text" class="form-input" name="student_first_name">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Student Last Name</label>
+                <input type="text" class="form-input" name="student_last_name">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Age Group <span style="color: #EF4444;">*</span></label>
+                <select class="form-select" name="age_group" required>
+                  <option value="">Select age group</option>
+                  <option value="9-11">9-11 years</option>
+                  <option value="11-16">11-16 years (Senior School)</option>
+                  <option value="16+">16+ years (Sixth Form)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h3>Preferred Date & Time</h3>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Preferred Date</label>
+                <input type="date" class="form-input" name="preferred_date">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Preferred Time</label>
+                <select class="form-select" name="preferred_time">
+                  <option value="">Select time</option>
+                  <option value="Morning (9am-12pm)">Morning (9am-12pm)</option>
+                  <option value="Afternoon (12pm-3pm)">Afternoon (12pm-3pm)</option>
+                  <option value="After School (3pm-5pm)">After School (3pm-5pm)</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Number of Attendees *</label>
+              <input type="number" class="form-input" name="num_attendees" value="1" min="1" max="10" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Additional Information or Questions</label>
+              <textarea class="form-textarea" name="special_requirements" placeholder="Tell us about your interests, specific areas you'd like to see, or any questions you have..."></textarea>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary" id="tour-submit-btn">Submit Tour Request</button>
+        </form>
+
+        <div id="tour-success-container" style="display: none;">
+          <div class="success-message">
+            <h2>Request Received!</h2>
+            <p>Thank you for your interest. Our admissions team will contact you shortly to schedule your private tour.</p>
+            <p style="margin-top: 1rem;">We look forward to welcoming you!</p>
+            <button class="btn btn-primary" onclick="location.reload()">Submit Another Request</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Configuration
+    const SCHOOL_ID = 2; // More House
+    const API_URL = window.location.origin;
+    let selectedEvent = null;
+    let inquiryId = null;
+
+    // Check for inquiry_id from prospectus form
+    function checkInquiryId() {
+      inquiryId = sessionStorage.getItem('inquiry_id');
+      if (inquiryId) {
+        console.log('Found inquiry_id from prospectus form:', inquiryId);
+        // The inquiry_id will be included when submitting the booking
+      }
+    }
+
+    // Check for verified parent data and pre-populate forms
+    function loadVerifiedParentData() {
+      console.log('=== CHECKING FOR PRE-POPULATION DATA ===');
+      const verifiedParentData = sessionStorage.getItem('verifiedParent');
+      console.log('verifiedParentData from sessionStorage:', verifiedParentData);
+
+      if (verifiedParentData) {
+        try {
+          const parent = JSON.parse(verifiedParentData);
+          console.log('Parsed parent data:', parent);
+
+          // Split parent name into first and last if available
+          let firstName = '';
+          let lastName = '';
+          if (parent.name) {
+            const nameParts = parent.name.trim().split(' ');
+            firstName = nameParts[0] || '';
+            lastName = nameParts.slice(1).join(' ') || '';
+          }
+
+          // Use age_group directly from inquiry
+          const ageGroup = parent.age_group || null;
+
+          // Pre-populate Open Day form
+          const openDayForm = document.getElementById('openday-form');
+          if (openDayForm) {
+            const parentFirstField = openDayForm.querySelector('[name="parent_first_name"]');
+            const parentLastField = openDayForm.querySelector('[name="parent_last_name"]');
+            const emailField = openDayForm.querySelector('[name="email"]');
+            const phoneField = openDayForm.querySelector('[name="phone"]');
+            const studentFirstField = openDayForm.querySelector('[name="student_first_name"]');
+            const studentLastField = openDayForm.querySelector('[name="student_last_name"]');
+            const ageGroupField = openDayForm.querySelector('[name="age_group"]');
+
+            if (parentFirstField) parentFirstField.value = firstName;
+            if (parentLastField) parentLastField.value = lastName;
+            if (emailField) emailField.value = parent.email || '';
+            if (phoneField) phoneField.value = parent.contact_number || '';
+            if (studentFirstField && parent.first_name) studentFirstField.value = parent.first_name;
+            if (studentLastField && parent.family_surname) studentLastField.value = parent.family_surname;
+            if (ageGroupField && ageGroup) ageGroupField.value = ageGroup;
+          }
+
+          // Pre-populate Private Tour form
+          const privateTourForm = document.getElementById('private-tour-form');
+          if (privateTourForm) {
+            const parentFirstField = privateTourForm.querySelector('[name="parent_first_name"]');
+            const parentLastField = privateTourForm.querySelector('[name="parent_last_name"]');
+            const emailField = privateTourForm.querySelector('[name="email"]');
+            const phoneField = privateTourForm.querySelector('[name="phone"]');
+            const studentFirstField = privateTourForm.querySelector('[name="student_first_name"]');
+            const studentLastField = privateTourForm.querySelector('[name="student_last_name"]');
+            const ageGroupField = privateTourForm.querySelector('[name="age_group"]');
+
+            if (parentFirstField) parentFirstField.value = firstName;
+            if (parentLastField) parentLastField.value = lastName;
+            if (emailField) emailField.value = parent.email || '';
+            if (phoneField) phoneField.value = parent.contact_number || '';
+            if (studentFirstField && parent.first_name) studentFirstField.value = parent.first_name;
+            if (studentLastField && parent.family_surname) studentLastField.value = parent.family_surname;
+            if (ageGroupField && ageGroup) ageGroupField.value = ageGroup;
+          }
+
+          // Clear the sessionStorage after loading
+          sessionStorage.removeItem('verifiedParent');
+        } catch (error) {
+          console.error('Error loading verified parent data:', error);
+        }
+      }
+    }
+
+    // Tab switching
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tabName = btn.dataset.tab;
+
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+        btn.classList.add('active');
+        document.getElementById(`${tabName}-tab`).classList.add('active');
+
+        if (tabName === 'open-days') {
+          loadEvents();
+        }
+      });
+    });
+
+    // Load events
+    async function loadEvents() {
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        const res = await fetch(`${API_URL}/api/events?schoolId=${SCHOOL_ID}&eventType=open_day&status=published&startDate=${today}`);
+        const data = await res.json();
+
+        const events = data.events || [];
+        const futureEvents = events.filter(e => new Date(e.event_date) >= new Date());
+
+        renderEvents(futureEvents);
+      } catch (error) {
+        console.error('Load events error:', error);
+        showAlert('error', 'Failed to load events. Please try again later.');
+      }
+    }
+
+    function renderEvents(events) {
+      const container = document.getElementById('events-list');
+
+      if (events.length === 0) {
+        container.innerHTML = '<div class="empty-state"><p>No upcoming open days available at the moment.</p><p>Please request a private tour instead.</p></div>';
+        return;
+      }
+
+      container.innerHTML = events.map(e => {
+        const capacity = e.max_capacity - e.current_bookings;
+        const percentFull = (e.current_bookings / e.max_capacity) * 100;
+        let badge = 'available';
+        let badgeText = 'Available';
+
+        if (percentFull >= 90) {
+          badge = 'limited';
+          badgeText = 'Limited Spots';
+        }
+        if (capacity <= 0) {
+          badge = 'full';
+          badgeText = 'Fully Booked';
+        }
+
+        return `
+          <div class="event-card" onclick="selectEvent(${e.id}, ${capacity})" data-event-id="${e.id}">
+            <div class="event-title">${e.title}</div>
+            <p style="color: #6B7280; margin-top: 0.5rem;">${e.description || ''}</p>
+            <div class="event-details">
+              <div class="event-detail">
+                <strong>Date:</strong> ${new Date(e.event_date).toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+              </div>
+              <div class="event-detail">
+                <strong>Time:</strong> ${e.start_time} - ${e.end_time}
+              </div>
+              ${e.location ? `<div class="event-detail"><strong>Location:</strong> ${e.location}</div>` : ''}
+              <div class="event-detail">
+                <span class="badge badge-${badge}">${badgeText} (${capacity} spots left)</span>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function selectEvent(eventId, capacity) {
+      if (capacity <= 0) {
+        showAlert('error', 'This event is fully booked. Please select another date or request a private tour.');
+        return;
+      }
+
+      selectedEvent = eventId;
+
+      document.querySelectorAll('.event-card').forEach(card => {
+        card.classList.remove('selected');
+      });
+      document.querySelector(`[data-event-id="${eventId}"]`).classList.add('selected');
+
+      document.getElementById('events-container').style.display = 'none';
+      document.getElementById('openday-form').style.display = 'block';
+      clearAlert();
+    }
+
+    function resetForm() {
+      selectedEvent = null;
+      document.getElementById('openday-form').reset();
+      document.getElementById('openday-form').style.display = 'none';
+      document.getElementById('events-container').style.display = 'block';
+      document.querySelectorAll('.event-card').forEach(card => {
+        card.classList.remove('selected');
+      });
+      clearAlert();
+    }
+
+    // Submit open day booking
+    document.getElementById('openday-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      clearAlert();
+
+      const formData = new FormData(e.target);
+      const submitBtn = document.getElementById('submit-btn');
+
+      const data = {
+        school_id: SCHOOL_ID,
+        event_id: selectedEvent,
+        parent_first_name: formData.get('parent_first_name'),
+        parent_last_name: formData.get('parent_last_name'),
+        email: formData.get('email'),
+        phone: formData.get('phone'),
+        student_first_name: formData.get('student_first_name'),
+        student_last_name: formData.get('student_last_name'),
+        num_attendees: parseInt(formData.get('num_attendees')),
+        special_requirements: formData.get('special_requirements'),
+        booking_type: 'open_day',
+        inquiry_id: inquiryId || null
+      };
+
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span class="loading-spinner"></span>Processing...';
+
+      try {
+        const res = await fetch(`${API_URL}/api/bookings`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        const result = await res.json();
+
+        if (res.ok) {
+          document.getElementById('openday-form').style.display = 'none';
+          document.getElementById('success-container').style.display = 'block';
+        } else {
+          showAlert('error', result.error || 'Failed to create booking. Please try again.');
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = 'Complete Booking';
+        }
+      } catch (error) {
+        console.error('Booking error:', error);
+        showAlert('error', 'Connection error. Please try again later.');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = 'Complete Booking';
+      }
+    });
+
+    // Submit private tour request
+    document.getElementById('private-tour-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      clearTourAlert();
+
+      const formData = new FormData(e.target);
+      const submitBtn = document.getElementById('tour-submit-btn');
+
+      // For private tours, we'll need to create a generic private tour event or handle differently
+      // For now, we'll create a booking with special notes
+      const preferredDate = formData.get('preferred_date');
+      const preferredTime = formData.get('preferred_time');
+
+      const specialReqs = `
+PRIVATE TOUR REQUEST
+Preferred Date: ${preferredDate || 'Flexible'}
+Preferred Time: ${preferredTime || 'Flexible'}
+
+${formData.get('special_requirements') || ''}
+      `.trim();
+
+      const data = {
+        school_id: SCHOOL_ID,
+        parent_first_name: formData.get('parent_first_name'),
+        parent_last_name: formData.get('parent_last_name'),
+        email: formData.get('email'),
+        phone: formData.get('phone'),
+        student_first_name: formData.get('student_first_name'),
+        student_last_name: formData.get('student_last_name'),
+        num_attendees: parseInt(formData.get('num_attendees')),
+        special_requirements: specialReqs,
+        booking_type: 'private_tour',
+        inquiry_id: inquiryId || null
+      };
+
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span class="loading-spinner"></span>Submitting...';
+
+      try {
+        const res = await fetch(`${API_URL}/api/bookings`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        const result = await res.json();
+
+        if (res.ok) {
+          document.getElementById('private-tour-form').style.display = 'none';
+          document.getElementById('tour-success-container').style.display = 'block';
+        } else {
+          showTourAlert('error', result.error || 'Failed to submit request. Please try again.');
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = 'Submit Tour Request';
+        }
+      } catch (error) {
+        console.error('Tour request error:', error);
+        showTourAlert('error', 'Connection error. Please try again later.');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = 'Submit Tour Request';
+      }
+    });
+
+    function showAlert(type, message) {
+      const container = document.getElementById('alert-container');
+      container.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+    }
+
+    function clearAlert() {
+      document.getElementById('alert-container').innerHTML = '';
+    }
+
+    function showTourAlert(type, message) {
+      const container = document.getElementById('tour-alert-container');
+      container.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+    }
+
+    function clearTourAlert() {
+      document.getElementById('tour-alert-container').innerHTML = '';
+    }
+
+    // Check for prospectus URL and show banner if popup was blocked
+    function checkProspectusUrl() {
+      const prospectusUrl = sessionStorage.getItem('prospectus_url');
+      if (prospectusUrl) {
+        console.log('Found blocked prospectus URL, showing banner:', prospectusUrl);
+
+        // Create banner at top of page
+        const banner = document.createElement('div');
+        banner.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; background: linear-gradient(135deg, #091825, #FF9F1C); color: white; padding: 15px; text-align: center; z-index: 10000; box-shadow: 0 4px 12px rgba(0,0,0,0.3); font-family: Arial, sans-serif;';
+        banner.innerHTML = `
+          <div style="max-width: 900px; margin: 0 auto;">
+            <strong style="font-size: 18px;">🎓 Your Personalised Prospectus is Ready!</strong>
+            <br>
+            <a href="${prospectusUrl}" target="_blank" style="display: inline-block; margin-top: 10px; padding: 10px 30px; background: white; color: #091825; text-decoration: none; border-radius: 25px; font-weight: 600; transition: all 0.3s;">
+              View Your Prospectus Now
+            </a>
+            <button onclick="this.parentElement.parentElement.remove(); sessionStorage.removeItem('prospectus_url');" style="margin-left: 15px; padding: 10px 20px; background: transparent; color: white; border: 2px solid white; border-radius: 25px; cursor: pointer; font-weight: 600;">
+              Dismiss
+            </button>
+          </div>
+        `;
+        document.body.insertBefore(banner, document.body.firstChild);
+
+        // Add padding to body so content isn't hidden
+        document.body.style.paddingTop = '100px';
+
+        // Clear from sessionStorage after showing (user can still click link)
+        // sessionStorage.removeItem('prospectus_url');
+      }
+    }
+
+    // Initial load
+    checkInquiryId();
+    loadEvents();
+    loadVerifiedParentData();
+    checkProspectusUrl();
+  </script>
+
+  <!-- Footer -->
+  <div class="footer-badge">
+    Powered by <span>bSMART</span> ai
+  </div>
+</body>
+</html>

@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify Registration - More House School</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --blazer-navy: #091825;
+      --award-gold: #FF9F1C;
+      --sport-blue: #034674;
+      --text-primary: #2C3E50;
+      --white: #FFFFFF;
+      --light-grey: #F8FAFC;
+      --border-grey: #E5E7EB;
+      --success: #10B981;
+      --danger: #EF4444;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, var(--blazer-navy) 0%, var(--sport-blue) 100%);
+      min-height: 100vh;
+      padding: 2rem 1rem;
+    }
+
+    .container {
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    .header {
+      text-align: center;
+      color: white;
+      margin-bottom: 3rem;
+    }
+
+    .header h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .header p {
+      font-size: 1.125rem;
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 2.5rem;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      margin-bottom: 2rem;
+    }
+
+    .card h2 {
+      font-family: 'Playfair Display', serif;
+      color: var(--blazer-navy);
+      font-size: 1.75rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .question {
+      margin-bottom: 2rem;
+    }
+
+    .question p {
+      font-size: 1.125rem;
+      color: var(--text-primary);
+      margin-bottom: 1.5rem;
+      line-height: 1.6;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      flex: 1;
+      min-width: 150px;
+      padding: 1.25rem 2rem;
+      font-size: 1rem;
+      font-weight: 600;
+      border: 2px solid var(--blazer-navy);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .btn-primary {
+      background: var(--award-gold);
+      color: var(--blazer-navy);
+      border-color: var(--award-gold);
+    }
+
+    .btn-primary:hover {
+      background: var(--blazer-navy);
+      color: white;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(9, 24, 37, 0.3);
+    }
+
+    .btn-secondary {
+      background: white;
+      color: var(--blazer-navy);
+    }
+
+    .btn-secondary:hover {
+      background: var(--blazer-navy);
+      color: white;
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+      display: block;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 0.5rem;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 0.875rem;
+      border: 2px solid var(--border-grey);
+      border-radius: 6px;
+      font-size: 1rem;
+      transition: all 0.2s;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: var(--award-gold);
+      box-shadow: 0 0 0 3px rgba(255, 159, 28, 0.1);
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .alert {
+      padding: 1.25rem;
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+    }
+
+    .alert-info {
+      background: #DBEAFE;
+      border: 2px solid #3B82F6;
+      color: #1E3A8A;
+    }
+
+    .alert-success {
+      background: #D1FAE5;
+      border: 2px solid var(--success);
+      color: #065F46;
+    }
+
+    .alert-warning {
+      background: #FEF3C7;
+      border: 2px solid #F59E0B;
+      color: #92400E;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 2rem;
+      color: #6B7280;
+    }
+
+    .parent-info {
+      background: var(--light-grey);
+      padding: 1.5rem;
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+    }
+
+    .parent-info p {
+      margin: 0.5rem 0;
+      color: var(--text-primary);
+    }
+
+    .parent-info strong {
+      color: var(--blazer-navy);
+    }
+
+    .back-link {
+      text-align: center;
+      margin-top: 1.5rem;
+    }
+
+    .back-link a {
+      color: var(--text-primary);
+      text-decoration: none;
+      font-size: 0.875rem;
+    }
+
+    .back-link a:hover {
+      color: var(--award-gold);
+    }
+
+    /* Footer Badge */
+    .footer-badge {
+      text-align: center;
+      padding: 2rem 1rem;
+      font-size: 0.875rem;
+      color: white;
+      opacity: 0.9;
+    }
+
+    .footer-badge span {
+      color: var(--award-gold);
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1><span style="color: var(--award-gold);">SMART</span> Booking</h1>
+      <p>Tour Booking - Registration Verification</p>
+    </div>
+
+    <!-- Step 1: Initial Question -->
+    <div class="card" id="step1">
+      <h2>Have you already registered or enquired with us?</h2>
+      <div class="question">
+        <p>To provide you with the best booking experience, please let us know if you've previously registered or made an enquiry with More House School.</p>
+      </div>
+      <div class="btn-group">
+        <button class="btn btn-primary" onclick="handleInitialResponse(true)">Yes, I have registered</button>
+        <button class="btn btn-secondary" onclick="handleInitialResponse(false)">No, I'm new</button>
+      </div>
+    </div>
+
+    <!-- Step 2: Verify Email -->
+    <div class="card hidden" id="step2">
+      <h2>Verify Your Details</h2>
+      <div class="alert alert-info">
+        Let's quickly verify your information to pre-fill your booking details.
+      </div>
+      <form id="verifyForm" onsubmit="verifyParent(event)">
+        <div class="form-group">
+          <label class="form-label" for="verifyName">Your Full Name *</label>
+          <input type="text" id="verifyName" class="form-input" placeholder="e.g. Patrick Holmes" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="verifyEmail">Email Address *</label>
+          <input type="email" id="verifyEmail" class="form-input" placeholder="parent@example.com" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="verifyPhone">Phone Number *</label>
+          <input type="tel" id="verifyPhone" class="form-input" placeholder="07700 900000" required>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%;">Verify Details</button>
+      </form>
+      <div class="back-link">
+        <a href="#" onclick="showStep('step1'); return false;">← Back</a>
+      </div>
+    </div>
+
+    <!-- Step 3: Found - Success -->
+    <div class="card hidden" id="step3-found">
+      <h2>Welcome Back!</h2>
+      <div class="alert alert-success">
+        Great news! We found your registration in our system.
+      </div>
+      <div class="parent-info" id="parentInfo">
+        <!-- Will be populated dynamically -->
+      </div>
+      <p style="margin-bottom: 1.5rem; color: var(--text-primary);">Your details will be pre-filled in the booking form. Click below to continue.</p>
+      <button class="btn btn-primary" style="width: 100%;" onclick="proceedToBooking(true)">Continue to Booking</button>
+    </div>
+
+    <!-- Step 4: Not Found - Alternative Contact -->
+    <div class="card hidden" id="step4-notfound">
+      <h2>Details Not Found</h2>
+      <div class="alert alert-warning">
+        We couldn't find your details in our system. Could you have used a different email address or phone number when you registered?
+      </div>
+      <form id="altContactForm" onsubmit="verifyAlternative(event)">
+        <div class="form-group">
+          <label class="form-label" for="altEmail">Alternative Email Address</label>
+          <input type="email" id="altEmail" class="form-input" placeholder="another@example.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="altPhone">Alternative Phone Number</label>
+          <input type="tel" id="altPhone" class="form-input" placeholder="07700 900000">
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%; margin-bottom: 1rem;">Try Alternative Details</button>
+      </form>
+      <button class="btn btn-secondary" style="width: 100%;" onclick="proceedToBooking(false)">Continue as New Registration</button>
+      <div class="back-link">
+        <a href="#" onclick="showStep('step2'); return false;">← Back to verification</a>
+      </div>
+    </div>
+
+    <!-- Step 5: New Registration -->
+    <div class="card hidden" id="step5-new">
+      <h2>Welcome to More House School!</h2>
+      <div class="alert alert-info">
+        Thank you for your interest in More House School. We'll collect some basic information as part of your booking process.
+      </div>
+      <p style="margin-bottom: 1.5rem; color: var(--text-primary);">You'll be asked to provide your contact details and information about your child during the booking process.</p>
+      <button class="btn btn-primary" style="width: 100%;" onclick="proceedToBooking(false)">Continue to Booking</button>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="card hidden" id="loadingOverlay">
+      <div class="loading">
+        <div style="font-size: 2rem; margin-bottom: 1rem;">○</div>
+        <p>Verifying your details...</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = window.location.origin;
+    let verifiedParent = null;
+    let bookingType = null;
+    let bookingSettings = null;
+
+    // Get booking type from URL query parameter and load settings
+    window.addEventListener('DOMContentLoaded', async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      bookingType = urlParams.get('type') || 'openday';
+
+      // Check if returning from prospectus form with inquiry_id
+      const inquiryId = urlParams.get('inquiry_id');
+      const prospectusUrl = urlParams.get('prospectus_url');
+
+      if (inquiryId) {
+        // Store inquiry_id
+        sessionStorage.setItem('inquiry_id', inquiryId);
+
+        // Open prospectus in new tab if URL provided
+        if (prospectusUrl) {
+          const decodedUrl = decodeURIComponent(prospectusUrl);
+          console.log('Attempting to open prospectus:', decodedUrl);
+
+          // Try to open immediately (works if no popup blocker)
+          const prospectusWindow = window.open(decodedUrl, '_blank');
+
+          // If popup was blocked, store URL and show it on the booking page
+          if (!prospectusWindow || prospectusWindow.closed || typeof prospectusWindow.closed === 'undefined') {
+            console.warn('Popup blocked, storing URL for display on booking page');
+            sessionStorage.setItem('prospectus_url', decodedUrl);
+          } else {
+            console.log('Prospectus opened successfully in new tab');
+          }
+        } else {
+          console.warn('No prospectus URL provided in redirect');
+        }
+
+        // Fetch inquiry data from database to pre-populate booking form
+        try {
+          const response = await fetch(`${API_URL}/api/inquiry/${inquiryId}`);
+          if (response.ok) {
+            const data = await response.json();
+            console.log('Fetched inquiry data:', data);
+            if (data.success && data.inquiry) {
+              // Store parent data for pre-population
+              const parentData = {
+                email: data.inquiry.parent_email,
+                name: data.inquiry.parent_name,
+                inquiry_id: data.inquiry.id,
+                contact_number: data.inquiry.contact_number,
+                first_name: data.inquiry.first_name,
+                family_surname: data.inquiry.family_surname,
+                age_group: data.inquiry.age_group,
+                entry_year: data.inquiry.entry_year
+              };
+              sessionStorage.setItem('verifiedParent', JSON.stringify(parentData));
+              console.log('Stored parent data for pre-population:', parentData);
+            }
+          } else {
+            console.error('Failed to fetch inquiry data:', response.status);
+          }
+        } catch (error) {
+          console.error('Error fetching inquiry data:', error);
+          // Continue anyway - booking form will just not be pre-populated
+        }
+
+        // Small delay to ensure prospectus tab opens before redirect
+        setTimeout(() => {
+          window.location.href = `/book.html?request=${bookingType}`;
+        }, 500);
+        return;
+      }
+
+      // Load booking settings for prospectus integration
+      try {
+        const response = await fetch(`${API_URL}/api/settings`);
+        const data = await response.json();
+        bookingSettings = data.settings;
+      } catch (error) {
+        console.error('Failed to load settings:', error);
+      }
+    });
+
+    function showStep(stepId) {
+      // Hide all steps
+      document.querySelectorAll('.card').forEach(card => {
+        if (card.id !== 'loadingOverlay') {
+          card.classList.add('hidden');
+        }
+      });
+      // Show requested step
+      document.getElementById(stepId).classList.remove('hidden');
+    }
+
+    function showLoading() {
+      document.querySelectorAll('.card').forEach(card => card.classList.add('hidden'));
+      document.getElementById('loadingOverlay').classList.remove('hidden');
+    }
+
+    function hideLoading() {
+      document.getElementById('loadingOverlay').classList.add('hidden');
+    }
+
+    async function handleInitialResponse(hasRegistered) {
+      if (hasRegistered) {
+        showStep('step2');
+      } else {
+        // Check if school has prospectus app
+        if (bookingSettings && bookingSettings.has_prospectus_app && bookingSettings.prospectus_url) {
+          // Redirect to prospectus form with return URL
+          const returnUrl = encodeURIComponent(`${API_URL}/book-verify.html?type=${bookingType}`);
+          const prospectusUrl = `${bookingSettings.prospectus_url}?return_to=${returnUrl}&source=booking`;
+          window.location.href = prospectusUrl;
+        } else {
+          // Show form builder template
+          await loadAndRenderFormTemplate();
+        }
+      }
+    }
+
+    async function loadAndRenderFormTemplate() {
+      showLoading();
+
+      try {
+        // Load template with fields
+        const templateResponse = await fetch(`${API_URL}/api/form-template`);
+        const templateData = await templateResponse.json();
+
+        if (!templateResponse.ok || !templateData.success) {
+          hideLoading();
+          showStep('step5-new');
+          return;
+        }
+
+        // Load sections
+        const sectionsResponse = await fetch(`${API_URL}/api/form-sections/${templateData.template.id}`);
+        const sectionsData = await sectionsResponse.json();
+
+        // Load settings for branding
+        const settingsResponse = await fetch(`${API_URL}/api/settings`);
+        const settingsData = await settingsResponse.json();
+
+        renderDynamicForm(templateData.template, sectionsData.sections || [], settingsData.settings);
+      } catch (error) {
+        console.error('Failed to load form template:', error);
+        hideLoading();
+        showStep('step5-new');
+      }
+    }
+
+    function renderDynamicForm(template, sections, settings) {
+      const primaryColour = settings.primary_colour || '#091825';
+      const secondaryColour = settings.secondary_colour || '#FF9F1C';
+      const formHeading = settings.form_heading || 'Enquiry Form';
+      const formSubtitle = settings.form_subtitle || 'Please complete the form below';
+
+      let formHTML = `
+        <div class="card" id="dynamic-form-card" style="background: white;">
+          <div style="text-align: center; padding: 2rem; background: linear-gradient(135deg, ${primaryColour} 0%, ${primaryColour}dd 100%); border-radius: 12px 12px 0 0; margin: -2.5rem -2.5rem 2rem -2.5rem;">
+            ${settings.logo_url ? `<img src="${settings.logo_url}" alt="School Logo" style="max-width: ${settings.logo_size || 200}px; margin-bottom: 1rem;">` : ''}
+            <h2 style="color: white; margin: 0;">${formHeading}</h2>
+            <p style="color: white; margin-top: 0.5rem;">${formSubtitle}</p>
+          </div>
+          <form id="dynamic-enquiry-form" onsubmit="submitDynamicForm(event)" style="padding: 0 1rem;">
+      `;
+
+      // Group fields by section
+      const fieldsWithoutSection = template.fields.filter(f => !f.section_id).sort((a, b) => a.display_order - b.display_order);
+      const fieldsBySection = {};
+
+      template.fields.filter(f => f.section_id).forEach(field => {
+        if (!fieldsBySection[field.section_id]) {
+          fieldsBySection[field.section_id] = [];
+        }
+        fieldsBySection[field.section_id].push(field);
+      });
+
+      // Render fields without section
+      if (fieldsWithoutSection.length > 0) {
+        fieldsWithoutSection.forEach(field => {
+          formHTML += renderFormField(field, settings);
+        });
+      }
+
+      // Render sections with their fields
+      sections.sort((a, b) => a.display_order - b.display_order).forEach(section => {
+        if (fieldsBySection[section.id] && fieldsBySection[section.id].length > 0) {
+          const sectionFields = fieldsBySection[section.id].sort((a, b) => a.display_order - b.display_order);
+          formHTML += `
+            <div style="margin-top: 2rem; margin-bottom: 1.5rem;">
+              <h3 style="color: ${primaryColour}; border-bottom: 2px solid ${secondaryColour}; padding-bottom: 0.5rem; margin-bottom: 1rem;">
+                ${section.section_label}
+              </h3>
+          `;
+          sectionFields.forEach(field => {
+            formHTML += renderFormField(field, settings);
+          });
+          formHTML += `</div>`;
+        }
+      });
+
+      formHTML += `
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 2rem; background: ${primaryColour}; border-color: ${primaryColour};">Submit & Continue to Booking</button>
+          </form>
+        </div>
+      `;
+
+      // Replace all cards with the dynamic form
+      document.querySelectorAll('.card').forEach(card => card.remove());
+      document.querySelector('.container').innerHTML += formHTML;
+      hideLoading();
+    }
+
+    function renderFormField(field, settings) {
+      const primaryColour = settings.primary_colour || '#091825';
+      const showForGender = field.show_for_gender || 'both';
+      const dataAttrs = `data-field-id="${field.id}" data-show-for-gender="${showForGender}"`;
+
+      let fieldHTML = `<div style="margin-bottom: 1.5rem;" ${dataAttrs} class="enquiry-field">`;
+
+      switch (field.field_type) {
+        case 'text':
+        case 'email':
+        case 'tel':
+        case 'number':
+          fieldHTML += `
+            <label class="form-label" for="${field.field_name}">${field.field_label}${field.is_required ? ' *' : ''}</label>
+            <input
+              type="${field.field_type}"
+              id="${field.field_name}"
+              name="${field.field_name}"
+              class="form-input"
+              placeholder="${field.placeholder || ''}"
+              ${field.is_required ? 'required' : ''}
+            >
+            ${field.help_text ? `<small style="display: block; margin-top: 0.25rem; font-size: 0.875rem; color: #6B7280;">${field.help_text}</small>` : ''}
+          `;
+          break;
+
+        case 'select':
+          const options = field.field_options ? field.field_options.split(/\r?\n/).map(o => o.trim()).filter(o => o) : [];
+          const isGenderField = field.field_label.toLowerCase().includes('gender');
+          const genderId = isGenderField ? 'id="enquiry-gender-field"' : '';
+          const onChangeEvent = isGenderField ? 'onchange="handleEnquiryGenderChange(this.value)"' : '';
+
+          fieldHTML += `
+            <label class="form-label" for="${field.field_name}">${field.field_label}${field.is_required ? ' *' : ''}</label>
+            <select
+              ${genderId}
+              name="${field.field_name}"
+              class="form-input"
+              ${field.is_required ? 'required' : ''}
+              ${onChangeEvent}
+            >
+              <option value="">-- Please Select --</option>
+              ${options.map(opt => `<option value="${opt}">${opt}</option>`).join('')}
+            </select>
+            ${field.help_text ? `<small style="display: block; margin-top: 0.25rem; font-size: 0.875rem; color: #6B7280;">${field.help_text}</small>` : ''}
+          `;
+          break;
+
+        case 'checkbox':
+          fieldHTML += `
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <input
+                type="checkbox"
+                id="${field.field_name}"
+                name="${field.field_name}"
+                value="true"
+                style="width: 18px; height: 18px; cursor: pointer;"
+              >
+              <label for="${field.field_name}" style="cursor: pointer; margin: 0; font-weight: 500;">${field.field_label}</label>
+            </div>
+            ${field.help_text ? `<small style="display: block; margin-top: 0.25rem; margin-left: 26px; font-size: 0.875rem; color: #6B7280;">${field.help_text}</small>` : ''}
+          `;
+          break;
+
+        case 'textarea':
+          fieldHTML += `
+            <label class="form-label" for="${field.field_name}">${field.field_label}${field.is_required ? ' *' : ''}</label>
+            <textarea
+              id="${field.field_name}"
+              name="${field.field_name}"
+              class="form-input"
+              placeholder="${field.placeholder || ''}"
+              rows="4"
+              ${field.is_required ? 'required' : ''}
+            ></textarea>
+            ${field.help_text ? `<small style="display: block; margin-top: 0.25rem; font-size: 0.875rem; color: #6B7280;">${field.help_text}</small>` : ''}
+          `;
+          break;
+      }
+
+      fieldHTML += `</div>`;
+      return fieldHTML;
+    }
+
+    function handleEnquiryGenderChange(selectedGender) {
+      const allFields = document.querySelectorAll('.enquiry-field');
+
+      allFields.forEach(fieldDiv => {
+        const showForGender = fieldDiv.getAttribute('data-show-for-gender');
+
+        if (!showForGender || showForGender === 'both') {
+          fieldDiv.style.display = 'block';
+        } else if (!selectedGender) {
+          fieldDiv.style.display = 'block';
+        } else {
+          const selectedLower = selectedGender.toLowerCase();
+          const shouldShow = showForGender === 'both' ||
+                           (showForGender === 'male' && (selectedLower === 'male' || selectedLower === 'boy' || selectedLower === 'man')) ||
+                           (showForGender === 'female' && (selectedLower === 'female' || selectedLower === 'girl' || selectedLower === 'woman'));
+
+          fieldDiv.style.display = shouldShow ? 'block' : 'none';
+        }
+      });
+    }
+
+    async function submitDynamicForm(event) {
+      event.preventDefault();
+
+      const form = document.getElementById('dynamic-enquiry-form');
+      const formData = new FormData(form);
+      const data = {};
+
+      // Convert form data to object
+      for (let [key, value] of formData.entries()) {
+        if (value === 'true') {
+          data[key] = true;
+        } else {
+          data[key] = value;
+        }
+      }
+
+      // Handle unchecked checkboxes
+      const checkboxes = form.querySelectorAll('input[type="checkbox"]');
+      checkboxes.forEach(cb => {
+        if (!formData.has(cb.name)) {
+          data[cb.name] = false;
+        }
+      });
+
+      try {
+        const response = await fetch(`${API_URL}/api/form-submit`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          // Store inquiry_id
+          sessionStorage.setItem('inquiry_id', result.inquiry_id);
+
+          // If school has prospectus app, open it in new tab
+          if (bookingSettings && bookingSettings.has_prospectus_app && bookingSettings.prospectus_url) {
+            const prospectusUrl = `${bookingSettings.prospectus_url}?inquiry_id=${result.inquiry_id}`;
+            window.open(prospectusUrl, '_blank');
+          }
+
+          // Continue to booking
+          window.location.href = `/book.html?request=${bookingType}`;
+        } else {
+          alert('Failed to submit form. Please try again.');
+        }
+      } catch (error) {
+        console.error('Form submission error:', error);
+        alert('Failed to submit form. Please try again.');
+      }
+    }
+
+    async function verifyParent(event) {
+      event.preventDefault();
+
+      const name = document.getElementById('verifyName').value;
+      const email = document.getElementById('verifyEmail').value;
+      const phone = document.getElementById('verifyPhone').value;
+
+      showLoading();
+
+      try {
+        const response = await fetch(`${API_URL}/api/verify-parent`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, phone })
+        });
+
+        const data = await response.json();
+        hideLoading();
+
+        if (data.found) {
+          verifiedParent = data.parent;
+          displayParentInfo(data.parent);
+          showStep('step3-found');
+        } else {
+          showStep('step4-notfound');
+        }
+      } catch (error) {
+        console.error('Verification error:', error);
+        hideLoading();
+        alert('Failed to verify details. Please try again.');
+        showStep('step2');
+      }
+    }
+
+    async function verifyAlternative(event) {
+      event.preventDefault();
+
+      const altEmail = document.getElementById('altEmail').value;
+      const altPhone = document.getElementById('altPhone').value;
+
+      if (!altEmail && !altPhone) {
+        alert('Please provide at least an email address or phone number.');
+        return;
+      }
+
+      showLoading();
+
+      try {
+        const response = await fetch(`${API_URL}/api/verify-parent`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: altEmail, phone: altPhone })
+        });
+
+        const data = await response.json();
+        hideLoading();
+
+        if (data.found) {
+          verifiedParent = data.parent;
+          displayParentInfo(data.parent);
+          showStep('step3-found');
+        } else {
+          alert('We still couldn\'t find your details. You can continue as a new registration.');
+        }
+      } catch (error) {
+        console.error('Alternative verification error:', error);
+        hideLoading();
+        alert('Failed to verify alternative details. Please try again.');
+      }
+    }
+
+    function displayParentInfo(parent) {
+      const infoDiv = document.getElementById('parentInfo');
+      const registeredDate = new Date(parent.registered_at).toLocaleDateString('en-GB', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+
+      infoDiv.innerHTML = `
+        <p><strong>Name:</strong> ${parent.name || 'Not provided'}</p>
+        <p><strong>Email:</strong> ${parent.email}</p>
+        <p><strong>Inquiry ID:</strong> ${parent.inquiry_id || 'Not available'}</p>
+        <p><strong>Registered:</strong> ${registeredDate}</p>
+      `;
+    }
+
+    function proceedToBooking(isVerified) {
+      // Store verification data in sessionStorage
+      if (isVerified && verifiedParent) {
+        sessionStorage.setItem('verifiedParent', JSON.stringify(verifiedParent));
+      } else {
+        sessionStorage.removeItem('verifiedParent');
+      }
+
+      // Redirect to booking page with type
+      window.location.href = `/book.html?request=${bookingType}`;
+    }
+  </script>
+
+  <!-- Footer -->
+  <div class="footer-badge">
+    Powered by <span>bSMART</span> ai
+  </div>
+</body>
+</html>

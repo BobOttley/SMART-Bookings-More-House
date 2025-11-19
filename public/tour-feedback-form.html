@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SMART Feedback</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --blazer-navy: #091825;
+      --award-gold: #FF9F1C;
+      --sport-blue: #034674;
+      --text-primary: #2C3E50;
+      --white: #FFFFFF;
+      --light-grey: #F8FAFC;
+      --border-grey: #E5E7EB;
+      --success: #10B981;
+      --danger: #EF4444;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--light-grey);
+      color: var(--text-primary);
+      min-height: 100vh;
+      padding: 1rem;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .header {
+      background: var(--blazer-navy);
+      color: white;
+      padding: 1.5rem;
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+      text-align: center;
+      border-bottom: 3px solid var(--award-gold);
+    }
+
+    .header h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.75rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .header .gold {
+      color: var(--award-gold);
+    }
+
+    .header p {
+      font-size: 0.95rem;
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    .booking-info {
+      background: white;
+      border-radius: 8px;
+      padding: 1.25rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      border-left: 4px solid var(--sport-blue);
+    }
+
+    .booking-info h2 {
+      font-size: 1.1rem;
+      color: var(--blazer-navy);
+      margin-bottom: 0.75rem;
+    }
+
+    .booking-detail {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid var(--border-grey);
+    }
+
+    .booking-detail:last-child {
+      border-bottom: none;
+    }
+
+    .booking-detail label {
+      font-weight: 600;
+      color: #6B7280;
+    }
+
+    .booking-detail span {
+      color: var(--text-primary);
+    }
+
+    .form-card {
+      background: white;
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .form-group:last-child {
+      margin-bottom: 0;
+    }
+
+    .form-label {
+      display: block;
+      font-weight: 600;
+      color: var(--blazer-navy);
+      margin-bottom: 0.5rem;
+      font-size: 0.95rem;
+    }
+
+    .required {
+      color: var(--danger);
+    }
+
+    .help-text {
+      font-size: 0.85rem;
+      color: #6B7280;
+      margin-top: 0.25rem;
+    }
+
+    input[type="text"],
+    textarea,
+    select {
+      width: 100%;
+      padding: 0.75rem;
+      border: 2px solid var(--border-grey);
+      border-radius: 6px;
+      font-family: 'Inter', sans-serif;
+      font-size: 1rem;
+      transition: border-color 0.2s;
+    }
+
+    input[type="text"]:focus,
+    textarea:focus,
+    select:focus {
+      outline: none;
+      border-color: var(--award-gold);
+    }
+
+    textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+
+    /* Rating Stars */
+    .rating-stars {
+      display: flex;
+      gap: 0.5rem;
+      font-size: 2rem;
+    }
+
+    .star {
+      cursor: pointer;
+      color: #D1D5DB;
+      transition: color 0.2s;
+    }
+
+    .star:hover,
+    .star.filled {
+      color: var(--award-gold);
+    }
+
+    /* Radio and Checkbox */
+    .radio-group,
+    .checkbox-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .radio-option,
+    .checkbox-option {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem;
+      border: 2px solid var(--border-grey);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .radio-option:hover,
+    .checkbox-option:hover {
+      border-color: var(--award-gold);
+      background: rgba(255, 159, 28, 0.05);
+    }
+
+    .radio-option.selected,
+    .checkbox-option.selected {
+      border-color: var(--award-gold);
+      background: rgba(255, 159, 28, 0.1);
+    }
+
+    .radio-option input[type="radio"],
+    .checkbox-option input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+    }
+
+    .radio-option label,
+    .checkbox-option label {
+      cursor: pointer;
+      flex: 1;
+      font-weight: 500;
+    }
+
+    /* Buttons */
+    .btn {
+      width: 100%;
+      padding: 1rem;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .btn-primary {
+      background: var(--award-gold);
+      color: var(--blazer-navy);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: var(--blazer-navy);
+      color: white;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(9, 24, 37, 0.3);
+    }
+
+    .btn-primary:disabled {
+      background: #9CA3AF;
+      cursor: not-allowed;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 3rem;
+      color: #6B7280;
+    }
+
+    .loading::before {
+      content: '○';
+      display: inline-block;
+      margin-right: 0.5rem;
+      animation: spin 1s linear infinite;
+      font-size: 1.5rem;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .success-message {
+      background: #D1FAE5;
+      border: 2px solid #10B981;
+      color: #065F46;
+      padding: 1.5rem;
+      border-radius: 8px;
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+
+    .success-message h2 {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .error-message {
+      background: #FEE2E2;
+      border: 2px solid #EF4444;
+      color: #991B1B;
+      padding: 1.5rem;
+      border-radius: 8px;
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+
+    .previous-submissions {
+      background: #FEF3C7;
+      border-left: 4px solid #F59E0B;
+      padding: 1rem;
+      border-radius: 4px;
+      margin-bottom: 1.5rem;
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 640px) {
+      body {
+        padding: 0.5rem;
+      }
+
+      .header {
+        padding: 1rem;
+      }
+
+      .header h1 {
+        font-size: 1.5rem;
+      }
+
+      .form-card {
+        padding: 1rem;
+      }
+
+      .rating-stars {
+        font-size: 1.75rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <h1><span class="gold">SMART</span> Feedback</h1>
+      <p>Share your observations about the tour</p>
+    </div>
+
+    <!-- Main Content -->
+    <div id="mainContent">
+      <div class="loading">Loading feedback form...</div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = window.location.origin;
+    let token = '';
+    let bookingData = null;
+    let formFields = [];
+    let responses = {};
+
+    // Get token from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    token = urlParams.get('token');
+
+    if (!token) {
+      document.getElementById('mainContent').innerHTML = `
+        <div class="error-message">
+          <h2>Invalid Link</h2>
+          <p>This feedback link is invalid or has expired.</p>
+        </div>
+      `;
+    } else {
+      loadForm();
+    }
+
+    async function loadForm() {
+      try {
+        // First, load booking details to determine tour type
+        const bookingRes = await fetch(`${API_URL}/api/bookings?schoolId=2`);
+        const allBookings = await bookingRes.json();
+
+        // Find booking by token
+        const booking = allBookings.bookings?.find(b => b.feedback_token === token);
+
+        if (!booking) {
+          throw new Error('Invalid or expired token');
+        }
+
+        bookingData = booking;
+
+        // Map booking type to tour_type parameter
+        // Open day and private tour share the same guide feedback fields
+        let tourType;
+        if (booking.booking_type === 'taster_day') {
+          tourType = 'taster_day';
+        } else {
+          // Both 'open_day' and 'private_tour' use 'private_tour' fields
+          tourType = 'private_tour';
+        }
+
+        // Load form fields filtered by tour type
+        const fieldsRes = await fetch(`${API_URL}/api/tour-feedback-fields?schoolId=2&tourType=${tourType}`);
+        const fieldsData = await fieldsRes.json();
+
+        if (!fieldsData.success) {
+          throw new Error('Failed to load form fields');
+        }
+
+        formFields = fieldsData.fields;
+
+        // Check for previous submissions
+        const feedbackRes = await fetch(`${API_URL}/api/bookings/${booking.id}/tour-feedback`);
+        const feedbackData = await feedbackRes.json();
+        const submissionCount = feedbackData.feedback?.length || 0;
+
+        // Get the most recent submission to pre-populate form
+        const lastSubmission = feedbackData.feedback && feedbackData.feedback.length > 0
+          ? feedbackData.feedback[0].responses
+          : null;
+
+        renderForm(booking, submissionCount, lastSubmission);
+      } catch (error) {
+        console.error('Error loading form:', error);
+        document.getElementById('mainContent').innerHTML = `
+          <div class="error-message">
+            <h2>Error Loading Form</h2>
+            <p>${error.message || 'Please try again or contact support.'}</p>
+          </div>
+        `;
+      }
+    }
+
+    function renderForm(booking, submissionCount, lastSubmission) {
+      const mainContent = document.getElementById('mainContent');
+
+      // Pre-populate responses from last submission
+      if (lastSubmission) {
+        responses = { ...lastSubmission };
+      }
+
+      mainContent.innerHTML = `
+        ${submissionCount > 0 ? `
+          <div class="previous-submissions">
+            <strong>📝 Note:</strong> You have already submitted feedback ${submissionCount} time${submissionCount > 1 ? 's' : ''}.
+            ${lastSubmission ? 'The form below is pre-filled with your last submission - you can edit and resubmit.' : 'You can submit again to add additional observations or updates.'}
+          </div>
+        ` : ''}
+
+        <!-- Booking Info -->
+        <div class="booking-info">
+          <h2>Tour Details</h2>
+          <div class="booking-detail">
+            <label>Parent:</label>
+            <span>${booking.parent_first_name} ${booking.parent_last_name}</span>
+          </div>
+          <div class="booking-detail">
+            <label>Student:</label>
+            <span>${booking.student_first_name} ${booking.student_last_name}</span>
+          </div>
+          <div class="booking-detail">
+            <label>Date:</label>
+            <span>${booking.scheduled_date ? new Date(booking.scheduled_date).toLocaleDateString('en-GB') : 'Not scheduled'}</span>
+          </div>
+          <div class="booking-detail">
+            <label>Type:</label>
+            <span>${booking.booking_type === 'open_day' ? 'Open Day' : 'Private Tour'}</span>
+          </div>
+        </div>
+
+        <!-- Feedback Form -->
+        <form id="feedbackForm" onsubmit="submitFeedback(event)">
+          ${formFields.map(field => renderField(field, lastSubmission)).join('')}
+
+          <div class="form-card">
+            <button type="submit" class="btn btn-primary" id="submitBtn">
+              Submit Feedback
+            </button>
+          </div>
+        </form>
+      `;
+    }
+
+    function renderField(field, previousValues) {
+      const options = field.field_options ? JSON.parse(field.field_options) : {};
+      const savedValue = previousValues ? previousValues[field.field_name] : null;
+
+      switch (field.field_type) {
+        case 'text':
+          return `
+            <div class="form-card">
+              <div class="form-group">
+                <label class="form-label">
+                  ${field.field_label}
+                  ${field.is_required ? '<span class="required">*</span>' : ''}
+                </label>
+                <input
+                  type="text"
+                  name="${field.field_name}"
+                  placeholder="${field.placeholder || ''}"
+                  value="${savedValue || ''}"
+                  ${field.is_required ? 'required' : ''}
+                  onchange="updateResponse('${field.field_name}', this.value)"
+                >
+                ${field.help_text ? `<div class="help-text">${field.help_text}</div>` : ''}
+              </div>
+            </div>
+          `;
+
+        case 'textarea':
+          return `
+            <div class="form-card">
+              <div class="form-group">
+                <label class="form-label">
+                  ${field.field_label}
+                  ${field.is_required ? '<span class="required">*</span>' : ''}
+                </label>
+                <textarea
+                  name="${field.field_name}"
+                  placeholder="${field.placeholder || ''}"
+                  ${field.is_required ? 'required' : ''}
+                  onchange="updateResponse('${field.field_name}', this.value)"
+                >${savedValue || ''}</textarea>
+                ${field.help_text ? `<div class="help-text">${field.help_text}</div>` : ''}
+              </div>
+            </div>
+          `;
+
+        case 'rating':
+          const maxRating = options.max || 5;
+          const savedRating = savedValue ? parseInt(savedValue) : 0;
+          return `
+            <div class="form-card">
+              <div class="form-group">
+                <label class="form-label">
+                  ${field.field_label}
+                  ${field.is_required ? '<span class="required">*</span>' : ''}
+                </label>
+                <div class="rating-stars" id="rating-${field.field_name}">
+                  ${Array.from({ length: maxRating }, (_, i) => `
+                    <span class="star ${i < savedRating ? 'filled' : ''}" data-rating="${i + 1}" onclick="setRating('${field.field_name}', ${i + 1})">★</span>
+                  `).join('')}
+                </div>
+                <input type="hidden" name="${field.field_name}" value="${savedRating || ''}" ${field.is_required ? 'required' : ''}>
+                ${field.help_text ? `<div class="help-text">${field.help_text}</div>` : ''}
+              </div>
+            </div>
+          `;
+
+        case 'radio':
+          return `
+            <div class="form-card">
+              <div class="form-group">
+                <label class="form-label">
+                  ${field.field_label}
+                  ${field.is_required ? '<span class="required">*</span>' : ''}
+                </label>
+                <div class="radio-group">
+                  ${(options.options || []).map((option, index) => `
+                    <div class="radio-option ${savedValue === option ? 'selected' : ''}" onclick="selectRadio('${field.field_name}', '${option}', this)">
+                      <input
+                        type="radio"
+                        name="${field.field_name}"
+                        value="${option}"
+                        id="${field.field_name}-${index}"
+                        ${savedValue === option ? 'checked' : ''}
+                        ${field.is_required ? 'required' : ''}
+                        onchange="updateResponse('${field.field_name}', '${option}')"
+                      >
+                      <label for="${field.field_name}-${index}">${option}</label>
+                    </div>
+                  `).join('')}
+                </div>
+                ${field.help_text ? `<div class="help-text">${field.help_text}</div>` : ''}
+              </div>
+            </div>
+          `;
+
+        case 'checkbox':
+          const savedCheckboxes = Array.isArray(savedValue) ? savedValue : (savedValue ? [savedValue] : []);
+          return `
+            <div class="form-card">
+              <div class="form-group">
+                <label class="form-label">
+                  ${field.field_label}
+                  ${field.is_required ? '<span class="required">*</span>' : ''}
+                </label>
+                <div class="checkbox-group">
+                  ${(options.options || []).map((option, index) => {
+                    const isChecked = savedCheckboxes.includes(option);
+                    return `
+                    <div class="checkbox-option ${isChecked ? 'selected' : ''}" onclick="toggleCheckbox('${field.field_name}-${index}', event)">
+                      <input
+                        type="checkbox"
+                        name="${field.field_name}"
+                        value="${option}"
+                        id="${field.field_name}-${index}"
+                        ${isChecked ? 'checked' : ''}
+                        onchange="updateCheckboxResponse('${field.field_name}')"
+                        onclick="event.stopPropagation()"
+                      >
+                      <label for="${field.field_name}-${index}" onclick="event.stopPropagation(); toggleCheckbox('${field.field_name}-${index}', event)">${option}</label>
+                    </div>
+                  `}).join('')}
+                </div>
+                ${field.help_text ? `<div class="help-text">${field.help_text}</div>` : ''}
+              </div>
+            </div>
+          `;
+
+        case 'select':
+          return `
+            <div class="form-card">
+              <div class="form-group">
+                <label class="form-label">
+                  ${field.field_label}
+                  ${field.is_required ? '<span class="required">*</span>' : ''}
+                </label>
+                <select
+                  name="${field.field_name}"
+                  ${field.is_required ? 'required' : ''}
+                  onchange="updateResponse('${field.field_name}', this.value)"
+                >
+                  <option value="">Select an option...</option>
+                  ${(options.options || []).map(option => `
+                    <option value="${option}" ${savedValue === option ? 'selected' : ''}>${option}</option>
+                  `).join('')}
+                </select>
+                ${field.help_text ? `<div class="help-text">${field.help_text}</div>` : ''}
+              </div>
+            </div>
+          `;
+
+        default:
+          return '';
+      }
+    }
+
+    function updateResponse(fieldName, value) {
+      responses[fieldName] = value;
+    }
+
+    function updateCheckboxResponse(fieldName) {
+      const checkboxes = document.querySelectorAll(`input[name="${fieldName}"]:checked`);
+      responses[fieldName] = Array.from(checkboxes).map(cb => cb.value);
+    }
+
+    function setRating(fieldName, rating) {
+      const container = document.getElementById(`rating-${fieldName}`);
+      const stars = container.querySelectorAll('.star');
+
+      stars.forEach((star, index) => {
+        if (index < rating) {
+          star.classList.add('filled');
+        } else {
+          star.classList.remove('filled');
+        }
+      });
+
+      document.querySelector(`input[name="${fieldName}"]`).value = rating;
+      updateResponse(fieldName, rating);
+    }
+
+    function selectRadio(fieldName, value, element) {
+      const allOptions = document.querySelectorAll(`input[name="${fieldName}"]`);
+      allOptions.forEach(option => {
+        option.closest('.radio-option').classList.remove('selected');
+      });
+      element.classList.add('selected');
+      document.querySelector(`input[name="${fieldName}"][value="${value}"]`).checked = true;
+      updateResponse(fieldName, value);
+    }
+
+    function toggleCheckbox(checkboxId, event) {
+      if (event) {
+        event.preventDefault();
+      }
+      const checkbox = document.getElementById(checkboxId);
+      if (!checkbox) return;
+
+      checkbox.checked = !checkbox.checked;
+      const option = checkbox.closest('.checkbox-option');
+      if (checkbox.checked) {
+        option.classList.add('selected');
+      } else {
+        option.classList.remove('selected');
+      }
+      updateCheckboxResponse(checkbox.name);
+    }
+
+    async function submitFeedback(event) {
+      event.preventDefault();
+
+      const submitBtn = document.getElementById('submitBtn');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Submitting...';
+
+      try {
+        const response = await fetch(`${API_URL}/api/tour-feedback/submit`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            token: token,
+            responses: responses
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          document.getElementById('mainContent').innerHTML = `
+            <div class="success-message">
+              <h2>✓ Feedback Submitted</h2>
+              <p>Thank you for sharing your observations! Your feedback has been recorded and sent to the admissions team.</p>
+              <p style="margin-top: 1rem; font-size: 0.9rem;">You can close this page or submit additional feedback if needed.</p>
+            </div>
+            <button class="btn btn-primary" onclick="location.reload()">Submit More Feedback</button>
+          `;
+        } else {
+          throw new Error(data.error || 'Failed to submit feedback');
+        }
+      } catch (error) {
+        console.error('Error submitting feedback:', error);
+        alert('Error submitting feedback: ' + error.message);
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit Feedback';
+      }
+    }
+  </script>
+</body>
+</html>

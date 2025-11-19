@@ -1,0 +1,15 @@
+  node_modules/
+  .env
+  .DS_Store
+  *.log
+  *.bak
+  *.backup
+  ~$*
+  EOF
+  git add .gitignore
+  git add server.js package.json package-lock.json public/
+  git commit -m "Initial commit: More House SMART Bookings app"
+  git branch -M main
+  git push -u origin main
+
+

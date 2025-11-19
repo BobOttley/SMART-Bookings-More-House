@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Feedback Settings</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --blazer-navy: #091825;
+      --award-gold: #FF9F1C;
+      --sport-blue: #034674;
+      --text-primary: #2C3E50;
+      --white: #FFFFFF;
+      --light-grey: #F8FAFC;
+      --border-grey: #E5E7EB;
+      --success: #10B981;
+      --danger: #EF4444;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--light-grey);
+      color: var(--text-primary);
+      padding: 2rem;
+    }
+
+    .container {
+      max-width: 98%;
+      margin: 0 auto;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+    }
+
+    .header h1 {
+      font-family: 'Playfair Display', serif;
+      color: var(--blazer-navy);
+      font-size: 2rem;
+    }
+
+    .header .gold {
+      color: var(--award-gold);
+    }
+
+    .btn {
+      background: var(--award-gold);
+      color: var(--blazer-navy);
+      border: none;
+      padding: 0.75rem 1.5rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .btn:hover {
+      background: var(--blazer-navy);
+      color: white;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(9, 24, 37, 0.3);
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: #DC2626;
+    }
+
+    .btn-secondary {
+      background: #6B7280;
+      color: white;
+    }
+
+    .btn-secondary:hover {
+      background: #4B5563;
+    }
+
+    .btn-small {
+      padding: 0.5rem 1rem;
+      font-size: 0.8rem;
+    }
+
+    .card {
+      background: white;
+      border-radius: 8px;
+      padding: 1.5rem;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      margin-bottom: 1.5rem;
+    }
+
+    .card h2 {
+      font-family: 'Playfair Display', serif;
+      color: var(--blazer-navy);
+      font-size: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .questions-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .question-item {
+      border: 2px solid var(--border-grey);
+      border-radius: 8px;
+      padding: 1.5rem;
+      background: white;
+      transition: all 0.2s;
+    }
+
+    .question-item:hover {
+      border-color: var(--award-gold);
+      box-shadow: 0 2px 8px rgba(255, 159, 28, 0.2);
+    }
+
+    .question-item.inactive {
+      opacity: 0.6;
+      background: #F9FAFB;
+    }
+
+    .question-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .question-content {
+      flex: 1;
+    }
+
+    .question-text {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--blazer-navy);
+      margin-bottom: 0.5rem;
+    }
+
+    .question-meta {
+      display: flex;
+      gap: 1rem;
+      font-size: 0.875rem;
+      color: #6B7280;
+    }
+
+    .question-type {
+      background: var(--sport-blue);
+      color: white;
+      padding: 0.25rem 0.75rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .question-status {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .status-active {
+      background: #D1FAE5;
+      color: #065F46;
+    }
+
+    .status-inactive {
+      background: #FEE2E2;
+      color: #991B1B;
+    }
+
+    .question-actions {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .icon-btn {
+      background: transparent;
+      border: 1px solid var(--border-grey);
+      width: 36px;
+      height: 36px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+    }
+
+    .icon-btn:hover {
+      background: var(--light-grey);
+      border-color: var(--blazer-navy);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem;
+      color: #6B7280;
+    }
+
+    .empty-state h3 {
+      color: var(--blazer-navy);
+      margin-bottom: 0.5rem;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 12px;
+      padding: 2rem;
+      max-width: 600px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .modal-header h2 {
+      font-family: 'Playfair Display', serif;
+      color: var(--blazer-navy);
+      font-size: 1.75rem;
+      margin: 0;
+    }
+
+    .close-btn {
+      background: transparent;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: #6B7280;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+    }
+
+    .close-btn:hover {
+      background: var(--light-grey);
+      color: var(--blazer-navy);
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+      display: block;
+      font-weight: 600;
+      color: var(--blazer-navy);
+      margin-bottom: 0.5rem;
+      font-size: 0.95rem;
+    }
+
+    .form-input,
+    .form-select,
+    .form-textarea {
+      width: 100%;
+      padding: 0.75rem;
+      border: 2px solid var(--border-grey);
+      border-radius: 6px;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.95rem;
+      transition: border-color 0.2s;
+    }
+
+    .form-input:focus,
+    .form-select:focus,
+    .form-textarea:focus {
+      outline: none;
+      border-color: var(--award-gold);
+    }
+
+    .form-textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+
+    .form-help {
+      display: block;
+      margin-top: 0.5rem;
+      font-size: 0.85rem;
+      color: #6B7280;
+    }
+
+    .modal-footer {
+      display: flex;
+      gap: 1rem;
+      justify-content: flex-end;
+      margin-top: 2rem;
+      padding-top: 1.5rem;
+      border-top: 2px solid var(--border-grey);
+    }
+
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .checkbox-group input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+      accent-color: var(--award-gold);
+    }
+
+    .options-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .option-item {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .option-item input {
+      flex: 1;
+    }
+
+    .add-option-btn {
+      background: transparent;
+      border: 2px dashed var(--border-grey);
+      color: var(--sport-blue);
+      padding: 0.75rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      margin-top: 0.5rem;
+      width: 100%;
+    }
+
+    .add-option-btn:hover {
+      border-color: var(--sport-blue);
+      background: rgba(3, 70, 116, 0.05);
+    }
+
+    .loading {
+      text-align: center;
+      padding: 2rem;
+      color: #6B7280;
+    }
+
+    .alert {
+      padding: 1rem;
+      border-radius: 6px;
+      margin-bottom: 1.5rem;
+    }
+
+    .alert-success {
+      background: #D1FAE5;
+      color: #065F46;
+      border: 1px solid #10B981;
+    }
+
+    .alert-error {
+      background: #FEE2E2;
+      color: #991B1B;
+      border: 1px solid #EF4444;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <h1><span class="gold">SMART</span> Feedback Settings</h1>
+      <button class="btn" onclick="openAddModal()">
+        + Add Question
+      </button>
+    </div>
+
+    <!-- Alert messages -->
+    <div id="alert-container"></div>
+
+    <!-- Form Selector -->
+    <div class="card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <div style="flex: 1;">
+          <label class="form-label">Select Feedback Form</label>
+          <select class="form-select" id="form-selector" onchange="handleFormChange()" style="max-width: 400px;">
+            <option value="">Loading forms...</option>
+          </select>
+        </div>
+        <div style="display: flex; gap: 0.5rem;">
+          <button class="btn btn-small" onclick="openFormModal()">
+            + New Form
+          </button>
+          <button class="btn btn-small btn-secondary" id="edit-form-btn" onclick="editCurrentForm()" style="display: none;">
+            Edit Form
+          </button>
+          <button class="btn btn-small btn-danger" id="delete-form-btn" onclick="deleteCurrentForm()" style="display: none;">
+            Delete Form
+          </button>
+        </div>
+      </div>
+      <div id="form-info" style="display: none; padding: 1rem; background: var(--light-grey); border-radius: 6px; margin-bottom: 1rem;">
+        <div style="font-size: 0.875rem; color: #6B7280;">
+          <strong>Description:</strong> <span id="form-description-display"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Questions List -->
+    <div class="card">
+      <h2>Survey Questions</h2>
+      <div id="questions-container" class="loading">
+        Loading questions...
+      </div>
+    </div>
+  </div>
+
+  <!-- Add/Edit Modal -->
+  <div id="question-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modal-title">Add Question</h2>
+        <button class="close-btn" onclick="closeModal()">&times;</button>
+      </div>
+
+      <form id="question-form" onsubmit="saveQuestion(event)">
+        <input type="hidden" id="question-id" name="id">
+
+        <div class="form-group">
+          <label class="form-label">Question Text *</label>
+          <textarea
+            class="form-textarea"
+            id="question-text"
+            name="question_text"
+            required
+            placeholder="e.g., How would you rate your tour experience?"
+          ></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Question Type *</label>
+          <select class="form-select" id="question-type" name="question_type" required onchange="handleTypeChange()">
+            <option value="">Select type...</option>
+            <option value="rating">Rating (1-5 stars)</option>
+            <option value="text">Open Text</option>
+            <option value="yes_no">Yes/No</option>
+            <option value="multiple_choice">Multiple Choice</option>
+          </select>
+          <span class="form-help">Choose the type of response you want to collect</span>
+        </div>
+
+        <div class="form-group" id="options-group" style="display: none;">
+          <label class="form-label">Answer Options *</label>
+          <div id="options-list" class="options-list"></div>
+          <button type="button" class="add-option-btn" onclick="addOption()">
+            + Add Option
+          </button>
+          <span class="form-help">Add the choices that respondents can select from</span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Display Order</label>
+          <input
+            type="number"
+            class="form-input"
+            id="display-order"
+            name="display_order"
+            value="0"
+            min="0"
+          >
+          <span class="form-help">Lower numbers appear first in the survey</span>
+        </div>
+
+        <div class="form-group">
+          <div class="checkbox-group">
+            <input
+              type="checkbox"
+              id="is-active"
+              name="is_active"
+              checked
+            >
+            <label for="is-active" class="form-label" style="margin: 0;">Active (shown in surveys)</label>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal()">
+            Cancel
+          </button>
+          <button type="submit" class="btn">
+            Save Question
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Form Management Modal -->
+  <div id="form-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="form-modal-title">Create Feedback Form</h2>
+        <button class="close-btn" onclick="closeFormModal()">&times;</button>
+      </div>
+
+      <form id="form-form" onsubmit="saveForm(event)">
+        <input type="hidden" id="form-id" name="id">
+
+        <div class="form-group">
+          <label class="form-label">Form Name *</label>
+          <input
+            type="text"
+            class="form-input"
+            id="form-name"
+            name="form_name"
+            required
+            placeholder="e.g., Spring 2024 Open Day Feedback"
+          >
+          <span class="form-help">Give this form a descriptive name</span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Form Type *</label>
+          <select class="form-select" id="form-type" name="form_type" required>
+            <option value="">Select type...</option>
+            <option value="open_day">Open Day Tours</option>
+            <option value="private_tour">Private Tours</option>
+            <option value="taster_day">Taster Days</option>
+          </select>
+          <span class="form-help">Choose the type of event this parent feedback form is for</span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <textarea
+            class="form-textarea"
+            id="form-description"
+            name="description"
+            placeholder="Optional description of when/how this form should be used"
+          ></textarea>
+        </div>
+
+        <div class="form-group">
+          <div class="checkbox-group">
+            <input
+              type="checkbox"
+              id="form-is-active"
+              name="is_active"
+              checked
+            >
+            <label for="form-is-active" class="form-label" style="margin: 0;">Active (available for use)</label>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeFormModal()">
+            Cancel
+          </button>
+          <button type="submit" class="btn">
+            Save Form
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = window.location.origin.includes('localhost') ? window.location.origin : window.parent.location.origin;
+    let questions = [];
+    let forms = [];
+    let selectedFormId = null;
+    let editingQuestionId = null;
+    let editingFormId = null;
+
+    // Load forms and questions on page load
+    window.addEventListener('DOMContentLoaded', async () => {
+      await loadForms();
+      await loadQuestions();
+    });
+
+    async function loadForms() {
+      try {
+        const res = await fetch(`${API_URL}/api/admin/feedback-forms`, {
+          credentials: 'include'
+        });
+
+        if (!res.ok) {
+          throw new Error('Failed to load forms');
+        }
+
+        const data = await res.json();
+        forms = data.forms || [];
+        renderFormSelector();
+      } catch (error) {
+        console.error('Load forms error:', error);
+        document.getElementById('form-selector').innerHTML = `
+          <option value="">Error loading forms</option>
+        `;
+      }
+    }
+
+    function renderFormSelector() {
+      const selector = document.getElementById('form-selector');
+
+      if (forms.length === 0) {
+        selector.innerHTML = `
+          <option value="">No forms yet - Create one!</option>
+        `;
+        return;
+      }
+
+      // Group forms by type
+      const openDayForms = forms.filter(f => f.form_type === 'open_day');
+      const privateTourForms = forms.filter(f => f.form_type === 'private_tour');
+      const tasterDayForms = forms.filter(f => f.form_type === 'taster_day');
+
+      let html = '<option value="">-- Select a form --</option>';
+
+      if (openDayForms.length > 0) {
+        html += '<optgroup label="Open Day Forms">';
+        openDayForms.forEach(form => {
+          html += `<option value="${form.id}">${form.form_name}${!form.is_active ? ' (Inactive)' : ''}</option>`;
+        });
+        html += '</optgroup>';
+      }
+
+      if (privateTourForms.length > 0) {
+        html += '<optgroup label="Private Tour Forms">';
+        privateTourForms.forEach(form => {
+          html += `<option value="${form.id}">${form.form_name}${!form.is_active ? ' (Inactive)' : ''}</option>`;
+        });
+        html += '</optgroup>';
+      }
+
+      if (tasterDayForms.length > 0) {
+        html += '<optgroup label="Taster Day Forms">';
+        tasterDayForms.forEach(form => {
+          html += `<option value="${form.id}">${form.form_name}${!form.is_active ? ' (Inactive)' : ''}</option>`;
+        });
+        html += '</optgroup>';
+      }
+
+      selector.innerHTML = html;
+
+      // Auto-select first form if available
+      if (forms.length > 0 && !selectedFormId) {
+        selectedFormId = forms[0].id;
+        selector.value = selectedFormId;
+        updateFormInfo();
+      }
+    }
+
+    function handleFormChange() {
+      const selector = document.getElementById('form-selector');
+      selectedFormId = selector.value ? parseInt(selector.value) : null;
+      updateFormInfo();
+      loadQuestions();
+    }
+
+    function updateFormInfo() {
+      const editBtn = document.getElementById('edit-form-btn');
+      const deleteBtn = document.getElementById('delete-form-btn');
+      const formInfo = document.getElementById('form-info');
+      const formDescription = document.getElementById('form-description-display');
+
+      if (selectedFormId) {
+        const form = forms.find(f => f.id === selectedFormId);
+        if (form && form.description) {
+          formDescription.textContent = form.description;
+          formInfo.style.display = 'block';
+        } else {
+          formInfo.style.display = 'none';
+        }
+        editBtn.style.display = 'inline-block';
+        deleteBtn.style.display = 'inline-block';
+      } else {
+        formInfo.style.display = 'none';
+        editBtn.style.display = 'none';
+        deleteBtn.style.display = 'none';
+      }
+    }
+
+    async function loadQuestions() {
+      try {
+        let url = `${API_URL}/api/admin/feedback-questions`;
+        if (selectedFormId) {
+          url += `?form_id=${selectedFormId}`;
+        }
+
+        const res = await fetch(url, {
+          credentials: 'include'
+        });
+
+        if (!res.ok) {
+          throw new Error('Failed to load questions');
+        }
+
+        const data = await res.json();
+        questions = data.questions || [];
+        renderQuestions();
+      } catch (error) {
+        console.error('Load questions error:', error);
+        document.getElementById('questions-container').innerHTML = `
+          <div class="empty-state">
+            <h3>Failed to Load Questions</h3>
+            <p>Please try refreshing the page</p>
+          </div>
+        `;
+      }
+    }
+
+    function renderQuestions() {
+      const container = document.getElementById('questions-container');
+
+      if (!selectedFormId) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <h3>No Form Selected</h3>
+            <p>Please select a feedback form from the dropdown above, or create a new one</p>
+          </div>
+        `;
+        return;
+      }
+
+      if (questions.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <h3>No Questions Yet</h3>
+            <p>Click "Add Question" to create your first survey question for this form</p>
+          </div>
+        `;
+        return;
+      }
+
+      // Sort by display order
+      const sortedQuestions = [...questions].sort((a, b) => a.display_order - b.display_order);
+
+      container.innerHTML = `
+        <div class="questions-list">
+          ${sortedQuestions.map(q => `
+            <div class="question-item ${!q.is_active ? 'inactive' : ''}">
+              <div class="question-header">
+                <div class="question-content">
+                  <div class="question-text">${q.question_text}</div>
+                  <div class="question-meta">
+                    <span class="question-type">${formatQuestionType(q.question_type)}</span>
+                    <span class="question-status ${q.is_active ? 'status-active' : 'status-inactive'}">
+                      ${q.is_active ? 'Active' : 'Inactive'}
+                    </span>
+                    <span>Order: ${q.display_order}</span>
+                  </div>
+                  ${q.options ? `
+                    <div style="margin-top: 0.75rem; font-size: 0.875rem; color: #6B7280;">
+                      <strong>Options:</strong> ${(Array.isArray(q.options) ? q.options : JSON.parse(q.options)).join(', ')}
+                    </div>
+                  ` : ''}
+                </div>
+                <div class="question-actions">
+                  <button class="icon-btn" onclick="editQuestion(${q.id})" title="Edit">
+                    ✏️
+                  </button>
+                  <button class="icon-btn" onclick="deleteQuestion(${q.id})" title="Delete">
+                    🗑️
+                  </button>
+                </div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    function formatQuestionType(type) {
+      const types = {
+        'rating': 'Rating',
+        'text': 'Open Text',
+        'yes_no': 'Yes/No',
+        'multiple_choice': 'Multiple Choice'
+      };
+      return types[type] || type;
+    }
+
+    function openAddModal() {
+      if (!selectedFormId) {
+        showAlert('Please select a feedback form first', 'error');
+        return;
+      }
+
+      editingQuestionId = null;
+      document.getElementById('modal-title').textContent = 'Add Question';
+      document.getElementById('question-form').reset();
+      document.getElementById('question-id').value = '';
+      document.getElementById('is-active').checked = true;
+      document.getElementById('options-group').style.display = 'none';
+      document.getElementById('options-list').innerHTML = '';
+      document.getElementById('question-modal').classList.add('active');
+    }
+
+    function editQuestion(questionId) {
+      editingQuestionId = questionId;
+      const question = questions.find(q => q.id === questionId);
+
+      if (!question) return;
+
+      document.getElementById('modal-title').textContent = 'Edit Question';
+      document.getElementById('question-id').value = question.id;
+      document.getElementById('question-text').value = question.question_text;
+      document.getElementById('question-type').value = question.question_type;
+      document.getElementById('display-order').value = question.display_order;
+      document.getElementById('is-active').checked = question.is_active;
+
+      // Handle options for multiple choice
+      if (question.question_type === 'multiple_choice' && question.options) {
+        const options = Array.isArray(question.options) ? question.options : JSON.parse(question.options);
+        document.getElementById('options-group').style.display = 'block';
+        const optionsList = document.getElementById('options-list');
+        optionsList.innerHTML = '';
+        options.forEach(opt => {
+          addOption(opt);
+        });
+      } else {
+        document.getElementById('options-group').style.display = 'none';
+      }
+
+      document.getElementById('question-modal').classList.add('active');
+    }
+
+    function closeModal() {
+      document.getElementById('question-modal').classList.remove('active');
+      editingQuestionId = null;
+    }
+
+    function handleTypeChange() {
+      const type = document.getElementById('question-type').value;
+      const optionsGroup = document.getElementById('options-group');
+
+      if (type === 'multiple_choice') {
+        optionsGroup.style.display = 'block';
+        if (document.getElementById('options-list').children.length === 0) {
+          addOption();
+          addOption();
+        }
+      } else {
+        optionsGroup.style.display = 'none';
+      }
+    }
+
+    function addOption(value = '') {
+      const optionsList = document.getElementById('options-list');
+      const optionId = Date.now() + Math.random();
+
+      const optionItem = document.createElement('div');
+      optionItem.className = 'option-item';
+      optionItem.innerHTML = `
+        <input
+          type="text"
+          class="form-input"
+          placeholder="Option ${optionsList.children.length + 1}"
+          value="${value}"
+          data-option-id="${optionId}"
+        >
+        <button type="button" class="icon-btn" onclick="removeOption(this)">
+          ✕
+        </button>
+      `;
+
+      optionsList.appendChild(optionItem);
+    }
+
+    function removeOption(btn) {
+      btn.closest('.option-item').remove();
+    }
+
+    async function saveQuestion(e) {
+      e.preventDefault();
+
+      if (!selectedFormId) {
+        showAlert('Please select a feedback form first', 'error');
+        return;
+      }
+
+      const formData = new FormData(e.target);
+      const questionData = {
+        question_text: formData.get('question_text'),
+        question_type: formData.get('question_type'),
+        display_order: parseInt(formData.get('display_order')) || 0,
+        is_active: document.getElementById('is-active').checked,
+        form_id: selectedFormId
+      };
+
+      // Collect options for multiple choice
+      if (questionData.question_type === 'multiple_choice') {
+        const optionInputs = document.querySelectorAll('#options-list input');
+        const options = Array.from(optionInputs)
+          .map(input => input.value.trim())
+          .filter(val => val !== '');
+
+        if (options.length < 2) {
+          showAlert('Please provide at least 2 options for multiple choice questions', 'error');
+          return;
+        }
+
+        questionData.options = JSON.stringify(options);
+      }
+
+      try {
+        const url = editingQuestionId
+          ? `${API_URL}/api/admin/feedback-questions/${editingQuestionId}`
+          : `${API_URL}/api/admin/feedback-questions`;
+
+        const method = editingQuestionId ? 'PUT' : 'POST';
+
+        const res = await fetch(url, {
+          method: method,
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(questionData)
+        });
+
+        if (!res.ok) {
+          throw new Error('Failed to save question');
+        }
+
+        showAlert(`Question ${editingQuestionId ? 'updated' : 'created'} successfully!`, 'success');
+        closeModal();
+        loadQuestions();
+      } catch (error) {
+        console.error('Save question error:', error);
+        showAlert('Failed to save question. Please try again.', 'error');
+      }
+    }
+
+    async function deleteQuestion(questionId) {
+      if (!confirm('Are you sure you want to delete this question? This action cannot be undone.')) {
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_URL}/api/admin/feedback-questions/${questionId}`, {
+          method: 'DELETE',
+          credentials: 'include'
+        });
+
+        if (!res.ok) {
+          throw new Error('Failed to delete question');
+        }
+
+        showAlert('Question deleted successfully!', 'success');
+        loadQuestions();
+      } catch (error) {
+        console.error('Delete question error:', error);
+        showAlert('Failed to delete question. Please try again.', 'error');
+      }
+    }
+
+    function showAlert(message, type) {
+      const container = document.getElementById('alert-container');
+      const alert = document.createElement('div');
+      alert.className = `alert alert-${type}`;
+      alert.textContent = message;
+
+      container.innerHTML = '';
+      container.appendChild(alert);
+
+      setTimeout(() => {
+        alert.remove();
+      }, 5000);
+    }
+
+    // Close modal when clicking outside
+    document.getElementById('question-modal').addEventListener('click', (e) => {
+      if (e.target.id === 'question-modal') {
+        closeModal();
+      }
+    });
+
+    document.getElementById('form-modal').addEventListener('click', (e) => {
+      if (e.target.id === 'form-modal') {
+        closeFormModal();
+      }
+    });
+
+    // ==================== FORM MANAGEMENT FUNCTIONS ====================
+
+    function openFormModal() {
+      editingFormId = null;
+      document.getElementById('form-modal-title').textContent = 'Create Feedback Form';
+      document.getElementById('form-form').reset();
+      document.getElementById('form-id').value = '';
+      document.getElementById('form-is-active').checked = true;
+      document.getElementById('form-modal').classList.add('active');
+    }
+
+    function editCurrentForm() {
+      if (!selectedFormId) return;
+
+      editingFormId = selectedFormId;
+      const form = forms.find(f => f.id === selectedFormId);
+
+      if (!form) return;
+
+      document.getElementById('form-modal-title').textContent = 'Edit Feedback Form';
+      document.getElementById('form-id').value = form.id;
+      document.getElementById('form-name').value = form.form_name;
+      document.getElementById('form-type').value = form.form_type;
+      document.getElementById('form-description').value = form.description || '';
+      document.getElementById('form-is-active').checked = form.is_active;
+
+      document.getElementById('form-modal').classList.add('active');
+    }
+
+    function closeFormModal() {
+      document.getElementById('form-modal').classList.remove('active');
+      editingFormId = null;
+    }
+
+    async function saveForm(e) {
+      e.preventDefault();
+
+      const formData = new FormData(e.target);
+      const formPayload = {
+        form_name: formData.get('form_name'),
+        form_type: formData.get('form_type'),
+        description: formData.get('description') || '',
+        is_active: document.getElementById('form-is-active').checked
+      };
+
+      try {
+        const url = editingFormId
+          ? `${API_URL}/api/admin/feedback-forms/${editingFormId}`
+          : `${API_URL}/api/admin/feedback-forms`;
+
+        const method = editingFormId ? 'PUT' : 'POST';
+
+        const res = await fetch(url, {
+          method: method,
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(formPayload)
+        });
+
+        if (!res.ok) {
+          throw new Error('Failed to save form');
+        }
+
+        const data = await res.json();
+
+        showAlert(`Form ${editingFormId ? 'updated' : 'created'} successfully!`, 'success');
+        closeFormModal();
+
+        // Reload forms and maintain selection
+        await loadForms();
+
+        // Select the form (either the edited one or newly created one)
+        if (data.form && data.form.id) {
+          selectedFormId = data.form.id;
+          document.getElementById('form-selector').value = selectedFormId;
+          updateFormInfo();
+        } else if (editingFormId) {
+          selectedFormId = editingFormId;
+          document.getElementById('form-selector').value = selectedFormId;
+          updateFormInfo();
+        }
+
+        loadQuestions();
+      } catch (error) {
+        console.error('Save form error:', error);
+        showAlert('Failed to save form. Please try again.', 'error');
+      }
+    }
+
+    async function deleteCurrentForm() {
+      if (!selectedFormId) return;
+
+      const form = forms.find(f => f.id === selectedFormId);
+      if (!form) return;
+
+      if (!confirm(`Are you sure you want to delete "${form.form_name}"? This will also delete all questions associated with this form. This action cannot be undone.`)) {
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_URL}/api/admin/feedback-forms/${selectedFormId}`, {
+          method: 'DELETE',
+          credentials: 'include'
+        });
+
+        if (!res.ok) {
+          throw new Error('Failed to delete form');
+        }
+
+        showAlert('Form deleted successfully!', 'success');
+
+        // Reset selection and reload
+        selectedFormId = null;
+        await loadForms();
+        loadQuestions();
+      } catch (error) {
+        console.error('Delete form error:', error);
+        showAlert('Failed to delete form. Please try again.', 'error');
+      }
+    }
+  </script>
+</body>
+</html>
