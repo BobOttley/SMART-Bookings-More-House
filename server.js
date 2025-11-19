@@ -3045,9 +3045,10 @@ app.post('/api/bookings/:id/decline', async (req, res) => {
       let alternativesHTML = '';
 
       if (hasAlternatives) {
+        const appUrl = process.env.APP_URL || 'http://localhost:3002';
         alternativesText = '\n\nAlternative dates available:\n' +
           alternative_dates.map((alt, idx) => `${idx + 1}. ${alt.date} at ${alt.time}`).join('\n') +
-          `\n\nTo accept one of these alternatives, please visit:\nhttp://localhost:3002/respond.html?token=${responseToken}`;
+          `\n\nTo accept one of these alternatives, please visit:\n${appUrl}/respond.html?token=${responseToken}`;
 
         alternativesHTML = `
           <h3 style="color: #091825; margin-top: 20px;">Alternative Dates Available</h3>
@@ -3059,7 +3060,7 @@ app.post('/api/bookings/:id/decline', async (req, res) => {
             `).join('')}
           </ul>
           <p style="margin-top: 20px;">
-            <a href="http://localhost:3002/respond.html?token=${responseToken}"
+            <a href="${appUrl}/respond.html?token=${responseToken}"
                style="display: inline-block; padding: 12px 24px; background: #FF9F1C; color: white; text-decoration: none; border-radius: 4px; font-weight: 600;">
               View & Accept Alternative Dates
             </a>
