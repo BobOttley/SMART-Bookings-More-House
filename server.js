@@ -1561,17 +1561,19 @@ app.post('/api/bookings', async (req, res) => {
       }
     }
 
-    // Send confirmation email using database template
+    // Send email based on booking status
     try {
-      // Get the appropriate template ID based on booking type
-      const templateId = await getTemplateId(booking_type, 'booking_confirmation', school_id);
+      // For pending bookings (private tours and taster days), send "pending approval" email
+      // For confirmed bookings (open days), send "confirmation" email
+      const emailTemplateType = initialStatus === 'pending' ? 'booking_pending' : 'booking_confirmation';
+      const templateId = await getTemplateId(booking_type, emailTemplateType, school_id);
 
       if (templateId) {
         // Use the template-based email system
-        await sendTemplateEmail(booking, templateId, 'booking_confirmation');
-        console.log(`✅ Booking confirmation email sent using template ID ${templateId}`);
+        await sendTemplateEmail(booking, templateId, emailTemplateType);
+        console.log(`✅ Booking ${emailTemplateType} email sent using template ID ${templateId}`);
       } else {
-        console.error(`❌ No email template found for booking_type: ${booking_type}, template_type: booking_confirmation`);
+        console.error(`❌ No email template found for booking_type: ${booking_type}, template_type: ${emailTemplateType}`);
       }
     } catch (emailError) {
       console.error('Email send error:', emailError);
