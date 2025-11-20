@@ -4611,8 +4611,9 @@ async function sendTemplateEmail(booking, templateId, emailType, smartFeedback =
     }
 
     const templateData = {
-      parent_name: booking.parent_first_name,
-      student_name: booking.student_first_name,
+      booking_id: booking.id,
+      parent_name: `${booking.parent_first_name} ${booking.parent_last_name || ''}`.trim(),
+      student_name: `${booking.student_first_name} ${booking.student_last_name || ''}`.trim(),
       school_name: 'More House School',
       tour_date: eventDate ? new Date(eventDate).toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : '',
       tour_time: eventTime || '',
