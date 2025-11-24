@@ -270,8 +270,8 @@ async function sendFeedbackNotification(booking, responses, submissionNumber) {
       feedback_responses: feedbackResponses
     };
 
-    // Get admin email from environment or use default
-    const adminEmail = process.env.ADMIN_EMAIL || 'bob.ottley@bsmart-ai.com';
+    // Get admin email from environment
+    const adminEmail = process.env.ADMIN_EMAIL;
 
     // Send using template (ID 31 = Admissions - Feedback Notification)
     await sendInternalTemplateEmail(31, adminEmail, templateData);
@@ -338,15 +338,15 @@ async function sendAdmissionsBookingNotification(booking) {
     };
 
     // Get admin email from environment
-    const adminEmail = process.env.ADMIN_EMAIL || 'bob.ottley@morehousemail.org.uk';
+    const adminEmail = process.env.ADMIN_EMAIL;
 
     // Get the appropriate template ID based on booking type
     const templateId = await getTemplateId(booking.booking_type, 'admissions_notification', booking.school_id);
 
     if (templateId) {
-      // Send notification using template
-      await sendInternalTemplateEmail(templateId, adminEmail, templateData);
-      console.log(`✓ Admissions booking notification sent to ${adminEmail} for ${booking.booking_type} booking`);
+      // Send notification using template, CC parent for transparency
+      await sendInternalTemplateEmail(templateId, adminEmail, templateData, [], booking.email);
+      console.log(`✓ Admissions booking notification sent to ${adminEmail} (CC: ${booking.email}) for ${booking.booking_type} booking`);
       return true;
     } else {
       console.error(`❌ No admissions notification template found for booking_type: ${booking.booking_type}`);
@@ -1202,8 +1202,9 @@ app.post('/api/verify-parent', async (req, res) => {
   try {
     const { name, email, phone } = req.body;
 
-    if (!name || !email || !phone) {
-      return res.status(400).json({ error: 'Name, email and phone number are required' });
+    // Require at least ONE of: name, email, or phone
+    if (!name && !email && !phone) {
+      return res.status(400).json({ error: 'At least one of name, email, or phone is required' });
     }
 
     let query = `
@@ -1230,7 +1231,7 @@ app.post('/api/verify-parent', async (req, res) => {
       params.push(`%${name}%`);
     }
 
-    // Check email
+    // Check email (case-insensitive exact match)
     if (email) {
       paramCount++;
       query += ` AND LOWER(parent_email) = LOWER($${paramCount})`;
@@ -1652,6 +1653,35 @@ app.put('/api/bookings/:id', async (req, res) => {
     if (result.rows.length === 0) {
       console.log('[UPDATE BOOKING] Booking not found');
       return res.status(404).json({ success: false, error: 'Booking not found' });
+    }
+
+    const updatedBooking = result.rows[0];
+
+    // Also update the linked inquiry record if it exists
+    if (updatedBooking.inquiry_id) {
+      try {
+        await pool.query(
+          `UPDATE inquiries SET
+            parent_name = $1,
+            parent_email = $2,
+            contact_number = $3,
+            first_name = $4,
+            family_surname = $5,
+            updated_at = NOW()
+          WHERE id = $6`,
+          [
+            `${parent_first_name} ${parent_last_name}`,
+            email,
+            phone,
+            student_first_name,
+            student_last_name,
+            updatedBooking.inquiry_id
+          ]
+        );
+        console.log('[UPDATE BOOKING] Also updated linked inquiry record');
+      } catch (inquiryError) {
+        console.warn('[UPDATE BOOKING] Could not update inquiry:', inquiryError.message);
+      }
     }
 
     console.log('[UPDATE BOOKING] Successfully updated booking');
@@ -4833,7 +4863,7 @@ async function sendTemplateEmail(booking, templateId, emailType, smartFeedback =
 }
 
 // Helper function to send internal staff emails using templates
-async function sendInternalTemplateEmail(templateId, recipientEmail, templateData, attachments = []) {
+async function sendInternalTemplateEmail(templateId, recipientEmail, templateData, attachments = [], ccEmail = null) {
   try {
     // Fetch template
     const template = await pool.query('SELECT * FROM email_templates WHERE id = $1', [templateId]);
@@ -4956,16 +4986,24 @@ async function sendInternalTemplateEmail(templateId, recipientEmail, templateDat
     `;
 
     // Send email
-    await (await getEmailTransporter()).sendMail({
+    const mailOptions = {
       from: `"More House School" <${process.env.GMAIL_USER}>`,
       to: recipientEmail,
       subject: subject,
       text: body,
       html: htmlBody,
       attachments: attachments
-    });
+    };
 
-    console.log(`✓ Sent internal email (template ${templateId}) to ${recipientEmail}`);
+    // Add CC if provided
+    if (ccEmail) {
+      mailOptions.cc = ccEmail;
+    }
+
+    await (await getEmailTransporter()).sendMail(mailOptions);
+
+    const ccLog = ccEmail ? ` (CC: ${ccEmail})` : '';
+    console.log(`✓ Sent internal email (template ${templateId}) to ${recipientEmail}${ccLog}`);
     return true;
   } catch (error) {
     console.error(`Failed to send internal email (template ${templateId}):`, error);
