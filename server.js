@@ -201,7 +201,7 @@ async function sendTourGuideNotification(booking, guide, notificationType = 'ass
       num_attendees: booking.num_attendees,
       special_requirements: booking.special_requirements || 'None',
       feedback_link: booking.feedback_token
-        ? `${process.env.BASE_URL || 'http://localhost:3002'}/${feedbackFormPage}?token=${booking.feedback_token}`
+        ? `${process.env.APP_URL || 'https://smart-bookings-more-house.onrender.com'}/${feedbackFormPage}?token=${booking.feedback_token}`
         : ''
     };
 
@@ -600,7 +600,7 @@ app.post('/api/admin/request-password-reset', async (req, res) => {
     `, [user.id, token, expiresAt]);
 
     // Determine reset link based on environment
-    const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
+    const baseUrl = process.env.APP_URL || 'https://smart-bookings-more-house.onrender.com';
     const resetLink = `${baseUrl}/reset-password.html?token=${token}`;
 
     if (process.env.NODE_ENV === 'development') {
@@ -2379,7 +2379,7 @@ app.post('/api/bookings/:id/reassign-guide', async (req, res) => {
               <h3 style="margin: 0 0 10px 0; color: #92400E;">📝 Submit SMART Feedback After ${booking.booking_type === 'taster_day' ? 'Taster Day' : 'Tour'}</h3>
               <p style="margin: 0 0 15px 0;">After completing the ${booking.booking_type === 'taster_day' ? 'taster day' : 'tour'}, please share your observations about the student and parent using our SMART feedback system.</p>
               <div style="text-align: center; margin-top: 15px;">
-                <a href="${process.env.BASE_URL || 'http://localhost:3002'}/${booking.booking_type === 'taster_day' ? 'taster-feedback-form.html' : 'tour-feedback-form.html'}?token=${booking.feedback_token}"
+                <a href="${process.env.APP_URL || 'https://smart-bookings-more-house.onrender.com'}/${booking.booking_type === 'taster_day' ? 'taster-feedback-form.html' : 'tour-feedback-form.html'}?token=${booking.feedback_token}"
                    style="display: inline-block; background: #FF9F1C; color: #091825; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">
                   Submit ${booking.booking_type === 'taster_day' ? 'Taster Day' : 'Tour'} Feedback
                 </a>
@@ -3081,7 +3081,7 @@ app.post('/api/bookings/:id/decline', async (req, res) => {
       let alternativesHTML = '';
 
       if (hasAlternatives) {
-        const appUrl = process.env.APP_URL || 'http://localhost:3002';
+        const appUrl = process.env.APP_URL || 'https://smart-bookings-more-house.onrender.com';
         alternativesText = '\n\nAlternative dates available:\n' +
           alternative_dates.map((alt, idx) => `${idx + 1}. ${alt.date} at ${alt.time}`).join('\n') +
           `\n\nTo accept one of these alternatives, please visit:\n${appUrl}/respond.html?token=${responseToken}`;
@@ -4623,7 +4623,7 @@ async function sendTemplateEmail(booking, templateId, emailType, smartFeedback =
       : booking.booking_type === 'open_day'
       ? 'tour-feedback-form.html'
       : 'tour-feedback-form.html'; // Default for private tours
-    const feedbackUrl = `${process.env.APP_URL || 'http://localhost:3002'}/${feedbackFormPage}?token=${feedbackToken}`;
+    const feedbackUrl = `${process.env.APP_URL || 'https://smart-bookings-more-house.onrender.com'}/${feedbackFormPage}?token=${feedbackToken}`;
 
     // Determine pronouns based on gender
     // Default to 'she/her' for More House School (girls' school)
@@ -5403,8 +5403,8 @@ app.post('/api/email-templates/:id/test', async (req, res) => {
       preferred_language: 'English',
       status: 'Confirmed',
       booked_at: 'Monday, 17th November 2025 at 5:15 PM',
-      cancellation_link: 'http://localhost:3002/cancel/sample-token-123',
-      feedback_link: 'http://localhost:3002/tour-feedback-form.html?token=sample-token-456',
+      cancellation_link: `${process.env.APP_URL || 'https://smart-bookings-more-house.onrender.com'}/cancel/sample-token-123`,
+      feedback_link: `${process.env.APP_URL || 'https://smart-bookings-more-house.onrender.com'}/tour-feedback-form.html?token=sample-token-456`,
       pronoun_possessive: 'her',
       pronoun_object: 'her',
       key_interests: 'mathematics and science',
