@@ -5674,8 +5674,8 @@
       document.getElementById('brandingForm').addEventListener('submit', saveBrandingSettings);
     }
 
-    // Upload logo file
-    async function uploadLogo(input) {
+    // Upload logo file (global function for inline handler)
+    window.uploadLogo = async function(input) {
       const file = input.files[0];
       if (!file) return;
 
