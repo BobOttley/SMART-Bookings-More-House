@@ -748,18 +748,19 @@
                 // Get unique sections viewed across all visits
                 const allSections = new Map();
                 booking.visits.forEach(visit => {
-                    visit.sections.forEach(s => {
+                    (visit.sections || []).forEach(s => {
+                        const timeSpent = parseFloat(s.time_spent) || 0;
                         if (!allSections.has(s.section)) {
                             allSections.set(s.section, 0);
                         }
-                        allSections.set(s.section, allSections.get(s.section) + s.time_spent);
+                        allSections.set(s.section, allSections.get(s.section) + timeSpent);
                     });
                 });
 
                 // Sort sections by time spent
                 const sortedSections = Array.from(allSections.entries())
                     .sort((a, b) => b[1] - a[1])
-                    .map(([section, time]) => ({ section, time }));
+                    .map(([section, time]) => ({ section, time: time || 0 }));
 
                 sessionsHtml = `
                     <div style="background: #f8fafc; border-radius: 6px; padding: 10px; border-left: 3px solid #1a2b5c;">
