@@ -546,6 +546,9 @@
                 year: 'numeric'
             });
 
+            const schoolName = data.settings?.school_name || 'More House School';
+            const logoUrl = data.settings?.logo_url || '/morehouse-logo.jpg';
+
             const guideRows = Object.entries(data.bookingsByGuide).map(([guideName, bookings]) => {
                 const families = bookings.map(b => `${b.student_first_name} ${b.parent_last_name}`).join(', ');
                 return `
@@ -560,7 +563,7 @@
             return `
                 <div class="family-pack summary-page">
                     <div class="summary-header">
-                        <img src="/morehouse-logo.jpg" alt="More House School" class="school-logo">
+                        ${logoUrl ? `<img src="${logoUrl}" alt="${schoolName}" class="school-logo">` : ''}
                         <h1>${data.event.title}</h1>
                         <p>${eventDate} | ${data.event.start_time} - ${data.event.end_time}</p>
                     </div>

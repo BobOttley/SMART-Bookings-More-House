@@ -5989,6 +5989,13 @@ app.get('/api/events/:id/briefing-cards', async (req, res) => {
 
     const event = eventResult.rows[0];
 
+    // Get school settings for logo
+    const settingsResult = await pool.query(
+      'SELECT school_name, logo_url FROM booking_settings WHERE school_id = $1',
+      [event.school_id || 2]
+    );
+    const settings = settingsResult.rows[0] || {};
+
     // Get all bookings for this event with full inquiry data (same query as /api/bookings)
     let bookingsQuery = `
       SELECT DISTINCT ON (b.id) b.*, e.title as event_title, e.event_date, e.start_time,
@@ -6166,6 +6173,7 @@ app.get('/api/events/:id/briefing-cards', async (req, res) => {
     res.json({
       success: true,
       event: event,
+      settings: settings,
       bookings: bookingsWithFullData,
       bookingsByGuide: byGuide,
       totalFamilies: bookingsWithFullData.length,
