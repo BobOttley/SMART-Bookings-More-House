@@ -647,38 +647,54 @@
                 `).join('')
                 : '<p style="color: #666; font-style: italic;">No notes recorded</p>';
 
-            // Email history section
+            // Email history section - same format as booking card
             const emailHtml = booking.email_history && booking.email_history.length > 0
                 ? booking.email_history.map(email => {
                     const emailDate = email.sent_at || email.received_at;
                     const isAI = email.direction === 'ai-generated';
                     const isReceived = email.direction === 'received';
+                    const date = new Date(emailDate).toLocaleDateString('en-GB', {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
 
-                    let directionLabel, contact, statusClass;
                     if (isAI) {
-                        directionLabel = 'AI Response to';
-                        contact = email.from_email;
-                        statusClass = 'ai';
-                    } else if (isReceived) {
-                        directionLabel = 'Received from';
-                        contact = email.from_email;
-                        statusClass = 'received';
-                    } else {
-                        directionLabel = 'Sent to';
-                        contact = email.to_email;
-                        statusClass = 'sent';
-                    }
-
-                    return `
-                    <div class="email-item">
-                        <div class="email-subject">${email.subject || (isAI ? 'AI Generated Response' : 'No subject')}</div>
-                        <div class="email-meta">
-                            ${directionLabel} ${contact} on ${new Date(emailDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                            <span class="email-status ${statusClass}">${isAI ? 'AI' : (isReceived ? 'received' : 'sent')}</span>
-                            ${email.admin_email ? `<span style="margin-left: 5px; font-size: 8pt; color: #666;">by ${email.admin_email}</span>` : ''}
+                        // Parent email with our response - same as booking card
+                        return `
+                        <div style="background: #fff; border: 1px solid #e0e0e0; border-radius: 6px; padding: 12px; margin-bottom: 10px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <div style="font-weight: 600; color: #1a2b5c;">From: ${email.from_name || 'Parent'}</div>
+                                <div style="font-size: 9pt; color: #666;">${date}</div>
+                            </div>
+                            <div style="background: #f8f9fa; border-left: 3px solid #1a2b5c; padding: 10px; margin-bottom: 8px;">
+                                <div style="font-size: 9pt; font-weight: 600; color: #666; margin-bottom: 4px;">PARENT EMAIL:</div>
+                                <div style="font-size: 10pt; line-height: 1.5; white-space: pre-wrap;">${email.original_text || ''}</div>
+                            </div>
+                            <div style="background: #FFFBEB; border-left: 3px solid #F59E0B; padding: 10px;">
+                                <div style="font-size: 9pt; font-weight: 600; color: #666; margin-bottom: 4px;">OUR RESPONSE:</div>
+                                <div style="font-size: 10pt; line-height: 1.5; white-space: pre-wrap;">${email.body_text || ''}</div>
+                            </div>
                         </div>
-                    </div>
-                `}).join('')
+                        `;
+                    } else {
+                        // Regular email
+                        const directionLabel = isReceived ? 'FROM PARENT' : 'FROM SCHOOL';
+                        const directionColor = isReceived ? '#1976d2' : '#2e7d32';
+                        return `
+                        <div style="background: #f8f9fa; padding: 10px; border-left: 3px solid ${directionColor}; margin-bottom: 8px; border-radius: 4px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                <span style="background: ${directionColor}; color: white; padding: 2px 8px; border-radius: 3px; font-size: 8pt; text-transform: uppercase;">${directionLabel}</span>
+                                <span style="font-size: 9pt; color: #666;">${date}</span>
+                            </div>
+                            ${email.subject ? `<div style="font-weight: 600; margin-bottom: 6px; font-size: 10pt;">${email.subject}</div>` : ''}
+                            <div style="font-size: 10pt; line-height: 1.5; white-space: pre-wrap;">${email.body_text || ''}</div>
+                        </div>
+                        `;
+                    }
+                }).join('')
                 : '<p style="color: #666; font-style: italic; padding: 10px;">No emails yet</p>';
 
             // Special requirements (highlighted if present)
