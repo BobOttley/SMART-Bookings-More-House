@@ -2806,47 +2806,67 @@ app.get('/api/bookings/:id/sessions', async (req, res) => {
     const { inquiry_id } = bookingResult.rows[0];
 
     if (!inquiry_id) {
-      return res.json({ success: true, sessions: [], sectionViews: [] });
+      return res.json({ success: true, visits: [] });
     }
 
-    // Get sessions from tracking_events table (same as admin app SMART Tracking)
-    const sessionResult = await pool.query(`
+    // Get all tracking events for this inquiry, ordered by session and time
+    const eventsResult = await pool.query(`
       SELECT
         session_id,
-        MIN(timestamp) as started_at,
-        MAX(timestamp) as ended_at,
-        COUNT(*) as event_count,
-        MAX(country) as country,
-        SUM(CASE
-          WHEN event_type IN ('section_exit', 'section_exit_enhanced')
-            AND event_data->>'dwellSec' IS NOT NULL
-          THEN (event_data->>'dwellSec')::numeric
-          ELSE 0
-        END) as duration_seconds
+        event_type,
+        timestamp,
+        country,
+        event_data
       FROM tracking_events
       WHERE inquiry_id = $1
-      GROUP BY session_id
-      ORDER BY MIN(timestamp) DESC
+      ORDER BY session_id, timestamp ASC
     `, [inquiry_id]);
 
-    // Get section views with time spent from tracking_events
-    const sectionResult = await pool.query(`
-      SELECT
-        event_data->>'section' as section,
-        SUM((event_data->>'dwellSec')::numeric) as time_spent_seconds,
-        COUNT(*) as view_count
-      FROM tracking_events
-      WHERE inquiry_id = $1
-        AND event_type IN ('section_exit', 'section_exit_enhanced')
-        AND event_data->>'section' IS NOT NULL
-      GROUP BY event_data->>'section'
-      ORDER BY SUM((event_data->>'dwellSec')::numeric) DESC
-    `, [inquiry_id]);
+    // Group events by session_id to create visits (same as admin app)
+    const sessionsMap = new Map();
+
+    for (const event of eventsResult.rows) {
+      const sessionId = event.session_id;
+      if (!sessionsMap.has(sessionId)) {
+        sessionsMap.set(sessionId, {
+          session_id: sessionId,
+          started_at: event.timestamp,
+          ended_at: event.timestamp,
+          country: event.country,
+          sections: [],
+          total_time: 0
+        });
+      }
+
+      const session = sessionsMap.get(sessionId);
+      session.ended_at = event.timestamp;
+
+      // Track section views with dwell time
+      if ((event.event_type === 'section_exit' || event.event_type === 'section_exit_enhanced') && event.event_data) {
+        const section = event.event_data.section;
+        const dwellSec = parseFloat(event.event_data.dwellSec) || 0;
+        if (section) {
+          session.sections.push({
+            section: section,
+            time_spent: dwellSec
+          });
+          session.total_time += dwellSec;
+        }
+      }
+    }
+
+    // Convert to array and sort by start time descending (most recent first)
+    const visits = Array.from(sessionsMap.values())
+      .sort((a, b) => new Date(b.started_at) - new Date(a.started_at))
+      .map((visit, index, arr) => ({
+        ...visit,
+        visit_number: arr.length - index // Visit 1 is oldest, Visit N is newest
+      }));
 
     res.json({
       success: true,
-      sessions: sessionResult.rows,
-      sectionViews: sectionResult.rows
+      visits: visits,
+      total_visits: visits.length
     });
   } catch (error) {
     console.error('Get session history error:', error);
@@ -6099,53 +6119,69 @@ app.get('/api/events/:id/briefing-cards', async (req, res) => {
           emails = allEmails;
         }
 
-        // Get prospectus viewing sessions from tracking_events table (same as admin app SMART Tracking)
-        let sessions = [];
-        let sectionViews = [];
+        // Get prospectus viewing visits from tracking_events table (same as admin app SMART Tracking)
+        let visits = [];
         if (booking.inquiry_id) {
-          // Get sessions grouped by session_id - same query as admin app
-          const sessionResult = await pool.query(`
+          // Get all tracking events for this inquiry
+          const eventsResult = await pool.query(`
             SELECT
               session_id,
-              MIN(timestamp) as started_at,
-              MAX(timestamp) as ended_at,
-              COUNT(*) as event_count,
-              MAX(country) as country,
-              SUM(CASE
-                WHEN event_type IN ('section_exit', 'section_exit_enhanced')
-                  AND event_data->>'dwellSec' IS NOT NULL
-                THEN (event_data->>'dwellSec')::numeric
-                ELSE 0
-              END) as duration_seconds
+              event_type,
+              timestamp,
+              country,
+              event_data
             FROM tracking_events
             WHERE inquiry_id = $1
-            GROUP BY session_id
-            ORDER BY MIN(timestamp) DESC
+            ORDER BY session_id, timestamp ASC
           `, [booking.inquiry_id]);
-          sessions = sessionResult.rows;
 
-          // Get section views with time spent
-          const sectionResult = await pool.query(`
-            SELECT
-              event_data->>'section' as section,
-              SUM((event_data->>'dwellSec')::numeric) as time_spent_seconds,
-              COUNT(*) as view_count
-            FROM tracking_events
-            WHERE inquiry_id = $1
-              AND event_type IN ('section_exit', 'section_exit_enhanced')
-              AND event_data->>'section' IS NOT NULL
-            GROUP BY event_data->>'section'
-            ORDER BY SUM((event_data->>'dwellSec')::numeric) DESC
-          `, [booking.inquiry_id]);
-          sectionViews = sectionResult.rows;
+          // Group events by session_id to create visits
+          const sessionsMap = new Map();
+
+          for (const event of eventsResult.rows) {
+            const sessionId = event.session_id;
+            if (!sessionsMap.has(sessionId)) {
+              sessionsMap.set(sessionId, {
+                session_id: sessionId,
+                started_at: event.timestamp,
+                ended_at: event.timestamp,
+                country: event.country,
+                sections: [],
+                total_time: 0
+              });
+            }
+
+            const session = sessionsMap.get(sessionId);
+            session.ended_at = event.timestamp;
+
+            // Track section views with dwell time
+            if ((event.event_type === 'section_exit' || event.event_type === 'section_exit_enhanced') && event.event_data) {
+              const section = event.event_data.section;
+              const dwellSec = parseFloat(event.event_data.dwellSec) || 0;
+              if (section) {
+                session.sections.push({
+                  section: section,
+                  time_spent: dwellSec
+                });
+                session.total_time += dwellSec;
+              }
+            }
+          }
+
+          // Convert to array and sort by start time descending
+          visits = Array.from(sessionsMap.values())
+            .sort((a, b) => new Date(b.started_at) - new Date(a.started_at))
+            .map((visit, index, arr) => ({
+              ...visit,
+              visit_number: arr.length - index
+            }));
         }
 
         return {
           ...booking,
           notes: notes,
           email_history: emails,
-          sessions: sessions,
-          section_views: sectionViews
+          visits: visits
         };
       })
     );
