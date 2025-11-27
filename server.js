@@ -5967,6 +5967,131 @@ app.get('/api/bookings/:id/taster-feedback', async (req, res) => {
   }
 });
 
+// ============================================
+// TOUR GUIDE BRIEFING CARDS
+// ============================================
+
+// Get all bookings for an event with full details for briefing cards
+app.get('/api/events/:id/briefing-cards', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.query;
+
+    // Get event details
+    const eventResult = await pool.query(
+      'SELECT * FROM events WHERE id = $1',
+      [id]
+    );
+
+    if (eventResult.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Event not found' });
+    }
+
+    const event = eventResult.rows[0];
+
+    // Get all bookings for this event with full inquiry data
+    let bookingsQuery = `
+      SELECT
+        b.*,
+        tg.name as guide_name,
+        tg.email as guide_email,
+        i.age_group,
+        i.entry_year,
+        i.hear_about_us,
+        i.sciences,
+        i.mathematics,
+        i.english,
+        i.languages,
+        i.humanities,
+        i.business,
+        i.drama,
+        i.music,
+        i.art,
+        i.creative_writing,
+        i.sport,
+        i.leadership,
+        i.community_service,
+        i.outdoor_education,
+        i.academic_excellence,
+        i.pastoral_care,
+        i.university_preparation,
+        i.personal_development,
+        i.career_guidance,
+        i.extracurricular_opportunities
+      FROM bookings b
+      LEFT JOIN tour_guides tg ON b.assigned_guide_id = tg.id
+      LEFT JOIN inquiries i ON (b.inquiry_id = i.id OR (b.email = i.parent_email AND i.first_name = b.student_first_name))
+      WHERE b.event_id = $1
+    `;
+
+    const params = [id];
+
+    // Filter by status if provided (default to confirmed bookings)
+    if (status) {
+      bookingsQuery += ` AND b.status = $2`;
+      params.push(status);
+    } else {
+      bookingsQuery += ` AND b.status IN ('confirmed', 'checked_in')`;
+    }
+
+    bookingsQuery += ` ORDER BY tg.name ASC NULLS LAST, b.parent_last_name ASC`;
+
+    const bookingsResult = await pool.query(bookingsQuery, params);
+
+    // Get notes and email history for each booking
+    const bookingsWithFullData = await Promise.all(
+      bookingsResult.rows.map(async (booking) => {
+        // Get notes
+        const notesResult = await pool.query(
+          `SELECT note_text, note_type, created_at, created_by
+           FROM booking_notes
+           WHERE booking_id = $1
+           ORDER BY created_at DESC`,
+          [booking.id]
+        );
+
+        // Get email history
+        const emailResult = await pool.query(
+          `SELECT template_name, subject, sent_at, sent_to, status
+           FROM email_logs
+           WHERE booking_id = $1
+           ORDER BY sent_at DESC`,
+          [booking.id]
+        );
+
+        return {
+          ...booking,
+          notes: notesResult.rows,
+          email_history: emailResult.rows
+        };
+      })
+    );
+
+    // Group bookings by tour guide for easier distribution
+    const byGuide = {};
+    bookingsWithFullData.forEach(booking => {
+      const guideName = booking.guide_name || 'Unassigned';
+      if (!byGuide[guideName]) {
+        byGuide[guideName] = [];
+      }
+      byGuide[guideName].push(booking);
+    });
+
+    res.json({
+      success: true,
+      event: event,
+      bookings: bookingsWithFullData,
+      bookingsByGuide: byGuide,
+      totalFamilies: bookingsWithFullData.length,
+      totalGuides: Object.keys(byGuide).length
+    });
+
+  } catch (error) {
+    console.error('Get briefing cards error:', error);
+    res.status(500).json({ success: false, error: 'Failed to get briefing cards data' });
+  }
+});
+
 // Start server
 app.listen(PORT, () => {
   console.log(`Booking server running on http://localhost:${PORT}`);

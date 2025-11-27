@@ -2610,6 +2610,7 @@
                 <td>${e.current_bookings} / ${e.max_capacity}</td>
                 <td><span class="badge badge-${e.status}">${e.status}</span></td>
                 <td>
+                  <button class="btn btn-sm" onclick="window.open('/briefing-cards.html?eventId=${e.id}', '_blank')" style="margin-right: 0.5rem; background: #10B981; color: white;" title="Print briefing packs for tour guides">Print Packs</button>
                   <button class="btn btn-sm btn-primary" onclick="showEditEventModal(${e.id})" style="margin-right: 0.5rem;">Edit</button>
                   <button class="btn btn-sm btn-danger" onclick="deleteEvent(${e.id})">Delete</button>
                 </td>
