@@ -6052,8 +6052,8 @@ app.get('/api/events/:id/briefing-cards', async (req, res) => {
 
         // Get email history
         const emailResult = await pool.query(
-          `SELECT template_name, subject, sent_at, sent_to, status
-           FROM email_logs
+          `SELECT email_type as template_name, subject, sent_at, recipient as sent_to
+           FROM booking_email_logs
            WHERE booking_id = $1
            ORDER BY sent_at DESC`,
           [booking.id]
