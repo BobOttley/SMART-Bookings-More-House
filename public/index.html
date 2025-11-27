@@ -5569,7 +5569,9 @@
 
     function renderBrandingSettings(settings) {
       const container = document.getElementById('branding-form');
-      const currentLogo = settings.logo_url || '';
+      // Use logo_data (base64) if available, otherwise fall back to logo_url
+      const currentLogo = settings.logo_data || settings.logo_url || '';
+      const isFromDatabase = settings.logo_data ? true : false;
       container.innerHTML = `
         <form id="brandingForm">
           <div class="form-group">
@@ -5577,7 +5579,7 @@
             ${currentLogo ? `
               <div style="margin-bottom: 1rem; padding: 1rem; background: #f8f9fa; border-radius: 8px; text-align: center;">
                 <img src="${currentLogo}" alt="Current logo" style="max-width: 200px; max-height: 100px; object-fit: contain;">
-                <p style="margin-top: 0.5rem; font-size: 0.8rem; color: #666;">Current logo</p>
+                <p style="margin-top: 0.5rem; font-size: 0.8rem; color: #666;">Current logo ${isFromDatabase ? '(stored in database)' : ''}</p>
               </div>
             ` : ''}
             <div style="display: flex; gap: 1rem; align-items: flex-start; flex-wrap: wrap;">
@@ -5593,8 +5595,8 @@
               </div>
               <div style="flex: 1; min-width: 200px;">
                 <label class="form-label" style="margin-bottom: 0.5rem;">Or enter logo path/URL</label>
-                <input type="text" class="form-input" name="logo_url" value="${currentLogo}" placeholder="/morehouse-logo.jpg or https://...">
-                <small style="display: block; margin-top: 0.25rem; color: #6B7280;">Default: /morehouse-logo.jpg</small>
+                <input type="text" class="form-input" name="logo_url" value="${isFromDatabase ? '' : (settings.logo_url || '')}" placeholder="/morehouse-logo.jpg or https://...">
+                <small style="display: block; margin-top: 0.25rem; color: #6B7280;">Leave blank to use uploaded logo</small>
               </div>
             </div>
             <div id="uploadStatus" style="margin-top: 0.5rem;"></div>

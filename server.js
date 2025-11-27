@@ -3561,7 +3561,7 @@ app.get('/api/settings', async (req, res) => {
   }
 });
 
-// Upload school logo
+// Upload school logo - stores as base64 in database
 app.post('/api/settings/upload-logo', logoUpload.single('logo'), async (req, res) => {
   try {
     if (!req.file) {
@@ -3569,17 +3569,28 @@ app.post('/api/settings/upload-logo', logoUpload.single('logo'), async (req, res
     }
 
     const schoolId = 2; // Default to More House School
-    const logoUrl = `/uploads/${req.file.filename}`;
 
-    // Update the logo_url in booking_settings
+    // Convert file to base64 data URI
+    const base64Data = req.file.buffer ?
+      req.file.buffer.toString('base64') :
+      fs.readFileSync(req.file.path).toString('base64');
+    const mimeType = req.file.mimetype;
+    const dataUri = `data:${mimeType};base64,${base64Data}`;
+
+    // Clean up temp file if it exists
+    if (req.file.path && fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
+
+    // Store base64 in database
     await pool.query(
-      'UPDATE booking_settings SET logo_url = $1 WHERE school_id = $2',
-      [logoUrl, schoolId]
+      'UPDATE booking_settings SET logo_data = $1, logo_url = $2 WHERE school_id = $3',
+      [dataUri, 'database', schoolId]
     );
 
     res.json({
       success: true,
-      logo_url: logoUrl,
+      logo_url: dataUri,
       message: 'Logo uploaded successfully'
     });
   } catch (error) {
@@ -6065,10 +6076,15 @@ app.get('/api/events/:id/briefing-cards', async (req, res) => {
 
     // Get school settings for logo
     const settingsResult = await pool.query(
-      'SELECT school_name, logo_url FROM booking_settings WHERE school_id = $1',
+      'SELECT school_name, logo_url, logo_data FROM booking_settings WHERE school_id = $1',
       [event.school_id || 2]
     );
-    const settings = settingsResult.rows[0] || {};
+    const settingsRow = settingsResult.rows[0] || {};
+    // Use logo_data (base64) if available, otherwise logo_url
+    const settings = {
+      ...settingsRow,
+      logo_url: settingsRow.logo_data || settingsRow.logo_url
+    };
 
     // Get all bookings for this event with full inquiry data (same query as /api/bookings)
     let bookingsQuery = `
