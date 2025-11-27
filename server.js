@@ -8,6 +8,39 @@ const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 const cors = require('cors');
 const cron = require('node-cron');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+
+// Configure multer for logo uploads
+const logoStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadDir = path.join(__dirname, 'public', 'uploads');
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    cb(null, `school-logo-${Date.now()}${ext}`);
+  }
+});
+
+const logoUpload = multer({
+  storage: logoStorage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB max
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = /jpeg|jpg|png|gif|svg|webp/;
+    const ext = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const mime = allowedTypes.test(file.mimetype);
+    if (ext && mime) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed (jpeg, jpg, png, gif, svg, webp)'));
+    }
+  }
+});
 
 const app = express();
 const PORT = process.env.PORT || 3002;
@@ -3525,6 +3558,33 @@ app.get('/api/settings', async (req, res) => {
   } catch (error) {
     console.error('Get settings error:', error);
     res.status(500).json({ success: false, error: 'Failed to get settings' });
+  }
+});
+
+// Upload school logo
+app.post('/api/settings/upload-logo', logoUpload.single('logo'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, error: 'No file uploaded' });
+    }
+
+    const schoolId = 2; // Default to More House School
+    const logoUrl = `/uploads/${req.file.filename}`;
+
+    // Update the logo_url in booking_settings
+    await pool.query(
+      'UPDATE booking_settings SET logo_url = $1 WHERE school_id = $2',
+      [logoUrl, schoolId]
+    );
+
+    res.json({
+      success: true,
+      logo_url: logoUrl,
+      message: 'Logo uploaded successfully'
+    });
+  } catch (error) {
+    console.error('Upload logo error:', error);
+    res.status(500).json({ success: false, error: 'Failed to upload logo' });
   }
 });
 

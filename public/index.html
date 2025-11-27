@@ -5569,12 +5569,35 @@
 
     function renderBrandingSettings(settings) {
       const container = document.getElementById('branding-form');
+      const currentLogo = settings.logo_url || '';
       container.innerHTML = `
         <form id="brandingForm">
           <div class="form-group">
-            <label class="form-label">School Logo URL</label>
-            <input type="url" class="form-input" name="logo_url" value="${settings.logo_url || ''}" placeholder="https://yourschool.com/logo.png">
-            <small style="display: block; margin-top: 0.5rem; color: #6B7280;">URL to your school logo (will be displayed on the enquiry form)</small>
+            <label class="form-label">School Logo</label>
+            ${currentLogo ? `
+              <div style="margin-bottom: 1rem; padding: 1rem; background: #f8f9fa; border-radius: 8px; text-align: center;">
+                <img src="${currentLogo}" alt="Current logo" style="max-width: 200px; max-height: 100px; object-fit: contain;">
+                <p style="margin-top: 0.5rem; font-size: 0.8rem; color: #666;">Current logo</p>
+              </div>
+            ` : ''}
+            <div style="display: flex; gap: 1rem; align-items: flex-start; flex-wrap: wrap;">
+              <div style="flex: 1; min-width: 200px;">
+                <label style="display: block; padding: 2rem; border: 2px dashed #d1d5db; border-radius: 8px; text-align: center; cursor: pointer; transition: all 0.2s;"
+                       onmouseover="this.style.borderColor='#FF6B9D'; this.style.background='#fff5f8';"
+                       onmouseout="this.style.borderColor='#d1d5db'; this.style.background='transparent';">
+                  <input type="file" id="logoUpload" accept="image/*" style="display: none;" onchange="uploadLogo(this)">
+                  <div style="font-size: 2rem; margin-bottom: 0.5rem;">📤</div>
+                  <div style="font-weight: 500; color: #374151;">Click to upload logo</div>
+                  <div style="font-size: 0.8rem; color: #6B7280; margin-top: 0.25rem;">PNG, JPG, SVG up to 5MB</div>
+                </label>
+              </div>
+              <div style="flex: 1; min-width: 200px;">
+                <label class="form-label" style="margin-bottom: 0.5rem;">Or enter URL</label>
+                <input type="url" class="form-input" name="logo_url" value="${currentLogo}" placeholder="https://yourschool.com/logo.png">
+              </div>
+            </div>
+            <div id="uploadStatus" style="margin-top: 0.5rem;"></div>
+            <small style="display: block; margin-top: 0.5rem; color: #6B7280;">Logo will be displayed on the enquiry form and briefing packs</small>
           </div>
 
           <div class="form-group">
@@ -5649,6 +5672,43 @@
       });
 
       document.getElementById('brandingForm').addEventListener('submit', saveBrandingSettings);
+    }
+
+    // Upload logo file
+    async function uploadLogo(input) {
+      const file = input.files[0];
+      if (!file) return;
+
+      const statusDiv = document.getElementById('uploadStatus');
+      statusDiv.innerHTML = '<span style="color: #6B7280;">Uploading...</span>';
+
+      const formData = new FormData();
+      formData.append('logo', file);
+
+      try {
+        const res = await fetch(`${API_URL}/api/settings/upload-logo`, {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+          statusDiv.innerHTML = '<span style="color: #10B981;">Logo uploaded successfully!</span>';
+          // Update the URL input and preview
+          document.querySelector('input[name="logo_url"]').value = data.logo_url;
+          // Reload branding settings to show new logo
+          const resData = await fetch(`${API_URL}/api/booking-settings/${SCHOOL_ID}`);
+          const updatedData = await resData.json();
+          currentSettings = updatedData.settings;
+          renderBrandingSettings(currentSettings);
+        } else {
+          statusDiv.innerHTML = `<span style="color: #EF4444;">Upload failed: ${data.error}</span>`;
+        }
+      } catch (error) {
+        console.error('Upload error:', error);
+        statusDiv.innerHTML = '<span style="color: #EF4444;">Upload failed. Please try again.</span>';
+      }
     }
 
     async function saveBrandingSettings(e) {
