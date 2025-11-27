@@ -53,6 +53,25 @@
       color: rgba(255, 255, 255, 0.8);
     }
 
+    .logout-btn {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.875rem;
+      transition: all 0.2s;
+    }
+
+    .logout-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: white;
+    }
+
     /* Tab Container */
     .container {
       max-width: 98%;
@@ -498,6 +517,7 @@
     <h1><span class="smart-text">SMART</span> Booking System</h1>
     <p>Manage open days, private tours, and bookings</p>
     <div class="powered-by">Powered by <span class="bsmart-text">bSMART</span> ai</div>
+    <button class="logout-btn" onclick="logout()">Logout</button>
   </div>
 
   <div class="container">
@@ -1371,6 +1391,18 @@
       // Continue with page initialization
       init();
     });
+
+    // ============================================================================
+    // LOGOUT FUNCTION (global)
+    // ============================================================================
+    async function logout() {
+      try {
+        await fetch('/api/admin/logout', { method: 'POST' });
+      } catch (error) {
+        console.error('Logout error:', error);
+      }
+      window.location.href = '/login.html';
+    }
 
     // ============================================================================
     // MAIN INITIALIZATION

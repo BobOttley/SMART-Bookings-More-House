@@ -766,7 +766,7 @@ app.post('/api/admin/reset-password', async (req, res) => {
 // ==================== BOOKING SETTINGS ENDPOINTS ====================
 
 // Get booking settings for a school
-app.get('/api/booking-settings/:schoolId', async (req, res) => {
+app.get('/api/booking-settings/:schoolId', requireAdminAuth, async (req, res) => {
   try {
     const { schoolId } = req.params;
 
@@ -787,7 +787,7 @@ app.get('/api/booking-settings/:schoolId', async (req, res) => {
 });
 
 // Update booking settings
-app.put('/api/booking-settings/:schoolId', async (req, res) => {
+app.put('/api/booking-settings/:schoolId', requireAdminAuth, async (req, res) => {
   try {
     const { schoolId } = req.params;
     const {
@@ -894,7 +894,7 @@ app.put('/api/booking-settings/:schoolId', async (req, res) => {
 // ==================== EMAIL SETTINGS ENDPOINTS ====================
 
 // Get email settings
-app.get('/api/email-settings/:schoolId', async (req, res) => {
+app.get('/api/email-settings/:schoolId', requireAdminAuth, async (req, res) => {
   try {
     const { schoolId } = req.params;
 
@@ -915,7 +915,7 @@ app.get('/api/email-settings/:schoolId', async (req, res) => {
 });
 
 // Update email settings
-app.put('/api/email-settings/:schoolId', async (req, res) => {
+app.put('/api/email-settings/:schoolId', requireAdminAuth, async (req, res) => {
   try {
     const { schoolId } = req.params;
     const { smtp_host, smtp_port, smtp_username, smtp_password, smtp_from_email, smtp_from_name, smtp_use_tls, reminder_days_before_1, reminder_days_before_2, followup_days_after, guide_reminder_days_before_1, guide_reminder_days_before_2 } = req.body;
@@ -944,7 +944,7 @@ app.put('/api/email-settings/:schoolId', async (req, res) => {
 });
 
 // Test email settings
-app.post('/api/email-settings/test', async (req, res) => {
+app.post('/api/email-settings/test', requireAdminAuth, async (req, res) => {
   try {
     const { smtp_host, smtp_port, smtp_username, smtp_password, smtp_from_email, smtp_from_name, smtp_use_tls, test_email } = req.body;
 
@@ -1013,7 +1013,7 @@ app.post('/api/email-settings/test', async (req, res) => {
 // ==================== EVENTS ENDPOINTS ====================
 
 // Get all events for a school
-app.get('/api/events', async (req, res) => {
+app.get('/api/events', requireAdminAuth, async (req, res) => {
   console.log('[API] GET /api/events - Query params:', req.query);
   try {
     const { schoolId, eventType, status, startDate, endDate, includeDeleted } = req.query;
@@ -1062,7 +1062,7 @@ app.get('/api/events', async (req, res) => {
 });
 
 // Get single event
-app.get('/api/events/:id', async (req, res) => {
+app.get('/api/events/:id', requireAdminAuth, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -1083,7 +1083,7 @@ app.get('/api/events/:id', async (req, res) => {
 });
 
 // Create new event (No auth for now - accessed via iframe from authenticated admin dashboard)
-app.post('/api/events', async (req, res) => {
+app.post('/api/events', requireAdminAuth, async (req, res) => {
   try {
     const {
       school_id,
@@ -1125,7 +1125,7 @@ app.post('/api/events', async (req, res) => {
 });
 
 // Update event
-app.put('/api/events/:id', async (req, res) => {
+app.put('/api/events/:id', requireAdminAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const {
@@ -1177,7 +1177,7 @@ app.put('/api/events/:id', async (req, res) => {
 });
 
 // Delete event
-app.delete('/api/events/:id', async (req, res) => {
+app.delete('/api/events/:id', requireAdminAuth, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -1309,7 +1309,7 @@ app.post('/api/verify-parent', async (req, res) => {
 // ==================== BOOKINGS ENDPOINTS ====================
 
 // Get all bookings
-app.get('/api/bookings', async (req, res) => {
+app.get('/api/bookings', requireAdminAuth, async (req, res) => {
   console.log('[API] GET /api/bookings - Query params:', req.query);
   try {
     const { schoolId, eventId, status, startDate, endDate } = req.query;
@@ -1367,7 +1367,7 @@ app.get('/api/bookings', async (req, res) => {
 });
 
 // Get single booking
-app.get('/api/bookings/:id', async (req, res) => {
+app.get('/api/bookings/:id', requireAdminAuth, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -1394,7 +1394,7 @@ app.get('/api/bookings/:id', async (req, res) => {
 });
 
 // Create new booking (Public endpoint)
-app.post('/api/bookings', async (req, res) => {
+app.post('/api/bookings', requireAdminAuth, async (req, res) => {
   console.log('[CREATE BOOKING] Received request body:', JSON.stringify(req.body, null, 2));
   try {
     const {
@@ -1631,7 +1631,7 @@ app.post('/api/bookings', async (req, res) => {
 });
 
 // Update booking details
-app.put('/api/bookings/:id', async (req, res) => {
+app.put('/api/bookings/:id', requireAdminAuth, async (req, res) => {
   try {
     const { id } = req.params;
     console.log(`[UPDATE BOOKING] Received request to update booking #${id}`);
@@ -1730,7 +1730,7 @@ app.put('/api/bookings/:id', async (req, res) => {
 });
 
 // Staff-initiated booking creation (from CRM)
-app.post('/api/bookings/staff-create', async (req, res) => {
+app.post('/api/bookings/staff-create', requireAdminAuth, async (req, res) => {
   console.log('[STAFF CREATE BOOKING] Received request:', JSON.stringify(req.body, null, 2));
   try {
     const {
@@ -2043,7 +2043,7 @@ More House School Admissions Team`;
 });
 
 // Update booking (for staff edits)
-app.put('/api/bookings/:id/staff-edit', async (req, res) => {
+app.put('/api/bookings/:id/staff-edit', requireAdminAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const { scheduled_date, scheduled_time, status } = req.body;
@@ -2074,7 +2074,7 @@ app.put('/api/bookings/:id/staff-edit', async (req, res) => {
 });
 
 // Reassign tour guide and send notification emails
-app.post('/api/bookings/:id/reassign-guide', async (req, res) => {
+app.post('/api/bookings/:id/reassign-guide', requireAdminAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const { oldGuideId, newGuideId } = req.body;
@@ -2457,7 +2457,7 @@ app.post('/api/bookings/:id/reassign-guide', async (req, res) => {
 });
 
 // Mark booking as no-show
-app.put('/api/bookings/:id/no-show', async (req, res) => {
+app.put('/api/bookings/:id/no-show', requireAdminAuth, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -2535,7 +2535,7 @@ app.put('/api/bookings/:id/no-show', async (req, res) => {
 });
 
 // Update booking status
-app.put('/api/bookings/:id/status', async (req, res) => {
+app.put('/api/bookings/:id/status', requireAdminAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const { status, assigned_guide_id } = req.body;
@@ -2600,7 +2600,7 @@ app.put('/api/bookings/:id/status', async (req, res) => {
 });
 
 // Check-in booking
-app.post('/api/bookings/:id/checkin', async (req, res) => {
+app.post('/api/bookings/:id/checkin', requireAdminAuth, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -2631,7 +2631,7 @@ app.post('/api/bookings/:id/checkin', async (req, res) => {
 });
 
 // Get email history for a booking
-app.get('/api/bookings/:id/email-history', async (req, res) => {
+app.get('/api/bookings/:id/email-history', requireAdminAuth, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -2713,7 +2713,7 @@ app.get('/api/bookings/:id/email-history', async (req, res) => {
 });
 
 // Get booking notes
-app.get('/api/bookings/:id/notes', async (req, res) => {
+app.get('/api/bookings/:id/notes', requireAdminAuth, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -2760,7 +2760,7 @@ app.get('/api/bookings/:id/notes', async (req, res) => {
 });
 
 // Create a booking note
-app.post('/api/bookings/:id/notes', async (req, res) => {
+app.post('/api/bookings/:id/notes', requireAdminAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const { note } = req.body;
@@ -2822,7 +2822,7 @@ app.post('/api/bookings/:id/notes', async (req, res) => {
 });
 
 // Get session/prospectus viewing history for a booking
-app.get('/api/bookings/:id/sessions', async (req, res) => {
+app.get('/api/bookings/:id/sessions', requireAdminAuth, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -2908,7 +2908,7 @@ app.get('/api/bookings/:id/sessions', async (req, res) => {
 });
 
 // Assign tour guide to open day booking
-app.post('/api/bookings/:id/assign-guide', async (req, res) => {
+app.post('/api/bookings/:id/assign-guide', requireAdminAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const { guideId } = req.body;
@@ -2967,7 +2967,7 @@ app.post('/api/bookings/:id/assign-guide', async (req, res) => {
 });
 
 // Schedule/Accept booking (Admin endpoint)
-app.post('/api/bookings/:id/schedule', async (req, res) => {
+app.post('/api/bookings/:id/schedule', requireAdminAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const { scheduled_date, scheduled_time, assigned_guide_id } = req.body;
@@ -3094,7 +3094,7 @@ More House School Admissions Team`,
 });
 
 // Decline booking with alternatives (Admin endpoint)
-app.post('/api/bookings/:id/decline', async (req, res) => {
+app.post('/api/bookings/:id/decline', requireAdminAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const { decline_reason, alternative_dates } = req.body;
@@ -3210,7 +3210,7 @@ More House School Admissions Team`,
 });
 
 // Parent accepts alternative date (Public endpoint)
-app.post('/api/bookings/accept-alternative', async (req, res) => {
+app.post('/api/bookings/accept-alternative', requireAdminAuth, async (req, res) => {
   try {
     const { token, selected_date, selected_time } = req.body;
 
@@ -3349,7 +3349,7 @@ app.post('/api/bookings/cancel', async (req, res) => {
 // ==================== TOUR GUIDES ENDPOINTS ====================
 
 // Get all tour guides for a school
-app.get('/api/tour-guides', async (req, res) => {
+app.get('/api/tour-guides', requireAdminAuth, async (req, res) => {
   try {
     const { schoolId } = req.query;
     const school_id = schoolId || 2; // Default to school 2
@@ -3367,7 +3367,7 @@ app.get('/api/tour-guides', async (req, res) => {
 });
 
 // Create tour guide
-app.post('/api/tour-guides', async (req, res) => {
+app.post('/api/tour-guides', requireAdminAuth, async (req, res) => {
   try {
     const { school_id, name, email, phone, type } = req.body;
 
@@ -3386,7 +3386,7 @@ app.post('/api/tour-guides', async (req, res) => {
 });
 
 // Update tour guide
-app.put('/api/tour-guides/:id', async (req, res) => {
+app.put('/api/tour-guides/:id', requireAdminAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const { name, email, phone, type, is_active } = req.body;
@@ -3415,7 +3415,7 @@ app.put('/api/tour-guides/:id', async (req, res) => {
 });
 
 // Delete tour guide
-app.delete('/api/tour-guides/:id', async (req, res) => {
+app.delete('/api/tour-guides/:id', requireAdminAuth, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -3430,7 +3430,7 @@ app.delete('/api/tour-guides/:id', async (req, res) => {
 // ==================== EMAIL TEMPLATES ENDPOINTS ====================
 
 // Get all email templates for a school
-app.get('/api/email-templates', async (req, res) => {
+app.get('/api/email-templates', requireAdminAuth, async (req, res) => {
   try {
     const schoolId = req.query.schoolId || 2;
     const result = await pool.query(
@@ -3445,7 +3445,7 @@ app.get('/api/email-templates', async (req, res) => {
 });
 
 // Create new email template
-app.post('/api/email-templates', async (req, res) => {
+app.post('/api/email-templates', requireAdminAuth, async (req, res) => {
   try {
     const {
       schoolId = 2,
@@ -3479,7 +3479,7 @@ app.post('/api/email-templates', async (req, res) => {
 });
 
 // Update email template
-app.put('/api/email-templates/:id', async (req, res) => {
+app.put('/api/email-templates/:id', requireAdminAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const {
@@ -3518,7 +3518,7 @@ app.put('/api/email-templates/:id', async (req, res) => {
 });
 
 // Delete email template
-app.delete('/api/email-templates/:id', async (req, res) => {
+app.delete('/api/email-templates/:id', requireAdminAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const result = await pool.query(
@@ -3562,7 +3562,7 @@ app.get('/api/settings', async (req, res) => {
 });
 
 // Upload school logo - stores as base64 in database
-app.post('/api/settings/upload-logo', logoUpload.single('logo'), async (req, res) => {
+app.post('/api/settings/upload-logo', logoUpload.single('logo'), requireAdminAuth, async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ success: false, error: 'No file uploaded' });
@@ -3692,7 +3692,7 @@ app.post('/api/form-submit', async (req, res) => {
 // ==================== FORM TEMPLATE MANAGEMENT ENDPOINTS ====================
 
 // Get form template with fields for editing
-app.get('/api/form-template/manage', async (req, res) => {
+app.get('/api/form-template/manage', requireAdminAuth, async (req, res) => {
   try {
     const schoolId = 2; // More House School
 
@@ -3726,7 +3726,7 @@ app.get('/api/form-template/manage', async (req, res) => {
 });
 
 // Update form template
-app.put('/api/form-template/:templateId', async (req, res) => {
+app.put('/api/form-template/:templateId', requireAdminAuth, async (req, res) => {
   try {
     const { templateId } = req.params;
     const { name, description } = req.body;
@@ -3747,7 +3747,7 @@ app.put('/api/form-template/:templateId', async (req, res) => {
 });
 
 // Create new form field
-app.post('/api/form-field', async (req, res) => {
+app.post('/api/form-field', requireAdminAuth, async (req, res) => {
   try {
     const {
       template_id,
@@ -3816,7 +3816,7 @@ app.post('/api/form-field', async (req, res) => {
 });
 
 // Update form field
-app.put('/api/form-field/:fieldId', async (req, res) => {
+app.put('/api/form-field/:fieldId', requireAdminAuth, async (req, res) => {
   try {
     const { fieldId } = req.params;
     const {
@@ -3890,7 +3890,7 @@ app.put('/api/form-field/:fieldId', async (req, res) => {
 });
 
 // Delete form field
-app.delete('/api/form-field/:fieldId', async (req, res) => {
+app.delete('/api/form-field/:fieldId', requireAdminAuth, async (req, res) => {
   try {
     const { fieldId } = req.params;
 
@@ -3928,7 +3928,7 @@ app.delete('/api/form-field/:fieldId', async (req, res) => {
 // ==================== FORM SECTIONS ENDPOINTS ====================
 
 // Get all sections for a template
-app.get('/api/form-sections/:templateId', async (req, res) => {
+app.get('/api/form-sections/:templateId', requireAdminAuth, async (req, res) => {
   try {
     const { templateId } = req.params;
     const result = await pool.query(
@@ -3943,7 +3943,7 @@ app.get('/api/form-sections/:templateId', async (req, res) => {
 });
 
 // Create new section
-app.post('/api/form-section', async (req, res) => {
+app.post('/api/form-section', requireAdminAuth, async (req, res) => {
   try {
     const { template_id, section_name, section_label, display_order } = req.body;
 
@@ -3963,7 +3963,7 @@ app.post('/api/form-section', async (req, res) => {
 });
 
 // Update section
-app.put('/api/form-section/:sectionId', async (req, res) => {
+app.put('/api/form-section/:sectionId', requireAdminAuth, async (req, res) => {
   try {
     const { sectionId } = req.params;
     const { section_label, display_order } = req.body;
@@ -3984,7 +3984,7 @@ app.put('/api/form-section/:sectionId', async (req, res) => {
 });
 
 // Delete section
-app.delete('/api/form-section/:sectionId', async (req, res) => {
+app.delete('/api/form-section/:sectionId', requireAdminAuth, async (req, res) => {
   try {
     const { sectionId } = req.params;
 
@@ -4153,7 +4153,7 @@ app.post('/api/feedback/submit', async (req, res) => {
 // ==================== FEEDBACK FORMS MANAGEMENT ====================
 
 // Get all feedback forms
-app.get('/api/admin/feedback-forms', async (req, res) => {
+app.get('/api/admin/feedback-forms', requireAdminAuth, async (req, res) => {
   try {
     const schoolId = 2;
     const result = await pool.query(
@@ -4168,7 +4168,7 @@ app.get('/api/admin/feedback-forms', async (req, res) => {
 });
 
 // Create feedback form
-app.post('/api/admin/feedback-forms', async (req, res) => {
+app.post('/api/admin/feedback-forms', requireAdminAuth, async (req, res) => {
   try {
     const { form_name, form_type, description } = req.body;
     const schoolId = 2;
@@ -4187,7 +4187,7 @@ app.post('/api/admin/feedback-forms', async (req, res) => {
 });
 
 // Update feedback form
-app.put('/api/admin/feedback-forms/:id', async (req, res) => {
+app.put('/api/admin/feedback-forms/:id', requireAdminAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const { form_name, form_type, description, is_active } = req.body;
@@ -4207,7 +4207,7 @@ app.put('/api/admin/feedback-forms/:id', async (req, res) => {
 });
 
 // Delete feedback form
-app.delete('/api/admin/feedback-forms/:id', async (req, res) => {
+app.delete('/api/admin/feedback-forms/:id', requireAdminAuth, async (req, res) => {
   try {
     const { id } = req.params;
     await pool.query('DELETE FROM feedback_forms WHERE id = $1', [id]);
@@ -4219,7 +4219,7 @@ app.delete('/api/admin/feedback-forms/:id', async (req, res) => {
 });
 
 // Assign feedback form to event
-app.put('/api/events/:id/assign-form', async (req, res) => {
+app.put('/api/events/:id/assign-form', requireAdminAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const { form_id } = req.body;
@@ -4238,7 +4238,7 @@ app.put('/api/events/:id/assign-form', async (req, res) => {
 });
 
 // Get all feedback questions (admin) - optionally filtered by form_id
-app.get('/api/admin/feedback-questions', async (req, res) => {
+app.get('/api/admin/feedback-questions', requireAdminAuth, async (req, res) => {
   try {
     const { form_id } = req.query;
 
@@ -4261,7 +4261,7 @@ app.get('/api/admin/feedback-questions', async (req, res) => {
 });
 
 // Create feedback question
-app.post('/api/admin/feedback-questions', async (req, res) => {
+app.post('/api/admin/feedback-questions', requireAdminAuth, async (req, res) => {
   try {
     const { question_text, question_type, options, display_order, form_id } = req.body;
 
@@ -4280,7 +4280,7 @@ app.post('/api/admin/feedback-questions', async (req, res) => {
 });
 
 // Update feedback question
-app.put('/api/admin/feedback-questions/:id', async (req, res) => {
+app.put('/api/admin/feedback-questions/:id', requireAdminAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const { question_text, question_type, options, is_active, display_order } = req.body;
@@ -4305,7 +4305,7 @@ app.put('/api/admin/feedback-questions/:id', async (req, res) => {
 });
 
 // Delete feedback question
-app.delete('/api/admin/feedback-questions/:id', async (req, res) => {
+app.delete('/api/admin/feedback-questions/:id', requireAdminAuth, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -4319,7 +4319,7 @@ app.delete('/api/admin/feedback-questions/:id', async (req, res) => {
 });
 
 // Get booking outcome
-app.get('/api/bookings/:id/outcome', async (req, res) => {
+app.get('/api/bookings/:id/outcome', requireAdminAuth, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -4340,7 +4340,7 @@ app.get('/api/bookings/:id/outcome', async (req, res) => {
 });
 
 // Update booking outcome
-app.put('/api/bookings/:id/outcome', async (req, res) => {
+app.put('/api/bookings/:id/outcome', requireAdminAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const { outcome_status, outcome_date, enrollment_year, notes } = req.body;
@@ -5450,7 +5450,7 @@ setTimeout(async () => {
 }, 5000);
 
 // Test email template
-app.post('/api/email-templates/:id/test', async (req, res) => {
+app.post('/api/email-templates/:id/test', requireAdminAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const { testEmail } = req.body;
@@ -5633,7 +5633,7 @@ app.post('/api/email-templates/:id/test', async (req, res) => {
 // ====================================================
 
 // Get all tour feedback form fields
-app.get('/api/tour-feedback-fields', async (req, res) => {
+app.get('/api/tour-feedback-fields', requireAdminAuth, async (req, res) => {
   try {
     const { schoolId = 2, tourType } = req.query;
 
@@ -5658,7 +5658,7 @@ app.get('/api/tour-feedback-fields', async (req, res) => {
 });
 
 // Get all taster day feedback form fields
-app.get('/api/taster-feedback-fields', async (req, res) => {
+app.get('/api/taster-feedback-fields', requireAdminAuth, async (req, res) => {
   try {
     const { schoolId = 2 } = req.query;
 
@@ -5708,7 +5708,7 @@ app.get('/api/feedback-questions', async (req, res) => {
 });
 
 // Create a new tour feedback field
-app.post('/api/tour-feedback-fields', async (req, res) => {
+app.post('/api/tour-feedback-fields', requireAdminAuth, async (req, res) => {
   try {
     const {
       field_name,
@@ -5751,7 +5751,7 @@ app.post('/api/tour-feedback-fields', async (req, res) => {
 });
 
 // Update a tour feedback field
-app.put('/api/tour-feedback-fields/:id', async (req, res) => {
+app.put('/api/tour-feedback-fields/:id', requireAdminAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const {
@@ -5789,7 +5789,7 @@ app.put('/api/tour-feedback-fields/:id', async (req, res) => {
 });
 
 // Delete a tour feedback field
-app.delete('/api/tour-feedback-fields/:id', async (req, res) => {
+app.delete('/api/tour-feedback-fields/:id', requireAdminAuth, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -5810,7 +5810,7 @@ app.delete('/api/tour-feedback-fields/:id', async (req, res) => {
 });
 
 // Reorder tour feedback fields
-app.post('/api/tour-feedback-fields/reorder', async (req, res) => {
+app.post('/api/tour-feedback-fields/reorder', requireAdminAuth, async (req, res) => {
   try {
     const { updates } = req.body; // Array of {id, display_order}
 
@@ -5919,7 +5919,7 @@ app.post('/api/tour-feedback/submit', async (req, res) => {
 });
 
 // Get feedback for a booking
-app.get('/api/bookings/:id/tour-feedback', async (req, res) => {
+app.get('/api/bookings/:id/tour-feedback', requireAdminAuth, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -6031,7 +6031,7 @@ app.post('/api/feedback/taster', async (req, res) => {
 });
 
 // Get taster day feedback for a booking
-app.get('/api/bookings/:id/taster-feedback', async (req, res) => {
+app.get('/api/bookings/:id/taster-feedback', requireAdminAuth, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -6057,7 +6057,7 @@ app.get('/api/bookings/:id/taster-feedback', async (req, res) => {
 // ============================================
 
 // Get all bookings for an event with full details for briefing cards
-app.get('/api/events/:id/briefing-cards', async (req, res) => {
+app.get('/api/events/:id/briefing-cards', requireAdminAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.query;
