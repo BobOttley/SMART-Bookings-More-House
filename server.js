@@ -6041,14 +6041,17 @@ app.get('/api/events/:id/briefing-cards', async (req, res) => {
     // Get notes and email history for each booking
     const bookingsWithFullData = await Promise.all(
       bookingsResult.rows.map(async (booking) => {
-        // Get notes
-        const notesResult = await pool.query(
-          `SELECT note_text, note_type, created_at, created_by
-           FROM booking_notes
-           WHERE booking_id = $1
-           ORDER BY created_at DESC`,
-          [booking.id]
-        );
+        // Get notes (from inquiry_notes via inquiry_id)
+        let notesResult = { rows: [] };
+        if (booking.inquiry_id) {
+          notesResult = await pool.query(
+            `SELECT note_text, created_at, created_by
+             FROM inquiry_notes
+             WHERE inquiry_id = $1
+             ORDER BY created_at DESC`,
+            [booking.inquiry_id]
+          );
+        }
 
         // Get email history
         const emailResult = await pool.query(
