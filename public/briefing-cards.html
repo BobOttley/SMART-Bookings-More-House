@@ -778,8 +778,14 @@
                             </div>
                         </div>
                         ${sortedSections.length > 0 ? `
-                            <div style="font-size: 8pt; color: #374151;">
-                                <strong>Viewed:</strong> ${sortedSections.map(s => formatSectionName(s.section)).join(', ')}
+                            <div style="margin-top: 8px;">
+                                <div style="font-size: 8pt; font-weight: 600; color: #1a2b5c; margin-bottom: 4px;">Most interested in:</div>
+                                ${sortedSections.slice(0, 5).map((s, i) => `
+                                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 4px 6px; background: ${i === 0 ? '#e8f5e9' : '#f8f9fa'}; border-radius: 3px; margin-bottom: 2px; ${i === 0 ? 'border-left: 2px solid #4caf50;' : ''}">
+                                        <span style="font-size: 8pt; ${i === 0 ? 'font-weight: 600;' : ''}">${formatSectionName(s.section)}</span>
+                                        <span style="font-size: 7pt; color: #666;">${formatDuration(s.time)}</span>
+                                    </div>
+                                `).join('')}
                             </div>
                         ` : ''}
                     </div>
