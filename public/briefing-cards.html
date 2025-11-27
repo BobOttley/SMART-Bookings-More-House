@@ -772,6 +772,53 @@
                 `
                 : '';
 
+            // Prospectus viewing sessions - same format as booking card
+            let sessionsHtml = '';
+            if (booking.sessions && booking.sessions.length > 0) {
+                sessionsHtml += '<div style="margin-bottom: 10px;"><strong style="font-size: 9pt; color: #666;">Session Summaries</strong></div>';
+                sessionsHtml += booking.sessions.map(session => `
+                    <div style="background: #e3f2fd; padding: 10px; border-left: 3px solid #1976d2; margin-bottom: 8px; border-radius: 4px;">
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 5px; font-size: 9pt;">
+                            <div><strong>Date:</strong> ${new Date(session.start_time).toLocaleString('en-GB')}</div>
+                            <div><strong>Duration:</strong> ${Math.round(session.duration_seconds / 60)} mins</div>
+                            <div><strong>Device:</strong> ${session.device_type || 'Unknown'} ${session.is_mobile ? '(Mobile)' : '(Desktop)'}</div>
+                            <div><strong>Engagement:</strong> ${session.engagement_score}/100</div>
+                        </div>
+                        <div style="margin-top: 6px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; font-size: 8pt; color: #666;">
+                            <div>Sections: ${session.sections_visited}</div>
+                            <div>Videos: ${session.videos_played}</div>
+                            <div>Downloads: ${session.downloads_count}</div>
+                            <div>Scroll: ${session.max_scroll_depth}%</div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            // Module views
+            if (booking.module_views && booking.module_views.length > 0) {
+                sessionsHtml += '<div style="margin: 10px 0;"><strong style="font-size: 9pt; color: #666;">Sections Viewed</strong></div>';
+                sessionsHtml += booking.module_views.map(view => `
+                    <div style="background: #f3e5f5; padding: 8px; border-left: 3px solid #9c27b0; margin-bottom: 6px; border-radius: 4px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 9pt;">
+                            <div>
+                                <strong>${view.module_name}</strong>
+                                ${view.was_idle ? '<span style="color: #999; margin-left: 5px;">(idle)</span>' : ''}
+                            </div>
+                            <div style="font-size: 8pt; color: #666;">
+                                ${new Date(view.started_at).toLocaleString('en-GB')}
+                            </div>
+                        </div>
+                        <div style="margin-top: 4px; font-size: 8pt; color: #666;">
+                            Time: ${Math.round(view.time_spent_seconds / 60)} mins | Scroll: ${view.scroll_depth_percent}%
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            if (!sessionsHtml) {
+                sessionsHtml = '<p style="color: #666; font-style: italic;">No prospectus viewing activity</p>';
+            }
+
             return `
                 <div class="family-pack">
                     <div class="pack-header">
@@ -859,6 +906,13 @@
                             </div>
                         </div>
                         ` : ''}
+
+                        <div class="section">
+                            <div class="section-header">Prospectus Viewing History</div>
+                            <div class="section-content">
+                                ${sessionsHtml}
+                            </div>
+                        </div>
 
                         <div class="section">
                             <div class="section-header">Staff Notes</div>

@@ -6098,10 +6098,57 @@ app.get('/api/events/:id/briefing-cards', async (req, res) => {
           emails = allEmails;
         }
 
+        // Get prospectus viewing sessions - same as /api/bookings/:id/sessions
+        let sessions = [];
+        let moduleViews = [];
+        if (booking.inquiry_id) {
+          const sessionResult = await pool.query(
+            `SELECT
+              id,
+              session_id,
+              start_time,
+              end_time,
+              duration_seconds,
+              device_type,
+              is_mobile,
+              sections_visited,
+              videos_played,
+              videos_completed,
+              total_video_time,
+              engagement_score,
+              max_scroll_depth,
+              downloads_count,
+              contact_actions
+            FROM session_summaries
+            WHERE inquiry_id = $1
+            ORDER BY start_time DESC`,
+            [booking.inquiry_id]
+          );
+          sessions = sessionResult.rows;
+
+          const moduleResult = await pool.query(
+            `SELECT
+              id,
+              module_name,
+              started_at,
+              ended_at,
+              time_spent_seconds,
+              scroll_depth_percent,
+              was_idle
+            FROM module_view_sessions
+            WHERE enquiry_id = $1
+            ORDER BY started_at DESC`,
+            [booking.inquiry_id]
+          );
+          moduleViews = moduleResult.rows;
+        }
+
         return {
           ...booking,
           notes: notes,
-          email_history: emails
+          email_history: emails,
+          sessions: sessions,
+          module_views: moduleViews
         };
       })
     );
