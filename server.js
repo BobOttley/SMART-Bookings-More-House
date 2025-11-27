@@ -5989,36 +5989,17 @@ app.get('/api/events/:id/briefing-cards', async (req, res) => {
 
     const event = eventResult.rows[0];
 
-    // Get all bookings for this event with full inquiry data
+    // Get all bookings for this event with full inquiry data (same query as /api/bookings)
     let bookingsQuery = `
-      SELECT
-        b.*,
-        tg.name as guide_name,
-        tg.email as guide_email,
-        i.age_group,
-        i.entry_year,
-        i.hear_about_us,
-        i.sciences,
-        i.mathematics,
-        i.english,
-        i.languages,
-        i.humanities,
-        i.business,
-        i.drama,
-        i.music,
-        i.art,
-        i.creative_writing,
-        i.sport,
-        i.leadership,
-        i.community_service,
-        i.outdoor_education,
-        i.academic_excellence,
-        i.pastoral_care,
-        i.university_preparation,
-        i.personal_development,
-        i.career_guidance,
-        i.extracurricular_opportunities
+      SELECT DISTINCT ON (b.id) b.*, e.title as event_title, e.event_date, e.start_time,
+             tg.name as guide_name,
+             i.age_group, i.entry_year, i.sciences, i.mathematics, i.english, i.languages, i.humanities,
+             i.business, i.drama, i.music, i.art, i.creative_writing, i.sport,
+             i.leadership, i.community_service, i.outdoor_education, i.academic_excellence,
+             i.pastoral_care, i.university_preparation, i.personal_development,
+             i.career_guidance, i.extracurricular_opportunities, i.hear_about_us
       FROM bookings b
+      LEFT JOIN events e ON b.event_id = e.id
       LEFT JOIN tour_guides tg ON b.assigned_guide_id = tg.id
       LEFT JOIN inquiries i ON (b.inquiry_id = i.id OR (b.email = i.parent_email AND i.first_name = b.student_first_name))
       WHERE b.event_id = $1
@@ -6034,38 +6015,59 @@ app.get('/api/events/:id/briefing-cards', async (req, res) => {
       bookingsQuery += ` AND b.status IN ('confirmed', 'checked_in')`;
     }
 
-    bookingsQuery += ` ORDER BY tg.name ASC NULLS LAST, b.parent_last_name ASC`;
+    bookingsQuery += ` ORDER BY b.id, tg.name ASC NULLS LAST, b.parent_last_name ASC`;
 
     const bookingsResult = await pool.query(bookingsQuery, params);
 
-    // Get notes and email history for each booking
+    // Get notes and email history for each booking (using same queries as existing endpoints)
     const bookingsWithFullData = await Promise.all(
       bookingsResult.rows.map(async (booking) => {
-        // Get notes (from inquiry_notes via inquiry_id)
-        let notesResult = { rows: [] };
+        // Get notes - same as /api/bookings/:id/notes
+        let notes = [];
         if (booking.inquiry_id) {
-          notesResult = await pool.query(
-            `SELECT note_text, created_at, created_by
-             FROM inquiry_notes
-             WHERE inquiry_id = $1
-             ORDER BY created_at DESC`,
+          const notesResult = await pool.query(
+            `SELECT
+              n.id,
+              n.note_text as content,
+              n.created_at,
+              n.created_by,
+              CONCAT(creator.first_name, ' ', creator.last_name) as admin_name,
+              creator.email as created_by_email
+            FROM inquiry_notes n
+            LEFT JOIN admin_users creator ON n.created_by = creator.id
+            WHERE n.inquiry_id = $1
+            ORDER BY n.created_at DESC`,
             [booking.inquiry_id]
           );
+          notes = notesResult.rows;
         }
 
-        // Get email history
-        const emailResult = await pool.query(
-          `SELECT email_type as template_name, subject, sent_at, recipient as sent_to
-           FROM booking_email_logs
-           WHERE booking_id = $1
-           ORDER BY sent_at DESC`,
-          [booking.id]
-        );
+        // Get email history - same as /api/bookings/:id/email-history
+        let emails = [];
+        if (booking.inquiry_id) {
+          const emailResult = await pool.query(
+            `SELECT
+              id,
+              direction,
+              from_email,
+              from_name,
+              to_email,
+              subject,
+              body_text,
+              sent_at,
+              received_at
+            FROM email_history
+            WHERE enquiry_id = $1 AND is_deleted = false
+            ORDER BY COALESCE(sent_at, received_at) DESC`,
+            [booking.inquiry_id]
+          );
+          emails = emailResult.rows;
+        }
 
         return {
           ...booking,
-          notes: notesResult.rows,
-          email_history: emailResult.rows
+          notes: notes,
+          email_history: emails
         };
       })
     );
