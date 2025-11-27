@@ -474,6 +474,35 @@
     </div>
 
     <script>
+        // Format section names to human-readable (same as admin app)
+        function formatSectionName(section) {
+            const SECTION_NAMES = {
+                cover_page: 'Welcome Page',
+                heads_welcome: "Head's Welcome",
+                academic_excellence: 'Academic Excellence',
+                about_more_house: 'About More House',
+                day_in_the_life: 'A Day at More House',
+                creative_arts_hero: 'Creative Arts',
+                your_journey: 'Your Journey',
+                london_extended_classroom: 'London Extended Classroom',
+                city_curriculum_days: 'City Curriculum Days',
+                values_hero: 'Values & Faith',
+                ethical_leaders: 'Ethical Leaders',
+                discover_video: 'Discover Video',
+                cta_begin_your_journey: 'Begin Your Journey'
+            };
+            return SECTION_NAMES[section] || (section ? section.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'Unknown Section');
+        }
+
+        // Format time in seconds to human-readable
+        function formatDuration(seconds) {
+            seconds = Math.round(seconds || 0);
+            if (seconds < 60) return `${seconds}s`;
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return secs > 0 ? `${mins}m ${secs}s` : `${mins}m`;
+        }
+
         // Get event ID from URL
         const urlParams = new URLSearchParams(window.location.search);
         const eventId = urlParams.get('eventId');
@@ -717,7 +746,7 @@
                     <div style="background: #e3f2fd; padding: 10px; border-left: 3px solid #1976d2; margin-bottom: 8px; border-radius: 4px;">
                         <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 5px; font-size: 9pt;">
                             <div><strong>Date:</strong> ${new Date(session.started_at).toLocaleString('en-GB')}</div>
-                            <div><strong>Duration:</strong> ${Math.round((session.duration_seconds || 0) / 60)} mins</div>
+                            <div><strong>Duration:</strong> ${formatDuration(session.duration_seconds)}</div>
                             <div><strong>Events:</strong> ${session.event_count || 0}</div>
                             <div><strong>Location:</strong> ${session.country || 'Unknown'}</div>
                         </div>
@@ -732,14 +761,14 @@
                     <div style="background: #f3e5f5; padding: 8px; border-left: 3px solid #9c27b0; margin-bottom: 6px; border-radius: 4px;">
                         <div style="display: flex; justify-content: space-between; align-items: center; font-size: 9pt;">
                             <div>
-                                <strong>${view.section}</strong>
+                                <strong>${formatSectionName(view.section)}</strong>
                             </div>
                             <div style="font-size: 8pt; color: #666;">
                                 ${view.view_count} view${view.view_count > 1 ? 's' : ''}
                             </div>
                         </div>
                         <div style="margin-top: 4px; font-size: 8pt; color: #666;">
-                            Total time: ${Math.round((view.time_spent_seconds || 0) / 60)} mins
+                            Total time: ${formatDuration(view.time_spent_seconds)}
                         </div>
                     </div>
                 `).join('');
