@@ -6045,23 +6045,57 @@ app.get('/api/events/:id/briefing-cards', async (req, res) => {
         // Get email history - same as /api/bookings/:id/email-history
         let emails = [];
         if (booking.inquiry_id) {
+          // Get regular email history
           const emailResult = await pool.query(
             `SELECT
               id,
+              enquiry_id,
               direction,
               from_email,
               from_name,
               to_email,
+              to_name,
               subject,
               body_text,
               sent_at,
-              received_at
+              received_at,
+              admin_email
             FROM email_history
             WHERE enquiry_id = $1 AND is_deleted = false
-            ORDER BY COALESCE(sent_at, received_at) DESC`,
+            ORDER BY COALESCE(sent_at, received_at) ASC`,
             [booking.inquiry_id]
           );
-          emails = emailResult.rows;
+
+          // Also get AI-generated email history
+          const aiEmailResult = await pool.query(
+            `SELECT
+              id,
+              inquiry_id as enquiry_id,
+              parent_email as from_email,
+              parent_name as from_name,
+              '' as to_email,
+              '' as to_name,
+              '' as subject,
+              original_email_text as original_text,
+              generated_email as body_text,
+              created_at as sent_at,
+              sentiment_score,
+              sentiment_label,
+              sentiment_reasoning,
+              'ai-generated' as direction
+            FROM email_generation_history
+            WHERE inquiry_id = $1
+            ORDER BY created_at ASC`,
+            [booking.inquiry_id]
+          );
+
+          // Combine both results
+          const allEmails = [...emailResult.rows, ...aiEmailResult.rows].sort((a, b) => {
+            const timeA = new Date(a.sent_at || a.received_at);
+            const timeB = new Date(b.sent_at || b.received_at);
+            return timeA - timeB;
+          });
+          emails = allEmails;
         }
 
         return {

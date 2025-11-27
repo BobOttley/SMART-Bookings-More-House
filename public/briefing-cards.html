@@ -303,6 +303,11 @@
             color: #1E40AF;
         }
 
+        .email-status.ai {
+            background: #FEF3C7;
+            color: #92400E;
+        }
+
         .email-status.failed {
             background: #FEE2E2;
             color: #991B1B;
@@ -646,14 +651,31 @@
             const emailHtml = booking.email_history && booking.email_history.length > 0
                 ? booking.email_history.map(email => {
                     const emailDate = email.sent_at || email.received_at;
-                    const direction = email.direction === 'received' ? 'Received from' : 'Sent to';
-                    const contact = email.direction === 'received' ? email.from_email : email.to_email;
+                    const isAI = email.direction === 'ai-generated';
+                    const isReceived = email.direction === 'received';
+
+                    let directionLabel, contact, statusClass;
+                    if (isAI) {
+                        directionLabel = 'AI Response to';
+                        contact = email.from_email;
+                        statusClass = 'ai';
+                    } else if (isReceived) {
+                        directionLabel = 'Received from';
+                        contact = email.from_email;
+                        statusClass = 'received';
+                    } else {
+                        directionLabel = 'Sent to';
+                        contact = email.to_email;
+                        statusClass = 'sent';
+                    }
+
                     return `
                     <div class="email-item">
-                        <div class="email-subject">${email.subject || 'No subject'}</div>
+                        <div class="email-subject">${email.subject || (isAI ? 'AI Generated Response' : 'No subject')}</div>
                         <div class="email-meta">
-                            ${direction} ${contact} on ${new Date(emailDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                            <span class="email-status ${email.direction === 'received' ? 'received' : 'sent'}">${email.direction || 'sent'}</span>
+                            ${directionLabel} ${contact} on ${new Date(emailDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                            <span class="email-status ${statusClass}">${isAI ? 'AI' : (isReceived ? 'received' : 'sent')}</span>
+                            ${email.admin_email ? `<span style="margin-left: 5px; font-size: 8pt; color: #666;">by ${email.admin_email}</span>` : ''}
                         </div>
                     </div>
                 `}).join('')
