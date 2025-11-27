@@ -5154,7 +5154,8 @@
 
         const primaryColour = settings.primary_colour || '#091825';
         const secondaryColour = settings.secondary_colour || '#FF9F1C';
-        const logoUrl = settings.logo_url ? settings.logo_url.trim() : null;
+        // Use logo_data (base64) if available, otherwise logo_url
+        const logoUrl = settings.logo_data || (settings.logo_url ? settings.logo_url.trim() : null);
         const logoSize = settings.logo_size || 'medium';
 
         // Map logo size to pixel width

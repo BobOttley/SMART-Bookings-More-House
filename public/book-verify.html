@@ -486,11 +486,13 @@
       const secondaryColour = settings.secondary_colour || '#FF9F1C';
       const formHeading = settings.form_heading || 'Enquiry Form';
       const formSubtitle = settings.form_subtitle || 'Please complete the form below';
+      // Use logo_data (base64) if available, otherwise logo_url
+      const logoSrc = settings.logo_data || settings.logo_url;
 
       let formHTML = `
         <div class="card" id="dynamic-form-card" style="background: white;">
           <div style="text-align: center; padding: 2rem; background: linear-gradient(135deg, ${primaryColour} 0%, ${primaryColour}dd 100%); border-radius: 12px 12px 0 0; margin: -2.5rem -2.5rem 2rem -2.5rem;">
-            ${settings.logo_url ? `<img src="${settings.logo_url}" alt="School Logo" style="max-width: ${settings.logo_size || 200}px; margin-bottom: 1rem;">` : ''}
+            ${logoSrc ? `<img src="${logoSrc}" alt="School Logo" style="max-width: ${settings.logo_size || 200}px; margin-bottom: 1rem;">` : ''}
             <h2 style="color: white; margin: 0;">${formHeading}</h2>
             <p style="color: white; margin-top: 0.5rem;">${formSubtitle}</p>
           </div>
