@@ -77,47 +77,6 @@
                 background: rgba(255,255,255,0.1);
             }
 
-            .btn-small {
-                padding: 6px 12px;
-                font-size: 13px;
-            }
-
-            .size-controls {
-                display: flex;
-                align-items: center;
-                gap: 8px;
-                background: rgba(255,255,255,0.1);
-                padding: 5px 12px;
-                border-radius: 5px;
-            }
-
-            .size-controls label {
-                font-size: 12px;
-                opacity: 0.9;
-            }
-
-            .size-controls button {
-                background: white;
-                color: #1a2b5c;
-                border: none;
-                width: 28px;
-                height: 28px;
-                border-radius: 4px;
-                cursor: pointer;
-                font-size: 16px;
-                font-weight: bold;
-            }
-
-            .size-controls button:hover {
-                background: #FFB3C1;
-            }
-
-            .size-controls .size-value {
-                min-width: 45px;
-                text-align: center;
-                font-weight: bold;
-            }
-
             .packs-container {
                 margin-top: 70px;
                 padding: 20px;
@@ -502,13 +461,6 @@
         <div class="controls-info">
             <span id="eventInfo">Loading...</span>
             <span id="familyCount"></span>
-            <div class="size-controls">
-                <label>Text Size:</label>
-                <button onclick="adjustSize(-5)">-</button>
-                <span class="size-value" id="sizeValue">100%</span>
-                <button onclick="adjustSize(5)">+</button>
-            </div>
-            <button class="btn btn-secondary btn-small" onclick="resetSize()">Reset</button>
             <button class="btn btn-secondary" onclick="window.history.back()">Back</button>
             <button class="btn" onclick="window.print()">Print All Packs</button>
         </div>
@@ -522,24 +474,6 @@
     </div>
 
     <script>
-        // Text size controls
-        let currentSize = 100;
-
-        function adjustSize(amount) {
-            currentSize = Math.max(50, Math.min(150, currentSize + amount));
-            applySize();
-        }
-
-        function resetSize() {
-            currentSize = 100;
-            applySize();
-        }
-
-        function applySize() {
-            document.getElementById('sizeValue').textContent = currentSize + '%';
-            document.getElementById('packsContainer').style.fontSize = currentSize + '%';
-        }
-
         // Get event ID from URL
         const urlParams = new URLSearchParams(window.location.search);
         const eventId = urlParams.get('eventId');
