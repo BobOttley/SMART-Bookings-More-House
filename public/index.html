@@ -3329,54 +3329,50 @@
           if (!data.visits || data.visits.length === 0) {
             container.innerHTML = '<div style="text-align: center; padding: 1rem; color: #999;">No prospectus viewing activity found</div>';
           } else {
-            // Display visits like admin app SMART Tracking
-            let html = `<div style="margin-bottom: 0.75rem; font-size: 0.85rem; color: #666;">${data.total_visits} visit${data.total_visits > 1 ? 's' : ''} recorded</div>`;
+            // Calculate summary stats
+            const totalVisits = data.visits.length;
+            const totalTime = data.visits.reduce((sum, v) => sum + (v.total_time || 0), 0);
 
-            html += data.visits.map(visit => {
-              const visitDate = new Date(visit.started_at);
-              const dateStr = visitDate.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
-              const timeStr = visitDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-              const sectionsCount = visit.sections.length;
+            // Get unique sections viewed across all visits
+            const allSections = new Map();
+            data.visits.forEach(visit => {
+              visit.sections.forEach(s => {
+                if (!allSections.has(s.section)) {
+                  allSections.set(s.section, 0);
+                }
+                allSections.set(s.section, allSections.get(s.section) + s.time_spent);
+              });
+            });
 
-              // Build section items
-              const sectionsHtml = visit.sections.length > 0
-                ? visit.sections.map(s => {
-                    const maxTime = Math.max(...visit.sections.map(sec => sec.time_spent), 1);
-                    const barWidth = Math.min(100, (s.time_spent / maxTime) * 100);
-                    return `
-                      <div style="display: flex; align-items: center; padding: 0.5rem; background: #f8f9fa; border-radius: 4px; margin-bottom: 0.25rem;">
-                        <div style="width: 20px; height: 20px; background: #1a2b5c; border-radius: 4px; display: flex; align-items: center; justify-content: center; margin-right: 0.75rem;">
-                          <span style="color: white; font-size: 10px;">📖</span>
-                        </div>
-                        <div style="flex: 1;">
-                          <div style="font-weight: 500; font-size: 0.85rem;">${formatSectionName(s.section)}</div>
-                          <div style="font-size: 0.75rem; color: #666;">Time spent: ${formatDuration(s.time_spent)}</div>
-                          <div style="height: 4px; background: #e0e0e0; border-radius: 2px; margin-top: 4px;">
-                            <div style="height: 100%; width: ${barWidth}%; background: linear-gradient(90deg, #1a2b5c, #FF6B9D); border-radius: 2px;"></div>
-                          </div>
-                        </div>
-                      </div>
-                    `;
-                  }).join('')
-                : '<div style="padding: 0.5rem; color: #999; font-size: 0.85rem;">Started visit (no sections viewed)</div>';
+            // Sort sections by time spent
+            const sortedSections = Array.from(allSections.entries())
+              .sort((a, b) => b[1] - a[1])
+              .map(([section, time]) => ({ section, time }));
 
-              return `
-                <div style="border: 1px solid #e0e0e0; border-radius: 8px; margin-bottom: 1rem; overflow: hidden;">
-                  <div style="background: #1a2b5c; color: white; padding: 0.75rem 1rem; display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                      <strong>Visit ${visit.visit_number}</strong>
-                      <div style="font-size: 0.75rem; opacity: 0.9;">${dateStr}, ${timeStr} • ${visit.country || 'GB'}</div>
-                    </div>
+            // Build concise summary
+            let html = `
+              <div style="background: #f8fafc; border-radius: 8px; padding: 1rem; border-left: 4px solid #1a2b5c;">
+                <div style="display: flex; gap: 1.5rem; flex-wrap: wrap; margin-bottom: 0.75rem;">
+                  <div style="text-align: center;">
+                    <div style="font-size: 1.5rem; font-weight: bold; color: #1a2b5c;">${totalVisits}</div>
+                    <div style="font-size: 0.75rem; color: #666;">Visit${totalVisits !== 1 ? 's' : ''}</div>
                   </div>
-                  <div style="padding: 0.75rem;">
-                    <div style="padding: 0.5rem; background: #f8fafc; border-radius: 6px; margin-bottom: 0.75rem; font-size: 0.85rem;">
-                      <strong>Visit Summary:</strong> ${sectionsCount} section${sectionsCount !== 1 ? 's' : ''} viewed • Total time: ${formatDuration(visit.total_time)}
-                    </div>
-                    ${sectionsHtml}
+                  <div style="text-align: center;">
+                    <div style="font-size: 1.5rem; font-weight: bold; color: #1a2b5c;">${formatDuration(totalTime)}</div>
+                    <div style="font-size: 0.75rem; color: #666;">Total Time</div>
+                  </div>
+                  <div style="text-align: center;">
+                    <div style="font-size: 1.5rem; font-weight: bold; color: #1a2b5c;">${sortedSections.length}</div>
+                    <div style="font-size: 0.75rem; color: #666;">Sections</div>
                   </div>
                 </div>
-              `;
-            }).join('');
+                ${sortedSections.length > 0 ? `
+                  <div style="font-size: 0.85rem; color: #374151;">
+                    <strong>Sections viewed:</strong> ${sortedSections.map(s => formatSectionName(s.section)).join(', ')}
+                  </div>
+                ` : ''}
+              </div>
+            `;
 
             container.innerHTML = html;
           }

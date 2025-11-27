@@ -738,51 +738,56 @@
                 `
                 : '';
 
-            // Prospectus viewing visits - using tracking_events data (same as admin app SMART Tracking)
+            // Prospectus viewing summary - concise for tour guides
             let sessionsHtml = '';
             if (booking.visits && booking.visits.length > 0) {
-                sessionsHtml += `<div style="margin-bottom: 8px; font-size: 9pt; color: #666;">${booking.visits.length} visit${booking.visits.length > 1 ? 's' : ''} recorded</div>`;
+                // Calculate summary stats
+                const totalVisits = booking.visits.length;
+                const totalTime = booking.visits.reduce((sum, v) => sum + (v.total_time || 0), 0);
 
-                sessionsHtml += booking.visits.map(visit => {
-                    const visitDate = new Date(visit.started_at);
-                    const dateStr = visitDate.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
-                    const timeStr = visitDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-                    const sectionsCount = visit.sections.length;
+                // Get unique sections viewed across all visits
+                const allSections = new Map();
+                booking.visits.forEach(visit => {
+                    visit.sections.forEach(s => {
+                        if (!allSections.has(s.section)) {
+                            allSections.set(s.section, 0);
+                        }
+                        allSections.set(s.section, allSections.get(s.section) + s.time_spent);
+                    });
+                });
 
-                    // Build section items
-                    const sectionsHtml = visit.sections.length > 0
-                        ? visit.sections.map(s => `
-                            <div style="display: flex; align-items: center; padding: 6px; background: #f8f9fa; border-radius: 4px; margin-bottom: 4px;">
-                                <div style="width: 16px; height: 16px; background: #1a2b5c; border-radius: 3px; display: flex; align-items: center; justify-content: center; margin-right: 8px;">
-                                    <span style="color: white; font-size: 8px;">📖</span>
-                                </div>
-                                <div style="flex: 1;">
-                                    <div style="font-weight: 500; font-size: 9pt;">${formatSectionName(s.section)}</div>
-                                    <div style="font-size: 8pt; color: #666;">Time spent: ${formatDuration(s.time_spent)}</div>
-                                </div>
+                // Sort sections by time spent
+                const sortedSections = Array.from(allSections.entries())
+                    .sort((a, b) => b[1] - a[1])
+                    .map(([section, time]) => ({ section, time }));
+
+                sessionsHtml = `
+                    <div style="background: #f8fafc; border-radius: 6px; padding: 10px; border-left: 3px solid #1a2b5c;">
+                        <div style="display: flex; gap: 20px; margin-bottom: 8px;">
+                            <div style="text-align: center;">
+                                <div style="font-size: 14pt; font-weight: bold; color: #1a2b5c;">${totalVisits}</div>
+                                <div style="font-size: 7pt; color: #666;">Visit${totalVisits !== 1 ? 's' : ''}</div>
                             </div>
-                        `).join('')
-                        : '<div style="padding: 6px; color: #999; font-size: 8pt;">Started visit (no sections viewed)</div>';
-
-                    return `
-                        <div style="border: 1px solid #e0e0e0; border-radius: 6px; margin-bottom: 8px; overflow: hidden;">
-                            <div style="background: #1a2b5c; color: white; padding: 6px 10px; font-size: 9pt;">
-                                <strong>Visit ${visit.visit_number}</strong>
-                                <span style="opacity: 0.9; margin-left: 8px;">${dateStr}, ${timeStr} • ${visit.country || 'GB'}</span>
+                            <div style="text-align: center;">
+                                <div style="font-size: 14pt; font-weight: bold; color: #1a2b5c;">${formatDuration(totalTime)}</div>
+                                <div style="font-size: 7pt; color: #666;">Total Time</div>
                             </div>
-                            <div style="padding: 8px;">
-                                <div style="padding: 6px; background: #f8fafc; border-radius: 4px; margin-bottom: 8px; font-size: 8pt;">
-                                    <strong>Visit Summary:</strong> ${sectionsCount} section${sectionsCount !== 1 ? 's' : ''} viewed • Total time: ${formatDuration(visit.total_time)}
-                                </div>
-                                ${sectionsHtml}
+                            <div style="text-align: center;">
+                                <div style="font-size: 14pt; font-weight: bold; color: #1a2b5c;">${sortedSections.length}</div>
+                                <div style="font-size: 7pt; color: #666;">Sections</div>
                             </div>
                         </div>
-                    `;
-                }).join('');
+                        ${sortedSections.length > 0 ? `
+                            <div style="font-size: 8pt; color: #374151;">
+                                <strong>Viewed:</strong> ${sortedSections.map(s => formatSectionName(s.section)).join(', ')}
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
             }
 
             if (!sessionsHtml) {
-                sessionsHtml = '<p style="color: #666; font-style: italic;">No prospectus viewing activity</p>';
+                sessionsHtml = '<p style="color: #666; font-style: italic; font-size: 9pt;">No prospectus viewing activity</p>';
             }
 
             return `
