@@ -2806,53 +2806,47 @@ app.get('/api/bookings/:id/sessions', async (req, res) => {
     const { inquiry_id } = bookingResult.rows[0];
 
     if (!inquiry_id) {
-      return res.json({ success: true, sessions: [], moduleViews: [] });
+      return res.json({ success: true, sessions: [], sectionViews: [] });
     }
 
-    // Get session summaries
-    const sessionResult = await pool.query(
-      `SELECT
-        id,
+    // Get sessions from tracking_events table (same as admin app SMART Tracking)
+    const sessionResult = await pool.query(`
+      SELECT
         session_id,
-        start_time,
-        end_time,
-        duration_seconds,
-        device_type,
-        is_mobile,
-        sections_visited,
-        videos_played,
-        videos_completed,
-        total_video_time,
-        engagement_score,
-        max_scroll_depth,
-        downloads_count,
-        contact_actions
-      FROM session_summaries
+        MIN(timestamp) as started_at,
+        MAX(timestamp) as ended_at,
+        COUNT(*) as event_count,
+        MAX(country) as country,
+        SUM(CASE
+          WHEN event_type IN ('section_exit', 'section_exit_enhanced')
+            AND event_data->>'dwellSec' IS NOT NULL
+          THEN (event_data->>'dwellSec')::numeric
+          ELSE 0
+        END) as duration_seconds
+      FROM tracking_events
       WHERE inquiry_id = $1
-      ORDER BY start_time DESC`,
-      [inquiry_id]
-    );
+      GROUP BY session_id
+      ORDER BY MIN(timestamp) DESC
+    `, [inquiry_id]);
 
-    // Get module view sessions
-    const moduleResult = await pool.query(
-      `SELECT
-        id,
-        module_name,
-        started_at,
-        ended_at,
-        time_spent_seconds,
-        scroll_depth_percent,
-        was_idle
-      FROM module_view_sessions
-      WHERE enquiry_id = $1
-      ORDER BY started_at DESC`,
-      [inquiry_id]
-    );
+    // Get section views with time spent from tracking_events
+    const sectionResult = await pool.query(`
+      SELECT
+        event_data->>'section' as section,
+        SUM((event_data->>'dwellSec')::numeric) as time_spent_seconds,
+        COUNT(*) as view_count
+      FROM tracking_events
+      WHERE inquiry_id = $1
+        AND event_type IN ('section_exit', 'section_exit_enhanced')
+        AND event_data->>'section' IS NOT NULL
+      GROUP BY event_data->>'section'
+      ORDER BY SUM((event_data->>'dwellSec')::numeric) DESC
+    `, [inquiry_id]);
 
     res.json({
       success: true,
       sessions: sessionResult.rows,
-      moduleViews: moduleResult.rows
+      sectionViews: sectionResult.rows
     });
   } catch (error) {
     console.error('Get session history error:', error);
@@ -6105,49 +6099,45 @@ app.get('/api/events/:id/briefing-cards', async (req, res) => {
           emails = allEmails;
         }
 
-        // Get prospectus viewing sessions - same as /api/bookings/:id/sessions
+        // Get prospectus viewing sessions from tracking_events table (same as admin app SMART Tracking)
         let sessions = [];
-        let moduleViews = [];
+        let sectionViews = [];
         if (booking.inquiry_id) {
-          const sessionResult = await pool.query(
-            `SELECT
-              id,
+          // Get sessions grouped by session_id - same query as admin app
+          const sessionResult = await pool.query(`
+            SELECT
               session_id,
-              start_time,
-              end_time,
-              duration_seconds,
-              device_type,
-              is_mobile,
-              sections_visited,
-              videos_played,
-              videos_completed,
-              total_video_time,
-              engagement_score,
-              max_scroll_depth,
-              downloads_count,
-              contact_actions
-            FROM session_summaries
+              MIN(timestamp) as started_at,
+              MAX(timestamp) as ended_at,
+              COUNT(*) as event_count,
+              MAX(country) as country,
+              SUM(CASE
+                WHEN event_type IN ('section_exit', 'section_exit_enhanced')
+                  AND event_data->>'dwellSec' IS NOT NULL
+                THEN (event_data->>'dwellSec')::numeric
+                ELSE 0
+              END) as duration_seconds
+            FROM tracking_events
             WHERE inquiry_id = $1
-            ORDER BY start_time DESC`,
-            [booking.inquiry_id]
-          );
+            GROUP BY session_id
+            ORDER BY MIN(timestamp) DESC
+          `, [booking.inquiry_id]);
           sessions = sessionResult.rows;
 
-          const moduleResult = await pool.query(
-            `SELECT
-              id,
-              module_name,
-              started_at,
-              ended_at,
-              time_spent_seconds,
-              scroll_depth_percent,
-              was_idle
-            FROM module_view_sessions
-            WHERE enquiry_id = $1
-            ORDER BY started_at DESC`,
-            [booking.inquiry_id]
-          );
-          moduleViews = moduleResult.rows;
+          // Get section views with time spent
+          const sectionResult = await pool.query(`
+            SELECT
+              event_data->>'section' as section,
+              SUM((event_data->>'dwellSec')::numeric) as time_spent_seconds,
+              COUNT(*) as view_count
+            FROM tracking_events
+            WHERE inquiry_id = $1
+              AND event_type IN ('section_exit', 'section_exit_enhanced')
+              AND event_data->>'section' IS NOT NULL
+            GROUP BY event_data->>'section'
+            ORDER BY SUM((event_data->>'dwellSec')::numeric) DESC
+          `, [booking.inquiry_id]);
+          sectionViews = sectionResult.rows;
         }
 
         return {
@@ -6155,7 +6145,7 @@ app.get('/api/events/:id/briefing-cards', async (req, res) => {
           notes: notes,
           email_history: emails,
           sessions: sessions,
-          module_views: moduleViews
+          section_views: sectionViews
         };
       })
     );

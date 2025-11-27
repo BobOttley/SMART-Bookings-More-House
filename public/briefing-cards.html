@@ -709,44 +709,37 @@
                 `
                 : '';
 
-            // Prospectus viewing sessions - same format as booking card
+            // Prospectus viewing sessions - using tracking_events data (same as admin app SMART Tracking)
             let sessionsHtml = '';
             if (booking.sessions && booking.sessions.length > 0) {
-                sessionsHtml += '<div style="margin-bottom: 10px;"><strong style="font-size: 9pt; color: #666;">Session Summaries</strong></div>';
+                sessionsHtml += '<div style="margin-bottom: 10px;"><strong style="font-size: 9pt; color: #666;">Viewing Sessions</strong></div>';
                 sessionsHtml += booking.sessions.map(session => `
                     <div style="background: #e3f2fd; padding: 10px; border-left: 3px solid #1976d2; margin-bottom: 8px; border-radius: 4px;">
                         <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 5px; font-size: 9pt;">
-                            <div><strong>Date:</strong> ${new Date(session.start_time).toLocaleString('en-GB')}</div>
-                            <div><strong>Duration:</strong> ${Math.round(session.duration_seconds / 60)} mins</div>
-                            <div><strong>Device:</strong> ${session.device_type || 'Unknown'} ${session.is_mobile ? '(Mobile)' : '(Desktop)'}</div>
-                            <div><strong>Engagement:</strong> ${session.engagement_score}/100</div>
-                        </div>
-                        <div style="margin-top: 6px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; font-size: 8pt; color: #666;">
-                            <div>Sections: ${session.sections_visited}</div>
-                            <div>Videos: ${session.videos_played}</div>
-                            <div>Downloads: ${session.downloads_count}</div>
-                            <div>Scroll: ${session.max_scroll_depth}%</div>
+                            <div><strong>Date:</strong> ${new Date(session.started_at).toLocaleString('en-GB')}</div>
+                            <div><strong>Duration:</strong> ${Math.round((session.duration_seconds || 0) / 60)} mins</div>
+                            <div><strong>Events:</strong> ${session.event_count || 0}</div>
+                            <div><strong>Location:</strong> ${session.country || 'Unknown'}</div>
                         </div>
                     </div>
                 `).join('');
             }
 
-            // Module views
-            if (booking.module_views && booking.module_views.length > 0) {
-                sessionsHtml += '<div style="margin: 10px 0;"><strong style="font-size: 9pt; color: #666;">Sections Viewed</strong></div>';
-                sessionsHtml += booking.module_views.map(view => `
+            // Section views from tracking_events
+            if (booking.section_views && booking.section_views.length > 0) {
+                sessionsHtml += '<div style="margin: 10px 0;"><strong style="font-size: 9pt; color: #666;">Sections Viewed (by time spent)</strong></div>';
+                sessionsHtml += booking.section_views.map(view => `
                     <div style="background: #f3e5f5; padding: 8px; border-left: 3px solid #9c27b0; margin-bottom: 6px; border-radius: 4px;">
                         <div style="display: flex; justify-content: space-between; align-items: center; font-size: 9pt;">
                             <div>
-                                <strong>${view.module_name}</strong>
-                                ${view.was_idle ? '<span style="color: #999; margin-left: 5px;">(idle)</span>' : ''}
+                                <strong>${view.section}</strong>
                             </div>
                             <div style="font-size: 8pt; color: #666;">
-                                ${new Date(view.started_at).toLocaleString('en-GB')}
+                                ${view.view_count} view${view.view_count > 1 ? 's' : ''}
                             </div>
                         </div>
                         <div style="margin-top: 4px; font-size: 8pt; color: #666;">
-                            Time: ${Math.round(view.time_spent_seconds / 60)} mins | Scroll: ${view.scroll_depth_percent}%
+                            Total time: ${Math.round((view.time_spent_seconds || 0) / 60)} mins
                         </div>
                     </div>
                 `).join('');
