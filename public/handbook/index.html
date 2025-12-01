@@ -1,0 +1,1738 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>More House School - Admissions Handbook</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #1a365d 0%, #2c5282 100%);
+            color: white;
+            padding: 20px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .header .subtitle {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        /* Search */
+        .search-container {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        #searchInput {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 25px;
+            width: 300px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        #searchInput:focus {
+            box-shadow: 0 0 0 3px rgba(255,255,255,0.3);
+        }
+
+        .search-results-count {
+            font-size: 0.85rem;
+            opacity: 0.9;
+        }
+
+        /* Layout */
+        .container {
+            display: flex;
+            margin-top: 80px;
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            width: 280px;
+            background: white;
+            height: calc(100vh - 80px);
+            position: fixed;
+            left: 0;
+            top: 80px;
+            overflow-y: auto;
+            border-right: 1px solid #e0e0e0;
+            padding: 20px 0;
+        }
+
+        .nav-section {
+            margin-bottom: 10px;
+        }
+
+        .nav-section-title {
+            padding: 12px 20px;
+            font-weight: 600;
+            color: #1a365d;
+            background: #f0f4f8;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.2s;
+        }
+
+        .nav-section-title:hover {
+            background: #e2e8f0;
+        }
+
+        .nav-section-title .arrow {
+            transition: transform 0.2s;
+        }
+
+        .nav-section.collapsed .arrow {
+            transform: rotate(-90deg);
+        }
+
+        .nav-section.collapsed .nav-items {
+            display: none;
+        }
+
+        .nav-items {
+            padding: 5px 0;
+        }
+
+        .nav-item {
+            padding: 8px 20px 8px 30px;
+            color: #555;
+            text-decoration: none;
+            display: block;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-item:hover {
+            background: #f7fafc;
+            color: #1a365d;
+            border-left-color: #2c5282;
+        }
+
+        .nav-item.active {
+            background: #ebf4ff;
+            color: #1a365d;
+            border-left-color: #2c5282;
+            font-weight: 500;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 280px;
+            padding: 30px 40px;
+            max-width: 900px;
+            background: white;
+            min-height: calc(100vh - 80px);
+        }
+
+        /* Content Sections */
+        .section {
+            margin-bottom: 40px;
+            padding-bottom: 30px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .section:last-child {
+            border-bottom: none;
+        }
+
+        h2 {
+            color: #1a365d;
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #2c5282;
+        }
+
+        h3 {
+            color: #2c5282;
+            font-size: 1.3rem;
+            margin: 25px 0 15px 0;
+        }
+
+        h4 {
+            color: #4a5568;
+            font-size: 1.1rem;
+            margin: 20px 0 10px 0;
+        }
+
+        p {
+            margin-bottom: 15px;
+        }
+
+        /* Golden Rule Box */
+        .golden-rule {
+            background: linear-gradient(135deg, #f6e05e 0%, #ecc94b 100%);
+            padding: 25px;
+            border-radius: 10px;
+            margin: 20px 0;
+            box-shadow: 0 4px 15px rgba(236, 201, 75, 0.3);
+        }
+
+        .golden-rule h3 {
+            color: #744210;
+            margin-top: 0;
+        }
+
+        .golden-rule p {
+            color: #744210;
+            font-size: 1.1rem;
+            margin-bottom: 0;
+        }
+
+        /* Important Box */
+        .important {
+            background: #fff5f5;
+            border-left: 4px solid #c53030;
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .important strong {
+            color: #c53030;
+        }
+
+        /* Info Box */
+        .info-box {
+            background: #ebf8ff;
+            border-left: 4px solid #3182ce;
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        /* Success Box */
+        .success-box {
+            background: #f0fff4;
+            border-left: 4px solid #38a169;
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 0.95rem;
+        }
+
+        th {
+            background: #1a365d;
+            color: white;
+            padding: 12px 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        tr:hover {
+            background: #f7fafc;
+        }
+
+        /* Lists */
+        ul, ol {
+            margin: 15px 0 15px 25px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        /* Checklist */
+        .checklist {
+            list-style: none;
+            margin-left: 0;
+        }
+
+        .checklist li {
+            padding: 10px 15px;
+            background: #f7fafc;
+            margin-bottom: 5px;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .checklist li::before {
+            content: "☐";
+            font-size: 1.2rem;
+            color: #718096;
+        }
+
+        /* Scripts/Quotes */
+        .script {
+            background: #f7fafc;
+            border-left: 4px solid #4a5568;
+            padding: 15px 20px;
+            margin: 15px 0;
+            font-style: italic;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .script::before {
+            content: '"';
+            font-size: 2rem;
+            color: #a0aec0;
+            float: left;
+            margin-right: 10px;
+            line-height: 1;
+        }
+
+        /* Code/System paths */
+        code {
+            background: #edf2f7;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'Consolas', monospace;
+            font-size: 0.9rem;
+            color: #2d3748;
+        }
+
+        /* Steps */
+        .steps {
+            counter-reset: step-counter;
+            list-style: none;
+            margin-left: 0;
+        }
+
+        .steps li {
+            counter-increment: step-counter;
+            padding: 15px 15px 15px 60px;
+            background: #f7fafc;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            position: relative;
+        }
+
+        .steps li::before {
+            content: counter(step-counter);
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 30px;
+            height: 30px;
+            background: #2c5282;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+
+        /* Highlight for search */
+        .highlight {
+            background: #fef08a;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+
+        /* Quick Links */
+        .quick-links {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .quick-link {
+            background: white;
+            border: 2px solid #e2e8f0;
+            padding: 20px;
+            border-radius: 10px;
+            text-decoration: none;
+            color: #2d3748;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .quick-link:hover {
+            border-color: #2c5282;
+            box-shadow: 0 4px 12px rgba(44, 82, 130, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .quick-link .icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        /* Back to top */
+        .back-to-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #2c5282;
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 1.5rem;
+        }
+
+        .back-to-top.visible {
+            opacity: 1;
+        }
+
+        .back-to-top:hover {
+            background: #1a365d;
+        }
+
+        /* Print styles */
+        @media print {
+            .sidebar, .header, .back-to-top {
+                display: none;
+            }
+            .main-content {
+                margin-left: 0;
+                max-width: 100%;
+            }
+        }
+
+        /* Mobile */
+        @media (max-width: 768px) {
+            .sidebar {
+                display: none;
+            }
+            .main-content {
+                margin-left: 0;
+                padding: 20px;
+            }
+            #searchInput {
+                width: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div>
+                <h1>More House School</h1>
+                <div class="subtitle">Admissions Handbook v5.0 | December 2025</div>
+            </div>
+            <div class="search-container">
+                <input type="text" id="searchInput" placeholder="Search handbook..." onkeyup="searchContent()">
+                <span class="search-results-count" id="searchResults"></span>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <nav class="sidebar">
+            <div class="nav-section collapsed">
+                <div class="nav-section-title" onclick="toggleSection(this)">
+                    Overview <span class="arrow">▼</span>
+                </div>
+                <div class="nav-items">
+                    <a href="#golden-rule" class="nav-item">The Golden Rule</a>
+                    <a href="#promises" class="nav-item">Our Promises</a>
+                    <a href="#system-access" class="nav-item">System Access</a>
+                </div>
+            </div>
+
+            <div class="nav-section collapsed">
+                <div class="nav-section-title" onclick="toggleSection(this)">
+                    Part 1: Auto vs Manual <span class="arrow">▼</span>
+                </div>
+                <div class="nav-items">
+                    <a href="#automatic" class="nav-item">What's Automatic</a>
+                    <a href="#manual" class="nav-item">What YOU Do</a>
+                </div>
+            </div>
+
+            <div class="nav-section collapsed">
+                <div class="nav-section-title" onclick="toggleSection(this)">
+                    Part 2: Booking Platform <span class="arrow">▼</span>
+                </div>
+                <div class="nav-items">
+                    <a href="#login" class="nav-item">Logging In</a>
+                    <a href="#dashboard-tabs" class="nav-item">Dashboard Tabs</a>
+                    <a href="#create-event" class="nav-item">Creating Events</a>
+                    <a href="#view-bookings" class="nav-item">Viewing Bookings</a>
+                    <a href="#assign-guide" class="nav-item">Assigning Guides</a>
+                    <a href="#schedule-tour" class="nav-item">Scheduling Tours</a>
+                    <a href="#check-in" class="nav-item">Checking Families In</a>
+                    <a href="#briefing-cards" class="nav-item">Briefing Cards</a>
+                    <a href="#no-show" class="nav-item">No-Shows</a>
+                    <a href="#decline" class="nav-item">Declining Bookings</a>
+                    <a href="#outcomes" class="nav-item">Recording Outcomes</a>
+                    <a href="#notes" class="nav-item">Adding Notes</a>
+                </div>
+            </div>
+
+            <div class="nav-section collapsed">
+                <div class="nav-section-title" onclick="toggleSection(this)">
+                    Part 3: Tour Guides <span class="arrow">▼</span>
+                </div>
+                <div class="nav-items">
+                    <a href="#add-guide" class="nav-item">Adding Guides</a>
+                    <a href="#remove-guide" class="nav-item">Removing Guides</a>
+                    <a href="#guide-notifications" class="nav-item">What Guides Receive</a>
+                    <a href="#guide-feedback" class="nav-item">Guide Feedback</a>
+                </div>
+            </div>
+
+            <div class="nav-section collapsed">
+                <div class="nav-section-title" onclick="toggleSection(this)">
+                    Part 4: Email Templates <span class="arrow">▼</span>
+                </div>
+                <div class="nav-items">
+                    <a href="#view-templates" class="nav-item">Viewing Templates</a>
+                    <a href="#template-types" class="nav-item">Template Types</a>
+                    <a href="#edit-template" class="nav-item">Editing Templates</a>
+                    <a href="#merge-fields" class="nav-item">Merge Fields</a>
+                    <a href="#email-timing" class="nav-item">Adjusting Timing</a>
+                </div>
+            </div>
+
+            <div class="nav-section collapsed">
+                <div class="nav-section-title" onclick="toggleSection(this)">
+                    Part 5: Enquiry Process <span class="arrow">▼</span>
+                </div>
+                <div class="nav-items">
+                    <a href="#online-enquiry" class="nav-item">Online Enquiries</a>
+                    <a href="#phone-enquiry" class="nav-item">Phone Enquiries</a>
+                    <a href="#prospectus" class="nav-item">Personalised Prospectus</a>
+                    <a href="#booking-tour" class="nav-item">Booking a Tour</a>
+                    <a href="#2-5-10" class="nav-item">The 2-5-10 System</a>
+                </div>
+            </div>
+
+            <div class="nav-section collapsed">
+                <div class="nav-section-title" onclick="toggleSection(this)">
+                    Part 6: SMART CRM <span class="arrow">▼</span>
+                </div>
+                <div class="nav-items">
+                    <a href="#crm-dashboard" class="nav-item">CRM Dashboard</a>
+                    <a href="#crm-tabs" class="nav-item">Dashboard Tabs</a>
+                    <a href="#view-enquiries" class="nav-item">Viewing Enquiries</a>
+                    <a href="#create-enquiry" class="nav-item">Creating Enquiries</a>
+                    <a href="#enquiry-status" class="nav-item">Enquiry Statuses</a>
+                    <a href="#prospectus-link" class="nav-item">Prospectus Links</a>
+                    <a href="#add-notes" class="nav-item">Adding Notes</a>
+                    <a href="#log-calls" class="nav-item">Logging Phone Calls</a>
+                    <a href="#crm-tasks" class="nav-item">Tasks & Follow-ups</a>
+                    <a href="#smart-reply" class="nav-item">AI Email (SMART Reply)</a>
+                    <a href="#crm-analytics" class="nav-item">Analytics</a>
+                </div>
+            </div>
+
+            <div class="nav-section collapsed">
+                <div class="nav-section-title" onclick="toggleSection(this)">
+                    Part 7: Open Days <span class="arrow">▼</span>
+                </div>
+                <div class="nav-items">
+                    <a href="#before-event" class="nav-item">Before the Event</a>
+                    <a href="#on-the-day" class="nav-item">On the Day</a>
+                    <a href="#after-event" class="nav-item">After the Event</a>
+                </div>
+            </div>
+
+            <div class="nav-section collapsed">
+                <div class="nav-section-title" onclick="toggleSection(this)">
+                    Part 8: Analytics <span class="arrow">▼</span>
+                </div>
+                <div class="nav-items">
+                    <a href="#feedback" class="nav-item">Viewing Feedback</a>
+                    <a href="#conversion" class="nav-item">Conversion Rates</a>
+                    <a href="#targets" class="nav-item">Our Targets</a>
+                </div>
+            </div>
+
+            <div class="nav-section collapsed">
+                <div class="nav-section-title" onclick="toggleSection(this)">
+                    Part 9: Call Scripts <span class="arrow">▼</span>
+                </div>
+                <div class="nav-items">
+                    <a href="#first-call" class="nav-item">First Call Script</a>
+                    <a href="#voicemail" class="nav-item">Voicemail Script</a>
+                    <a href="#day2-script" class="nav-item">Day 2 Script</a>
+                    <a href="#day5-script" class="nav-item">Day 5 Script</a>
+                    <a href="#day10-script" class="nav-item">Day 10 Script</a>
+                    <a href="#common-questions" class="nav-item">Common Questions</a>
+                </div>
+            </div>
+
+            <div class="nav-section collapsed">
+                <div class="nav-section-title" onclick="toggleSection(this)">
+                    Part 10: Daily Routine <span class="arrow">▼</span>
+                </div>
+                <div class="nav-items">
+                    <a href="#daily-schedule" class="nav-item">Daily Schedule</a>
+                    <a href="#daily-checklist" class="nav-item">Daily Checklist</a>
+                    <a href="#weekly-checklist" class="nav-item">Weekly Checklist</a>
+                    <a href="#monthly-checklist" class="nav-item">Monthly Checklist</a>
+                </div>
+            </div>
+
+            <div class="nav-section collapsed">
+                <div class="nav-section-title" onclick="toggleSection(this)">
+                    Part 11: Quick Reference <span class="arrow">▼</span>
+                </div>
+                <div class="nav-items">
+                    <a href="#where-to-find" class="nav-item">Where to Find Things</a>
+                    <a href="#troubleshooting" class="nav-item">Troubleshooting</a>
+                    <a href="#escalate" class="nav-item">When to Escalate</a>
+                    <a href="#contacts" class="nav-item">Emergency Contacts</a>
+                </div>
+            </div>
+        </nav>
+
+        <main class="main-content">
+            <!-- OVERVIEW -->
+            <section class="section" id="golden-rule">
+                <h2>The Golden Rule</h2>
+                <div class="golden-rule">
+                    <h3>Every enquiry represents a potential £150,000+ relationship.</h3>
+                    <p>A family choosing More House for their daughter from Year 7 through Sixth Form will invest over £150,000 in fees. That's not counting siblings.</p>
+                    <p><strong>Treat every contact accordingly.</strong></p>
+                </div>
+            </section>
+
+            <section class="section" id="promises">
+                <h2>Our Promises to Families</h2>
+                <table>
+                    <tr><th>Promise</th><th>Standard</th></tr>
+                    <tr><td>First response</td><td><strong>Within 2 hours</strong></td></tr>
+                    <tr><td>Tour offered</td><td>Within 5 working days</td></tr>
+                    <tr><td>Post-visit follow-up</td><td>Day 2 phone call</td></tr>
+                    <tr><td>Out-of-hours</td><td>Emily chatbot responds 24/7</td></tr>
+                </table>
+                <h4>Office Hours</h4>
+                <ul>
+                    <li>Monday to Friday: 8:30am - 5:30pm</li>
+                    <li>Saturday (term time): 9:00am - 1:00pm</li>
+                </ul>
+            </section>
+
+            <section class="section" id="system-access">
+                <h2>System Access</h2>
+                <table>
+                    <tr><th>System</th><th>URL</th></tr>
+                    <tr><td>Booking Platform</td><td><code>https://smart-bookings-more-house.onrender.com</code></td></tr>
+                    <tr><td>CRM Dashboard</td><td><code>https://smart-crm-more-house.onrender.com/dashboard.html</code></td></tr>
+                </table>
+                <div class="info-box">
+                    <strong>Support:</strong> Robert Ottley - bob.ottley@bsmart-ai.com / 07879 433298
+                </div>
+            </section>
+
+            <!-- PART 1 -->
+            <section class="section" id="automatic">
+                <h2>Part 1: What the System Does Automatically</h2>
+                <p>You don't need to do these - the system handles them:</p>
+                <table>
+                    <tr><th>What</th><th>When</th></tr>
+                    <tr><td>Personalised prospectus generated</td><td>Instantly when online enquiry submitted</td></tr>
+                    <tr><td>Booking confirmation email</td><td>Instantly when tour/event booked</td></tr>
+                    <tr><td>Reminder email (7 days before)</td><td>7 days before tour/event</td></tr>
+                    <tr><td>Reminder email (1 day before)</td><td>1 day before tour/event</td></tr>
+                    <tr><td>Thank you email (after tour)</td><td>Day 1 after tour (if checked in)</td></tr>
+                    <tr><td>No-show follow-up email</td><td>If they don't attend</td></tr>
+                    <tr><td>Tour guide assignment notification</td><td>When you assign a guide</td></tr>
+                    <tr><td>Tour guide reminders</td><td>3 days and 1 day before</td></tr>
+                    <tr><td>Calendar invite to tour guide</td><td>When assigned (iCal attachment)</td></tr>
+                    <tr><td>Daily task email to you</td><td>8:00am every day</td></tr>
+                </table>
+                <div class="info-box">
+                    <strong>For online enquiries:</strong> The prospectus is generated automatically when they submit the form. You just need to email them the link.<br><br>
+                    <strong>For phone enquiries:</strong> You create the enquiry in the CRM, which generates the prospectus link. Then you email it to them.
+                </div>
+            </section>
+
+            <section class="section" id="manual">
+                <h2>What YOU Do</h2>
+                <p>Your job is the personal touch that the system can't do:</p>
+                <table>
+                    <tr><th>Task</th><th>When</th><th>Where</th></tr>
+                    <tr><td><strong>Email prospectus link</strong></td><td>IMMEDIATELY when you see a new enquiry</td><td>Copy link from CRM</td></tr>
+                    <tr><td><strong>Log phone enquiries</strong></td><td>When someone phones in</td><td>CRM → New Enquiry</td></tr>
+                    <tr><td><strong>First contact phone call</strong></td><td>Within 2 hours of enquiry</td><td>Call them</td></tr>
+                    <tr><td><strong>Create events</strong></td><td>Before each Open Day/Taster Day</td><td>Booking Platform</td></tr>
+                    <tr><td><strong>Assign tour guides</strong></td><td>When booking confirmed</td><td>Booking Platform</td></tr>
+                    <tr><td><strong>Check families in</strong></td><td>On the day of their visit</td><td>Booking Platform</td></tr>
+                    <tr><td><strong>Day 2 phone call</strong></td><td>2 days after tour</td><td>System reminds you</td></tr>
+                    <tr><td><strong>Day 5 phone call</strong></td><td>5 days after tour</td><td>System reminds you</td></tr>
+                    <tr><td><strong>Day 10 phone call</strong></td><td>10 days after tour</td><td>System reminds you</td></tr>
+                    <tr><td><strong>Record outcomes</strong></td><td>After following up</td><td>Booking Platform</td></tr>
+                </table>
+            </section>
+
+            <!-- PART 2 -->
+            <section class="section" id="login">
+                <h2>Part 2: The Booking Platform</h2>
+                <h3>Logging In</h3>
+                <table>
+                    <tr><td><strong>URL</strong></td><td><code>https://smart-bookings-more-house.onrender.com</code></td></tr>
+                    <tr><td><strong>Username</strong></td><td>Your email</td></tr>
+                    <tr><td><strong>Password</strong></td><td>Your password</td></tr>
+                    <tr><td><strong>Session</strong></td><td>24 hours</td></tr>
+                </table>
+            </section>
+
+            <section class="section" id="dashboard-tabs">
+                <h3>Dashboard Tabs</h3>
+                <table>
+                    <tr><th>Tab</th><th>What It's For</th></tr>
+                    <tr><td>SMART Dashboard</td><td>Main view - see all bookings, check families in</td></tr>
+                    <tr><td>SMART Events & Tours</td><td>Create and manage Open Days, Taster Days</td></tr>
+                    <tr><td>SMART Tour Guides</td><td>Add and manage tour guides</td></tr>
+                    <tr><td>SMART Survey Analytics</td><td>View feedback and conversion rates</td></tr>
+                    <tr><td>SMART Settings</td><td>Email templates, timing, configuration</td></tr>
+                </table>
+            </section>
+
+            <section class="section" id="create-event">
+                <h3>Creating an Open Day Event</h3>
+                <div class="important">
+                    <strong>Before each Open Day, you must create the event in the system.</strong>
+                </div>
+                <ol class="steps">
+                    <li>Go to <strong>SMART Events & Tours</strong> tab</li>
+                    <li>Click <strong>Create New Event</strong></li>
+                    <li>Fill in: <strong>Title</strong> (e.g., "January Open Morning"), <strong>Date & Time</strong>, <strong>Duration</strong>, <strong>Max Capacity</strong></li>
+                    <li>Click <strong>Save</strong></li>
+                </ol>
+                <p>Families can now book this event through the website or you can book them in manually.</p>
+
+                <h4>Creating a Taster Day</h4>
+                <p>Same process - just select <strong>Taster Day</strong> as the type.</p>
+            </section>
+
+            <section class="section" id="view-bookings">
+                <h3>Viewing Bookings</h3>
+                <ol class="steps">
+                    <li>Go to <strong>SMART Dashboard</strong> tab</li>
+                    <li>See all bookings listed</li>
+                    <li>Filter by: <strong>Status</strong> (Pending, Confirmed, Checked In), <strong>Date</strong>, <strong>Type</strong></li>
+                </ol>
+            </section>
+
+            <section class="section" id="assign-guide">
+                <h3>Assigning a Tour Guide</h3>
+                <div class="important">
+                    <strong>Every tour needs a guide assigned.</strong>
+                </div>
+                <ol class="steps">
+                    <li>Open the booking details (click on it)</li>
+                    <li>Click <strong>Assign Guide</strong> button</li>
+                    <li>Select from the dropdown</li>
+                </ol>
+                <div class="success-box">
+                    System automatically sends:
+                    <ul>
+                        <li>Assignment notification email to the guide</li>
+                        <li>Calendar invite (.ics file) attached</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section class="section" id="schedule-tour">
+                <h3>Scheduling a Private Tour</h3>
+                <ol class="steps">
+                    <li>Open the booking details</li>
+                    <li>Click <strong>Schedule Tour</strong></li>
+                    <li>Select date and time</li>
+                    <li>Optionally assign a guide</li>
+                    <li>Click <strong>Confirm</strong></li>
+                </ol>
+                <p>The system sends confirmation to the family and calendar invite to the guide.</p>
+            </section>
+
+            <section class="section" id="check-in">
+                <h3>Checking Families In</h3>
+                <div class="important">
+                    <strong>CRITICAL: You must check families in when they arrive.</strong><br><br>
+                    This enables:
+                    <ul>
+                        <li>Follow-up emails to be sent</li>
+                        <li>Feedback collection</li>
+                        <li>Analytics tracking</li>
+                    </ul>
+                </div>
+
+                <h4>On the Day of an Open Day:</h4>
+                <ol class="steps">
+                    <li>Go to <strong>SMART Events & Tours</strong></li>
+                    <li>Click on the event</li>
+                    <li>Click <strong>View Briefing Cards</strong></li>
+                    <li>Find each family as they arrive</li>
+                    <li>Click <strong>Check In</strong> next to their name</li>
+                </ol>
+
+                <h4>For Private Tours:</h4>
+                <ol class="steps">
+                    <li>Go to <strong>SMART Dashboard</strong></li>
+                    <li>Find the booking</li>
+                    <li>Click <strong>Check In</strong> button</li>
+                </ol>
+            </section>
+
+            <section class="section" id="briefing-cards">
+                <h3>Briefing Cards (For Tour Guides)</h3>
+                <p><strong>Before an Open Day, print briefing cards for your guides.</strong></p>
+                <ol class="steps">
+                    <li>Go to <strong>SMART Events & Tours</strong></li>
+                    <li>Click on the event</li>
+                    <li>Click <strong>View Briefing Cards</strong></li>
+                    <li>Cards are grouped by tour guide</li>
+                </ol>
+                <p>Each card shows:</p>
+                <ul>
+                    <li>Family contact details</li>
+                    <li>Daughter's name and interests</li>
+                    <li>Special requirements</li>
+                    <li>Notes from previous contact</li>
+                    <li>Prospectus viewing history</li>
+                </ul>
+                <p>Print or email to each guide before the event.</p>
+            </section>
+
+            <section class="section" id="no-show">
+                <h3>If They Don't Show Up</h3>
+                <ol class="steps">
+                    <li>Open the booking</li>
+                    <li>Click <strong>Mark No-Show</strong></li>
+                    <li>System records timestamp</li>
+                </ol>
+                <div class="success-box">
+                    No-show follow-up email sent automatically (within 24 hours)
+                </div>
+            </section>
+
+            <section class="section" id="decline">
+                <h3>Declining a Booking (with Alternatives)</h3>
+                <p>If a date doesn't work:</p>
+                <ol class="steps">
+                    <li>Open the booking</li>
+                    <li>Click <strong>Decline Booking</strong></li>
+                    <li>Enter reason</li>
+                    <li>Add alternative dates/times</li>
+                </ol>
+                <p>Family receives email with link to accept an alternative.</p>
+            </section>
+
+            <section class="section" id="outcomes">
+                <h3>Recording Outcomes</h3>
+                <p><strong>Track what happens after each tour.</strong></p>
+                <ol class="steps">
+                    <li>Open the booking</li>
+                    <li>Scroll to <strong>Outcome</strong> section</li>
+                    <li>Click <strong>Record Outcome</strong></li>
+                    <li>Select: <strong>Interested</strong>, <strong>Applied</strong>, <strong>Enrolled</strong>, or <strong>Declined</strong></li>
+                    <li>Add notes</li>
+                    <li>Save</li>
+                </ol>
+                <p>This feeds into your conversion analytics.</p>
+            </section>
+
+            <section class="section" id="notes">
+                <h3>Adding Notes to a Booking</h3>
+                <ol class="steps">
+                    <li>Open the booking details</li>
+                    <li>Click <strong>Add Note</strong></li>
+                    <li>Type your observation</li>
+                </ol>
+                <p>Note is saved with your name and timestamp. Visible to all admissions staff and shared with CRM.</p>
+            </section>
+
+            <!-- PART 3 -->
+            <section class="section" id="add-guide">
+                <h2>Part 3: Tour Guide Management</h2>
+                <h3>Adding a New Tour Guide</h3>
+                <ol class="steps">
+                    <li>Go to <strong>SMART Tour Guides</strong> tab</li>
+                    <li>Click <strong>Add Guide</strong></li>
+                    <li>Fill in: Name, Email, Phone, Type (Staff, Sixth Former, etc.)</li>
+                    <li>Check <strong>Active</strong> status</li>
+                    <li>Save</li>
+                </ol>
+            </section>
+
+            <section class="section" id="remove-guide">
+                <h3>Removing a Tour Guide</h3>
+                <ol class="steps">
+                    <li>Go to <strong>SMART Tour Guides</strong> tab</li>
+                    <li>Click on the guide</li>
+                    <li>Uncheck <strong>Active</strong></li>
+                    <li>Save</li>
+                </ol>
+                <div class="info-box">
+                    Don't delete - just deactivate so history is preserved.
+                </div>
+            </section>
+
+            <section class="section" id="guide-notifications">
+                <h3>What Tour Guides Receive</h3>
+                <p>When you assign a guide:</p>
+                <h4>1. Assignment Email</h4>
+                <ul>
+                    <li>Family details</li>
+                    <li>Student information</li>
+                    <li>Number of attendees</li>
+                    <li>Special requirements</li>
+                    <li>Link to submit feedback after</li>
+                </ul>
+                <h4>2. Calendar Invite</h4>
+                <p>.ics file for their calendar</p>
+                <h4>3. Reminder Emails</h4>
+                <ul>
+                    <li>3 days before the tour</li>
+                    <li>1 day before the tour</li>
+                </ul>
+            </section>
+
+            <section class="section" id="guide-feedback">
+                <h3>Tour Guide Feedback</h3>
+                <p>After the tour, guides can submit observations:</p>
+                <ol class="steps">
+                    <li>They click the feedback link in their assignment email</li>
+                    <li>They complete the form about: student engagement, family interest level, academic observations, pastoral fit notes</li>
+                    <li>You see their feedback on the booking details page</li>
+                </ol>
+            </section>
+
+            <!-- PART 4 -->
+            <section class="section" id="view-templates">
+                <h2>Part 4: Email Templates</h2>
+                <h3>Viewing Email Templates</h3>
+                <ol class="steps">
+                    <li>Go to <strong>SMART Settings</strong> tab</li>
+                    <li>Click <strong>Email Templates</strong></li>
+                    <li>See all templates listed</li>
+                </ol>
+            </section>
+
+            <section class="section" id="template-types">
+                <h3>Template Types</h3>
+                <table>
+                    <tr><th>Template</th><th>When It's Sent</th></tr>
+                    <tr><td>Confirmation</td><td>When tour/event booked</td></tr>
+                    <tr><td>7-Day Reminder</td><td>7 days before</td></tr>
+                    <tr><td>1-Day Reminder</td><td>1 day before</td></tr>
+                    <tr><td>Follow-up</td><td>1 day after (if checked in)</td></tr>
+                    <tr><td>No-Show</td><td>When marked as no-show</td></tr>
+                    <tr><td>Decline with Alternatives</td><td>When you decline a booking</td></tr>
+                    <tr><td>Tour Guide Assignment</td><td>When guide assigned</td></tr>
+                    <tr><td>Tour Guide Reminders</td><td>3 days and 1 day before</td></tr>
+                </table>
+            </section>
+
+            <section class="section" id="edit-template">
+                <h3>Editing a Template</h3>
+                <ol class="steps">
+                    <li>Go to <strong>SMART Settings</strong> → <strong>Email Templates</strong></li>
+                    <li>Click on the template to edit</li>
+                    <li>Edit the <strong>Subject</strong> and <strong>Body</strong></li>
+                    <li>Use merge fields (see below)</li>
+                    <li>Click <strong>Save</strong></li>
+                    <li><strong>Test</strong> before committing</li>
+                </ol>
+            </section>
+
+            <section class="section" id="merge-fields">
+                <h3>Merge Fields (Personalisation)</h3>
+                <p>Use these in your templates - they get replaced with real data:</p>
+                <table>
+                    <tr><th>Field</th><th>What It Shows</th></tr>
+                    <tr><td><code>{parent_name}</code></td><td>Parent's full name</td></tr>
+                    <tr><td><code>{student_name}</code></td><td>Daughter's name</td></tr>
+                    <tr><td><code>{student_first_name}</code></td><td>Daughter's first name</td></tr>
+                    <tr><td><code>{tour_date}</code></td><td>Date of the tour</td></tr>
+                    <tr><td><code>{tour_time}</code></td><td>Time of the tour</td></tr>
+                    <tr><td><code>{event_title}</code></td><td>Name of the event</td></tr>
+                    <tr><td><code>{guide_name}</code></td><td>Assigned tour guide</td></tr>
+                    <tr><td><code>{special_requirements}</code></td><td>Any special needs noted</td></tr>
+                    <tr><td><code>{cancellation_link}</code></td><td>Link to cancel</td></tr>
+                    <tr><td><code>{feedback_link}</code></td><td>Link to give feedback</td></tr>
+                </table>
+            </section>
+
+            <section class="section" id="email-timing">
+                <h3>Adjusting Email Timing</h3>
+                <ol class="steps">
+                    <li>Go to <strong>SMART Settings</strong> → <strong>Email Timing</strong></li>
+                    <li>Set: Days before first reminder (default: 7), Days before second reminder (default: 1), Days after for follow-up (default: 1), Days before guide reminders (default: 3 and 1)</li>
+                    <li>Save</li>
+                </ol>
+            </section>
+
+            <!-- PART 5 -->
+            <section class="section" id="online-enquiry">
+                <h2>Part 5: The Enquiry Process</h2>
+                <h3>When a New Enquiry Arrives (Online)</h3>
+                <h4>First Thing in the Morning</h4>
+                <p>When you arrive at 9am, check your daily task email and the CRM for new enquiries.</p>
+                <div class="important">
+                    <strong>For each new enquiry:</strong>
+                    <ol>
+                        <li>The prospectus has already been generated automatically - find the link in the CRM</li>
+                        <li>Email them the prospectus link immediately - this engages them straight away</li>
+                        <li>Call them (within 2 hours of the enquiry arriving)</li>
+                    </ol>
+                </div>
+            </section>
+
+            <section class="section" id="phone-enquiry">
+                <h3>When Someone Phones In</h3>
+                <div class="important">
+                    <strong>CRITICAL: You must log them in the system.</strong><br><br>
+                    If someone phones to enquire, you MUST create an enquiry record while you're on the phone.
+                </div>
+                <p><strong>Go to:</strong> CRM → New Enquiry</p>
+                <p><strong>Fill in these fields as you talk:</strong></p>
+                <ul>
+                    <li>Parent/Guardian name</li>
+                    <li>Email address</li>
+                    <li>Phone number</li>
+                    <li>Daughter's name</li>
+                    <li>Daughter's date of birth</li>
+                    <li>Current school</li>
+                    <li>Year of entry interested in</li>
+                    <li>How did they hear about us?</li>
+                    <li>Any additional notes / support needs</li>
+                </ul>
+                <div class="success-box">
+                    <strong>After completing the form:</strong><br>
+                    The system automatically generates the prospectus link. Copy it and email it to them immediately.
+                </div>
+            </section>
+
+            <section class="section" id="prospectus">
+                <h3>The Personalised Prospectus</h3>
+                <div class="important">
+                    <strong>Send the link IMMEDIATELY after every first contact.</strong>
+                </div>
+                <ul>
+                    <li><strong>Online enquiries:</strong> The prospectus is generated automatically when they submit the form. Find the link in the CRM and email it to them.</li>
+                    <li><strong>Phone enquiries:</strong> When you create the enquiry in the CRM, the system generates the prospectus. Copy the link and email it.</li>
+                </ul>
+                <p><strong>Your job is to email them the link - the system generates the prospectus.</strong></p>
+
+                <h4>What to say in the email:</h4>
+                <div class="script">
+                    <strong>Subject:</strong> [Daughter's Name]'s personalised prospectus - More House<br><br>
+                    Dear [Parent Name],<br><br>
+                    Lovely to speak with you. Here's [Daughter's Name]'s personalised prospectus:<br><br>
+                    [LINK]<br><br>
+                    Looking forward to meeting you on [tour date].<br><br>
+                    Warm regards,<br>
+                    [Your Name]
+                </div>
+            </section>
+
+            <section class="section" id="booking-tour">
+                <h3>Booking a Tour</h3>
+                <h4>On the First Call</h4>
+                <p>Always book the tour while you're on the phone.</p>
+                <ol class="steps">
+                    <li>Offer two specific dates within the next 5 working days</li>
+                    <li>Confirm which one works</li>
+                    <li>Book it in the system</li>
+                </ol>
+                <div class="success-box">
+                    The system will automatically send:
+                    <ul>
+                        <li>Booking confirmation (immediately)</li>
+                        <li>Reminder (7 days before)</li>
+                        <li>Reminder (1 day before)</li>
+                    </ul>
+                    <strong>You just need to book it in the system - the emails are automatic.</strong>
+                </div>
+            </section>
+
+            <section class="section" id="2-5-10">
+                <h3>After the Tour: The 2-5-10 System</h3>
+                <p>This is where YOU add the personal touch. The system emails them on Day 1 - you CALL them on Days 2, 5, and 10.</p>
+
+                <h4>Day 1: System Sends Thank-You Email</h4>
+                <div class="success-box">
+                    <strong>You do nothing.</strong> The system automatically sends a thank-you email the day after their visit (if they were checked in).
+                </div>
+
+                <h4>Day 2: YOUR Phone Call</h4>
+                <p>Your daily task email at 8am will remind you who needs a Day 2 call.</p>
+                <div class="script">
+                    Hello [Name], it's [Your Name] from More House. I just wanted to check in after your visit. How are you feeling about things? Any questions I can help with?
+                </div>
+                <p><strong>Listen.</strong> This is a check-in, not a hard sell.</p>
+                <p><strong>After the call:</strong> Mark the task as complete and add notes.</p>
+
+                <h4>Day 5: YOUR Phone Call</h4>
+                <div class="script">
+                    Hello [Name], it's [Your Name] again. Just checking in to see how your thinking is going. Is there anything else that would help? Would a second visit or a chat with the Head be useful?
+                </div>
+
+                <h4>Day 10: YOUR Phone Call</h4>
+                <div class="script">
+                    Hello [Name], I wanted to touch base and understand where you are with your decision. Is there anything holding you back? What would help you feel confident?
+                </div>
+                <p><strong>After the call:</strong> Mark complete, add notes. Record the outcome in the booking platform.</p>
+
+                <h4>When to Stop</h4>
+                <p>Stop following up when:</p>
+                <ul>
+                    <li>They've submitted an application</li>
+                    <li>They've said they're not proceeding</li>
+                    <li>They've asked not to be contacted</li>
+                    <li>They've confirmed a place elsewhere</li>
+                </ul>
+            </section>
+
+            <!-- PART 6: SMART CRM -->
+            <section class="section" id="crm-dashboard">
+                <h2>Part 6: SMART CRM</h2>
+                <h3>CRM Dashboard</h3>
+                <p><strong>URL:</strong> <code>https://smart-crm-more-house.onrender.com/dashboard.html</code></p>
+                <p>The SMART CRM is your central hub for managing all enquiries. Login with your email and password.</p>
+            </section>
+
+            <section class="section" id="crm-tabs">
+                <h3>Dashboard Tabs</h3>
+                <table>
+                    <tr><th>Tab</th><th>What It's For</th></tr>
+                    <tr><td>SMART INTELLIGENCE</td><td>Health score and key performance metrics</td></tr>
+                    <tr><td>SMART ANALYTICS</td><td>Website traffic and conversion data (GA4)</td></tr>
+                    <tr><td>SMART ENQUIRIES</td><td>View and manage all enquiries</td></tr>
+                    <tr><td>SMART REPLY</td><td>AI-powered email generator</td></tr>
+                    <tr><td>SMART FOLLOW-UP</td><td>Tasks and reminders</td></tr>
+                    <tr><td>SMART EVENTS</td><td>Open days and events</td></tr>
+                    <tr><td>SMART CONFIGURATION</td><td>Settings and user management</td></tr>
+                </table>
+            </section>
+
+            <section class="section" id="view-enquiries">
+                <h3>Viewing Enquiries</h3>
+                <ol class="steps">
+                    <li>Click <strong>SMART ENQUIRIES</strong> tab</li>
+                    <li>See table with all prospects</li>
+                    <li>Use filters for status, age group, or interest</li>
+                    <li>Click any row to see full details</li>
+                </ol>
+                <h4>Filter Options</h4>
+                <ul>
+                    <li><strong>By Status:</strong> New, Contacted, Interested, Following Up, Converted, Rejected, On Hold, Archived</li>
+                    <li><strong>By Interest Level:</strong> Hot, Warm, Cold</li>
+                    <li><strong>By Age Group:</strong> 9-11, 11-16, 16-18</li>
+                    <li><strong>By Assignment:</strong> My Enquiries, Unassigned, specific staff</li>
+                </ul>
+            </section>
+
+            <section class="section" id="create-enquiry">
+                <h3>Creating Enquiries (Phone Calls)</h3>
+                <div class="important">
+                    <strong>When someone phones in, you MUST create an enquiry in the CRM.</strong>
+                </div>
+                <ol class="steps">
+                    <li>Click <strong>Create Enquiry</strong> link</li>
+                    <li>Fill in family information: Parent name, email, phone</li>
+                    <li>Fill in student information: Daughter's name, age group, entry year</li>
+                    <li>Select interests and priorities</li>
+                    <li>Click <strong>Create Enquiry</strong></li>
+                </ol>
+                <div class="success-box">
+                    <strong>On submission:</strong> System automatically generates personalised prospectus. Copy the link and email it to the parent immediately.
+                </div>
+            </section>
+
+            <section class="section" id="enquiry-status">
+                <h3>Enquiry Status Workflow</h3>
+                <div class="info-box">
+                    <strong>Status Flow:</strong><br><br>
+                    <code>New</code> → <code>Contacted</code> → <code>Interested</code> → <code>Following Up</code> → <code>Converted</code><br><br>
+                    <strong>Alternative paths:</strong><br>
+                    Any status → <strong>On Hold</strong> (pause temporarily)<br>
+                    Any status → <strong>Rejected</strong> (not interested)<br>
+                    Any status → <strong>Archived</strong> (very old enquiries)
+                </div>
+                <h4>To Update Status:</h4>
+                <ol class="steps">
+                    <li>Click on the enquiry to open details</li>
+                    <li>Find the Status dropdown</li>
+                    <li>Select the new status</li>
+                    <li>Status updates automatically</li>
+                </ol>
+            </section>
+
+            <section class="section" id="prospectus-link">
+                <h3>Getting the Prospectus Link</h3>
+                <p><strong>The system generates the prospectus automatically. Your job is to email the link.</strong></p>
+                <ol class="steps">
+                    <li>Open the enquiry details</li>
+                    <li>Find the <strong>Prospectus Link</strong> section</li>
+                    <li>Click <strong>Copy Link</strong> button</li>
+                    <li>Paste into your email to the parent</li>
+                </ol>
+                <div class="info-box">
+                    <strong>If link not working:</strong> Try regenerating the prospectus, clear browser cache, or try a different browser.
+                </div>
+            </section>
+
+            <section class="section" id="add-notes">
+                <h3>Adding Notes</h3>
+                <p>Record all communications and observations:</p>
+                <ol class="steps">
+                    <li>Open the enquiry details</li>
+                    <li>Click <strong>Add Note</strong></li>
+                    <li>Select note type (Communication, Follow-up, Observation, etc.)</li>
+                    <li>Type your note</li>
+                    <li>Click Save</li>
+                </ol>
+                <p>Notes are visible to all admissions staff and include your name and timestamp.</p>
+            </section>
+
+            <section class="section" id="log-calls">
+                <h3>Logging Phone Calls</h3>
+                <div class="important">
+                    <strong>Log every phone call in the system.</strong>
+                </div>
+                <ol class="steps">
+                    <li>Go to <strong>PHONE TRACKING</strong> or open the enquiry</li>
+                    <li>Click <strong>Log Call</strong></li>
+                    <li>Select Call Type: Outbound, Inbound, Voicemail, Missed</li>
+                    <li>Select Status: Completed, No Answer, Callback Scheduled</li>
+                    <li>Add duration and notes</li>
+                    <li>Click Save</li>
+                </ol>
+                <h4>What to Record:</h4>
+                <ul>
+                    <li>Topics discussed</li>
+                    <li>Interest level</li>
+                    <li>Any objections raised</li>
+                    <li>Next steps agreed</li>
+                    <li>Callback scheduled (date/time)</li>
+                </ul>
+            </section>
+
+            <section class="section" id="crm-tasks">
+                <h3>Tasks & Follow-ups (SMART Follow-Up)</h3>
+                <p>Track tasks, set reminders, and manage follow-up actions.</p>
+                <h4>Creating a Task:</h4>
+                <ol class="steps">
+                    <li>Open the enquiry details</li>
+                    <li>Click <strong>Add Task</strong></li>
+                    <li>Enter task description</li>
+                    <li>Set due date</li>
+                    <li>Select priority (High/Medium/Low)</li>
+                    <li>Click Save</li>
+                </ol>
+                <h4>Task Dashboard:</h4>
+                <ul>
+                    <li><strong>Overdue Tasks</strong> - Red, urgent attention needed</li>
+                    <li><strong>Tasks Due Today</strong> - Orange, complete today</li>
+                    <li><strong>Completed This Week</strong> - Green, progress tracking</li>
+                </ul>
+                <h4>Task Actions:</h4>
+                <ul>
+                    <li><strong>Mark Complete</strong> - Check off finished tasks</li>
+                    <li><strong>Snooze</strong> - Postpone 1, 3, or 7 days</li>
+                    <li><strong>Reassign</strong> - Give to different team member</li>
+                    <li><strong>Edit/Delete</strong> - Modify or remove task</li>
+                </ul>
+            </section>
+
+            <section class="section" id="smart-reply">
+                <h3>AI Email Generator (SMART Reply)</h3>
+                <p>Generate personalised email responses using AI.</p>
+                <ol class="steps">
+                    <li>Go to <strong>SMART REPLY</strong> tab</li>
+                    <li>Select the enquiry from dropdown</li>
+                    <li>Select email template (Welcome, Prospectus, Follow-up, etc.)</li>
+                    <li>Click <strong>Generate Email</strong></li>
+                    <li>Review and edit the AI draft</li>
+                    <li>Click <strong>Send Now</strong> or <strong>Schedule</strong></li>
+                </ol>
+                <h4>Email Templates:</h4>
+                <ul>
+                    <li><strong>Welcome Email</strong> - First contact after enquiry</li>
+                    <li><strong>Prospectus Delivery</strong> - Sharing personalised prospectus</li>
+                    <li><strong>Follow-up Email</strong> - Check-in after initial contact</li>
+                    <li><strong>Event Invitation</strong> - Invite to open day</li>
+                </ul>
+                <h4>Merge Fields:</h4>
+                <p>Use these in emails - they get replaced with real data:</p>
+                <ul>
+                    <li><code>{{firstName}}</code> - Student's first name</li>
+                    <li><code>{{familySurname}}</code> - Family surname</li>
+                    <li><code>{{parentName}}</code> - Parent/Guardian name</li>
+                    <li><code>{{prospectusLink}}</code> - Link to prospectus</li>
+                </ul>
+            </section>
+
+            <section class="section" id="crm-analytics">
+                <h3>CRM Analytics (SMART Analytics)</h3>
+                <p>Track website traffic and conversion data.</p>
+                <h4>Key Metrics:</h4>
+                <table>
+                    <tr><th>Metric</th><th>What It Shows</th></tr>
+                    <tr><td>Total Visitors</td><td>Unique website visitors</td></tr>
+                    <tr><td>Total Enquiries</td><td>Form submissions from website</td></tr>
+                    <tr><td>Conversion Rate</td><td>% of visitors who became enquiries</td></tr>
+                    <tr><td>Avg Session Duration</td><td>Time spent on site</td></tr>
+                    <tr><td>Bounce Rate</td><td>% who left without action</td></tr>
+                </table>
+                <h4>SMART Intelligence Health Score:</h4>
+                <table>
+                    <tr><th>Score</th><th>Status</th><th>Action</th></tr>
+                    <tr><td style="color: green;">80-100</td><td>Excellent</td><td>Continue current strategy</td></tr>
+                    <tr><td style="color: blue;">60-79</td><td>Good</td><td>Monitor for improvements</td></tr>
+                    <tr><td style="color: orange;">40-59</td><td>Warning</td><td>Review key metrics</td></tr>
+                    <tr><td style="color: red;">0-39</td><td>Critical</td><td>Immediate action needed</td></tr>
+                </table>
+            </section>
+
+            <!-- PART 7: OPEN DAYS -->
+            <section class="section" id="before-event">
+                <h2>Part 7: Open Days</h2>
+                <h3>Before the Event</h3>
+                <ul class="checklist">
+                    <li><strong>Create the event</strong> in the booking platform (see Part 2)</li>
+                    <li>System sends automatic reminders to booked families</li>
+                    <li><strong>Call anyone who hasn't confirmed</strong></li>
+                    <li><strong>Prepare briefing cards</strong> for tour guides</li>
+                    <li>Prepare name badges and welcome packs</li>
+                </ul>
+            </section>
+
+            <section class="section" id="on-the-day">
+                <h3>On the Day</h3>
+                <ul class="checklist">
+                    <li><strong>Check families in</strong> using the booking platform as they arrive</li>
+                    <li>Give guides their briefing cards</li>
+                    <li><strong>Log any walk-ins</strong> in the CRM (so they get follow-ups and prospectus)</li>
+                    <li>Note any no-shows</li>
+                </ul>
+            </section>
+
+            <section class="section" id="after-event">
+                <h3>After the Event</h3>
+                <ul class="checklist">
+                    <li>System sends automatic thank-you emails (to those checked in)</li>
+                    <li><strong>You: Call high-interest families on Day 2</strong></li>
+                    <li><strong>Record outcomes</strong> in the booking platform</li>
+                </ul>
+            </section>
+
+            <!-- PART 8 -->
+            <section class="section" id="feedback">
+                <h2>Part 8: Analytics & Reporting</h2>
+                <h3>Viewing Feedback</h3>
+                <ol class="steps">
+                    <li>Go to <strong>SMART Survey Analytics</strong> tab</li>
+                    <li>See: <strong>Response rate</strong> (% of families who gave feedback), <strong>Average rating</strong> (out of 5), <strong>Per-question breakdown</strong></li>
+                </ol>
+            </section>
+
+            <section class="section" id="conversion">
+                <h3>Viewing Conversion Rates</h3>
+                <ol class="steps">
+                    <li>Go to <strong>SMART Survey Analytics</strong> tab</li>
+                    <li>View <strong>Conversion Outcomes</strong> section: Interested, Applied, Enrolled, Declined</li>
+                    <li>Filter by entry year or booking type</li>
+                </ol>
+            </section>
+
+            <section class="section" id="targets">
+                <h3>Our Targets</h3>
+                <table>
+                    <tr><th>Metric</th><th>Target</th></tr>
+                    <tr><td>Enquiry to Tour</td><td><strong>70%</strong></td></tr>
+                    <tr><td>Tour to Application</td><td><strong>40%</strong></td></tr>
+                    <tr><td>First contact</td><td><strong>Under 2 hours</strong></td></tr>
+                </table>
+            </section>
+
+            <!-- PART 9 -->
+            <section class="section" id="first-call">
+                <h2>Part 9: Call Scripts</h2>
+                <h3>First Call Script (60 Seconds)</h3>
+                <h4>Opening:</h4>
+                <div class="script">
+                    Hello [Name], this is [Your Name] from More House School. Thank you for your enquiry about [Daughter's Name]. Do you have a quick moment?
+                </div>
+                <h4>Finding out more:</h4>
+                <div class="script">
+                    I'd love to understand a bit more about [Daughter's Name]...
+                    <ul>
+                        <li>What's prompted you to consider More House?</li>
+                        <li>Are there any areas where she might need support?</li>
+                    </ul>
+                </div>
+                <p><em>(You already have year group from the enquiry form - no need to ask again)</em></p>
+                <h4>Booking the tour:</h4>
+                <div class="script">
+                    I'd love to invite you for a tour. I have [Date 1] or [Date 2] - which works better?
+                </div>
+                <h4>Closing:</h4>
+                <div class="script">
+                    Perfect! You'll get a confirmation email shortly. I'll also send you the link to [Daughter's Name]'s personalised prospectus so you have a copy of it. Looking forward to meeting you!
+                </div>
+            </section>
+
+            <section class="section" id="voicemail">
+                <h3>Voicemail Script</h3>
+                <div class="script">
+                    Hello [Name], this is [Your Name] from More House School. Thank you for your enquiry about [Daughter's Name]. I'd love to have a chat. Please call me on 020 7235 2855, or I'll try again tomorrow. I've sent you an email with a personalised prospectus. Thanks!
+                </div>
+            </section>
+
+            <section class="section" id="day2-script">
+                <h3>Day 2 Call Script</h3>
+                <div class="script">
+                    Hello [Name], it's [Your Name] from More House. Just checking in after your visit on [day]. How are you feeling about things? Any questions?
+                </div>
+            </section>
+
+            <section class="section" id="day5-script">
+                <h3>Day 5 Call Script</h3>
+                <div class="script">
+                    Hello [Name], it's [Your Name] again. How's your thinking going? Is there anything else that would help - another visit, or a chat with the Head?
+                </div>
+            </section>
+
+            <section class="section" id="day10-script">
+                <h3>Day 10 Call Script</h3>
+                <div class="script">
+                    Hello [Name], I wanted to understand where you are with your decision. Is anything holding you back? What would help?
+                </div>
+            </section>
+
+            <section class="section" id="common-questions">
+                <h3>Handling Common Questions</h3>
+                <h4>"What makes you different?"</h4>
+                <div class="script">
+                    We're small by design - every girl is truly known. Class sizes are small, so your daughter gets individual attention.
+                </div>
+                <h4>"Is it expensive?"</h4>
+                <div class="script">
+                    I'll make sure you have the fee information. We also have bursaries - would you like details?
+                </div>
+                <h4>"My daughter has [specific need]"</h4>
+                <div class="script">
+                    Thank you for telling me. We have strong support for additional needs. Our SENCO can discuss this when you visit.
+                </div>
+            </section>
+
+            <!-- PART 10 -->
+            <section class="section" id="daily-schedule">
+                <h2>Part 10: Your Daily Routine</h2>
+                <h3>Daily Schedule</h3>
+                <table>
+                    <tr><th>Time</th><th>Task</th></tr>
+                    <tr><td>9:00am</td><td>Check daily task email - see who needs Day 2/5/10 calls</td></tr>
+                    <tr><td>9:00am</td><td>Check overnight enquiries - email prospectus link to each IMMEDIATELY</td></tr>
+                    <tr><td>9:30am</td><td>Start calling new enquiries</td></tr>
+                    <tr><td>10:00am</td><td>Continue first-contact calls</td></tr>
+                    <tr><td>11:00am</td><td>Book tours, assign guides, update systems</td></tr>
+                    <tr><td>12:00pm</td><td>Midday enquiry check</td></tr>
+                    <tr><td>2:00pm</td><td>Check for new enquiries</td></tr>
+                    <tr><td>3:00pm</td><td>Day 2/5/10 follow-up calls</td></tr>
+                    <tr><td>4:00pm</td><td>Check tomorrow's tours, print briefing cards</td></tr>
+                    <tr><td>4:30pm</td><td>Update CRM, record outcomes, mark tasks complete</td></tr>
+                    <tr><td>5:00pm</td><td>Final check</td></tr>
+                </table>
+            </section>
+
+            <section class="section" id="daily-checklist">
+                <h3>Daily Checklist</h3>
+                <p><strong>Before you leave:</strong></p>
+                <ul class="checklist">
+                    <li>All new enquiries called within 2 hours</li>
+                    <li>Prospectus link emailed to ALL new contacts</li>
+                    <li>All phone enquiries logged in CRM</li>
+                    <li>Tour guides assigned for upcoming tours</li>
+                    <li>Day 2/5/10 calls completed</li>
+                    <li>All families from today's tours checked in</li>
+                    <li>Tasks marked complete with notes</li>
+                    <li>Tomorrow's tours confirmed</li>
+                </ul>
+            </section>
+
+            <section class="section" id="weekly-checklist">
+                <h3>Weekly Checklist</h3>
+                <p><strong>Every Thursday at 4pm:</strong></p>
+                <ul class="checklist">
+                    <li>Review conversion analytics</li>
+                    <li>Check upcoming events are created</li>
+                    <li>Review tour guide availability</li>
+                    <li>Update email templates if needed</li>
+                    <li>Review feedback scores</li>
+                </ul>
+            </section>
+
+            <section class="section" id="monthly-checklist">
+                <h3>Monthly Checklist</h3>
+                <ul class="checklist">
+                    <li>Review last month's conversion rate</li>
+                    <li>Update event dates for next month</li>
+                    <li>Review and update tour guide list</li>
+                    <li>Adjust reminder timing if needed</li>
+                    <li>Generate and review feedback reports</li>
+                </ul>
+            </section>
+
+            <!-- PART 11 -->
+            <section class="section" id="where-to-find">
+                <h2>Part 11: Quick Reference</h2>
+                <h3>Where to Find Things</h3>
+                <table>
+                    <tr><th>What you need</th><th>Where</th></tr>
+                    <tr><td>New enquiries</td><td>CRM → Inquiries → New</td></tr>
+                    <tr><td>Create enquiry (phone calls)</td><td>CRM → New Enquiry</td></tr>
+                    <tr><td>Prospectus link</td><td>CRM → Enquiry details</td></tr>
+                    <tr><td>Book a tour</td><td>Booking Platform → Dashboard</td></tr>
+                    <tr><td>Create an event</td><td>Booking Platform → Events & Tours → Create</td></tr>
+                    <tr><td>Assign tour guide</td><td>Booking Platform → Booking details → Assign Guide</td></tr>
+                    <tr><td>Check families in</td><td>Booking Platform → Dashboard or Briefing Cards</td></tr>
+                    <tr><td>Briefing cards</td><td>Booking Platform → Events → View Briefing Cards</td></tr>
+                    <tr><td>Email templates</td><td>Booking Platform → Settings → Email Templates</td></tr>
+                    <tr><td>Analytics</td><td>Booking Platform → Survey Analytics</td></tr>
+                    <tr><td>Today's tasks</td><td>Check your 8am email</td></tr>
+                </table>
+            </section>
+
+            <section class="section" id="troubleshooting">
+                <h3>Troubleshooting</h3>
+                <h4>Can't log in?</h4>
+                <ul>
+                    <li>Check CAPS LOCK</li>
+                    <li>Clear browser cache</li>
+                    <li>Try incognito mode</li>
+                    <li>Use password reset</li>
+                </ul>
+                <h4>Enquiry not showing?</h4>
+                <ul>
+                    <li>Check filters</li>
+                    <li>Refresh the page</li>
+                    <li>Search by name</li>
+                </ul>
+                <h4>Email not sending?</h4>
+                <ul>
+                    <li>Check Settings → Email Configuration</li>
+                    <li>Test connection</li>
+                    <li>Check spam folder</li>
+                </ul>
+                <h4>Guide not receiving notification?</h4>
+                <ul>
+                    <li>Verify guide email in Tour Guides list</li>
+                    <li>Check if guide is marked as Active</li>
+                    <li>Re-assign guide to resend</li>
+                </ul>
+                <h4>Can't see feedback?</h4>
+                <ul>
+                    <li>Family must have been checked in</li>
+                    <li>Family must have received and completed feedback form</li>
+                    <li>Allow 24 hours after visit</li>
+                </ul>
+            </section>
+
+            <section class="section" id="escalate">
+                <h3>When to Escalate</h3>
+                <table>
+                    <tr><th>Type</th><th>Action</th></tr>
+                    <tr><td><strong>Handle now</strong></td><td>Response complaints, urgent admissions, SENCO questions</td></tr>
+                    <tr><td><strong>Same day</strong></td><td>Fee queries, bursary requests, complex needs</td></tr>
+                    <tr><td><strong>Refer to Head</strong></td><td>Formal complaints, safeguarding, media</td></tr>
+                </table>
+            </section>
+
+            <section class="section" id="contacts">
+                <h3>Emergency Contacts</h3>
+                <table>
+                    <tr><td><strong>Technical Support</strong></td><td>Robert Ottley - bob.ottley@bsmart-ai.com / 07879 433298</td></tr>
+                </table>
+            </section>
+
+            <section class="section">
+                <h2>Remember</h2>
+                <div class="golden-rule">
+                    <p><strong>Every enquiry = potentially £150,000+</strong></p>
+                    <p><strong>Every phone call = someone's big decision</strong></p>
+                    <p><strong>Every tour = a first impression</strong></p>
+                    <p><strong>Every follow-up = proof that we care</strong></p>
+                    <p><strong>Every check-in = enables the system to work</strong></p>
+                    <br>
+                    <p>The system handles the emails. <strong>You bring the personal touch.</strong></p>
+                </div>
+            </section>
+
+            <footer style="text-align: center; padding: 30px; color: #718096; font-size: 0.9rem;">
+                Version 5.0 | December 2025 | More House School
+            </footer>
+        </main>
+    </div>
+
+    <a href="#" class="back-to-top" id="backToTop">↑</a>
+
+    <script>
+        // Toggle sidebar sections
+        function toggleSection(element) {
+            element.parentElement.classList.toggle('collapsed');
+        }
+
+        // Search functionality
+        function searchContent() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const sections = document.querySelectorAll('.section');
+            let matchCount = 0;
+
+            // Remove existing highlights
+            document.querySelectorAll('.highlight').forEach(el => {
+                el.outerHTML = el.innerHTML;
+            });
+
+            if (searchTerm.length < 2) {
+                document.getElementById('searchResults').textContent = '';
+                sections.forEach(section => section.style.display = 'block');
+                return;
+            }
+
+            sections.forEach(section => {
+                const text = section.textContent.toLowerCase();
+                if (text.includes(searchTerm)) {
+                    section.style.display = 'block';
+                    matchCount++;
+
+                    // Highlight matches
+                    const walker = document.createTreeWalker(
+                        section,
+                        NodeFilter.SHOW_TEXT,
+                        null,
+                        false
+                    );
+
+                    const nodesToHighlight = [];
+                    while (walker.nextNode()) {
+                        if (walker.currentNode.textContent.toLowerCase().includes(searchTerm)) {
+                            nodesToHighlight.push(walker.currentNode);
+                        }
+                    }
+
+                    nodesToHighlight.forEach(node => {
+                        const regex = new RegExp(`(${searchTerm})`, 'gi');
+                        const newHTML = node.textContent.replace(regex, '<span class="highlight">$1</span>');
+                        const span = document.createElement('span');
+                        span.innerHTML = newHTML;
+                        node.parentNode.replaceChild(span, node);
+                    });
+                } else {
+                    section.style.display = 'none';
+                }
+            });
+
+            document.getElementById('searchResults').textContent = matchCount + ' section' + (matchCount !== 1 ? 's' : '') + ' found';
+        }
+
+        // Active nav item
+        function updateActiveNav() {
+            const sections = document.querySelectorAll('.section');
+            const navItems = document.querySelectorAll('.nav-item');
+
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                if (window.scrollY >= sectionTop - 150) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            navItems.forEach(item => {
+                item.classList.remove('active');
+                if (item.getAttribute('href') === '#' + current) {
+                    item.classList.add('active');
+                }
+            });
+        }
+
+        // Back to top button
+        function toggleBackToTop() {
+            const btn = document.getElementById('backToTop');
+            if (window.scrollY > 300) {
+                btn.classList.add('visible');
+            } else {
+                btn.classList.remove('visible');
+            }
+        }
+
+        // Smooth scroll for nav items
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+
+        // Event listeners
+        window.addEventListener('scroll', () => {
+            updateActiveNav();
+            toggleBackToTop();
+        });
+
+        document.getElementById('backToTop').addEventListener('click', (e) => {
+            e.preventDefault();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        // Initialize
+        updateActiveNav();
+    </script>
+</body>
+</html>
