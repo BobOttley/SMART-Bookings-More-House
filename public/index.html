@@ -21,6 +21,14 @@
       --danger: #EF4444;
     }
 
+    /* Booking details panels - MUST start hidden */
+    .booking-details-panel {
+      display: none !important;
+    }
+    .booking-details-panel.expanded {
+      display: block !important;
+    }
+
     * {
       margin: 0;
       padding: 0;
@@ -2079,8 +2087,8 @@
       if (window.toggleBookingDetails) {
         window.toggleBookingDetails(bookingId);
       } else {
-        // Fallback: manually expand
-        bookingElement.style.display = 'block';
+        // Fallback: manually expand using class
+        bookingElement.classList.add('expanded');
         const toggle = document.getElementById(`booking-${bookingId}-toggle`);
         if (toggle) toggle.textContent = '▲';
       }
@@ -2548,7 +2556,7 @@
               <span id="booking-${b.id}-toggle" style="font-size: 0.875rem; color: #666;">▼</span>
             </div>
           </div>
-          <div id="booking-${b.id}-details" class="booking-details-collapsed" style="display: none !important; padding: 1rem; background: white; border-top: 1px solid #e0e0e0;">
+          <div id="booking-${b.id}-details" class="booking-details-panel" style="display: none; padding: 1rem; background: white; border-top: 1px solid #e0e0e0;">
             ${renderBookingDetails(b)}
           </div>
         </div>
@@ -2848,13 +2856,11 @@
       const element = document.getElementById(`booking-${bookingId}-details`);
       const toggle = document.getElementById(`booking-${bookingId}-toggle`);
 
-      // Check if currently hidden
-      const isHidden = element.classList.contains('booking-details-collapsed') ||
-                       window.getComputedStyle(element).display === 'none';
+      // Check if currently hidden (no 'expanded' class means hidden)
+      const isHidden = !element.classList.contains('expanded');
 
       if (isHidden) {
-        element.classList.remove('booking-details-collapsed');
-        element.style.cssText = 'display: block; padding: 1rem; background: white; border-top: 1px solid #e0e0e0;';
+        element.classList.add('expanded');
         toggle.textContent = '▲';
 
         // Load CRM data if not already loaded
@@ -2863,8 +2869,7 @@
           await loadBookingCRMData(bookingId);
         }
       } else {
-        element.classList.add('booking-details-collapsed');
-        element.style.cssText = 'display: none !important; padding: 1rem; background: white; border-top: 1px solid #e0e0e0;';
+        element.classList.remove('expanded');
         toggle.textContent = '▼';
       }
     }
