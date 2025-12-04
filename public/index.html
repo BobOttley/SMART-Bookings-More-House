@@ -1835,7 +1835,7 @@
       });
     }
 
-    // Unified drag-and-drop bookings renderer
+    // Organized bookings renderer - Clear sections for each booking type
     function renderUnifiedDashboardBookings(openDayBookings, tasterDayBookings, privateTourBookings, events) {
       const container = document.getElementById('dashboard-unified-list');
 
@@ -1845,471 +1845,173 @@
         eventsMap[e.id] = e;
       });
 
-      // Create unified booking items array with metadata
-      const unifiedItems = [];
+      // ============ OPEN DAYS SECTION ============
+      const openDayEvents = Object.values(eventsMap).filter(e => e.event_type === 'open_day').sort((a, b) =>
+        new Date(a.event_date) - new Date(b.event_date)
+      );
 
-      // Add Open Day events as groups
-      const openDayEvents = Object.values(eventsMap).filter(e => e.event_type === 'open_day');
-      openDayEvents.forEach(event => {
-        const eventBookings = openDayBookings.filter(b => b.event_id === event.id);
+      let openDaysHTML = `
+        <div class="booking-section" style="margin-bottom: 2rem;">
+          <div style="background: linear-gradient(135deg, #FF9F1C 0%, #F4A020 100%); color: white; padding: 1rem 1.5rem; border-radius: 8px 8px 0 0; display: flex; justify-content: space-between; align-items: center;">
+            <h2 style="margin: 0; font-size: 1.25rem; font-weight: 600;">OPEN DAYS</h2>
+            <span style="background: rgba(255,255,255,0.2); padding: 0.5rem 1rem; border-radius: 4px; font-weight: 600;">${openDayBookings.length} bookings</span>
+          </div>
+          <div style="background: white; border: 1px solid #e0e0e0; border-top: none; border-radius: 0 0 8px 8px;">
+      `;
 
-        unifiedItems.push({
-          type: 'open_day',
-          id: `event-${event.id}`,
-          event: event,
-          bookings: eventBookings,
-          sortKey: event.event_date || '9999-12-31'
+      if (openDayEvents.length === 0) {
+        openDaysHTML += `<div style="padding: 2rem; text-align: center; color: #666;">No upcoming open days scheduled</div>`;
+      } else {
+        openDayEvents.forEach(event => {
+          const eventBookings = openDayBookings.filter(b => b.event_id === event.id);
+          openDaysHTML += renderEventSection(event, eventBookings, 'open_day');
         });
-      });
+      }
 
-      // Add Taster Day events as groups
-      const tasterDayEvents = Object.values(eventsMap).filter(e => e.event_type === 'taster_day');
-      tasterDayEvents.forEach(event => {
-        const eventBookings = tasterDayBookings.filter(b => b.event_id === event.id);
+      openDaysHTML += `</div></div>`;
 
-        unifiedItems.push({
-          type: 'taster_day',
-          id: `event-${event.id}`,
-          event: event,
-          bookings: eventBookings,
-          sortKey: event.event_date || '9999-12-31'
-        });
-      });
+      // ============ PRIVATE TOURS SECTION ============
+      const privatePending = privateTourBookings.filter(b => b.status === 'pending');
+      const privateScheduled = privateTourBookings.filter(b => b.status === 'confirmed' && b.scheduled_date && !b.checked_in_at);
+      const privateCompleted = privateTourBookings.filter(b => b.checked_in_at);
 
-      // Add standalone Taster Day bookings (those without event_id) grouped by status
+      let privateToursHTML = `
+        <div class="booking-section" style="margin-bottom: 2rem;">
+          <div style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); color: white; padding: 1rem 1.5rem; border-radius: 8px 8px 0 0; display: flex; justify-content: space-between; align-items: center;">
+            <h2 style="margin: 0; font-size: 1.25rem; font-weight: 600;">PRIVATE TOURS</h2>
+            <span style="background: rgba(255,255,255,0.2); padding: 0.5rem 1rem; border-radius: 4px; font-weight: 600;">${privateTourBookings.length} bookings</span>
+          </div>
+          <div style="background: white; border: 1px solid #e0e0e0; border-top: none; border-radius: 0 0 8px 8px;">
+      `;
+
+      // Pending
+      privateToursHTML += renderBookingGroup('Pending Requests', privatePending, 'private-pending', '#f39c12');
+      // Scheduled
+      privateToursHTML += renderBookingGroup('Scheduled Tours', privateScheduled, 'private-scheduled', '#27ae60');
+      // Completed
+      privateToursHTML += renderBookingGroup('Completed Tours', privateCompleted, 'private-completed', '#3498db');
+
+      if (privateTourBookings.length === 0) {
+        privateToursHTML += `<div style="padding: 2rem; text-align: center; color: #666;">No private tour bookings</div>`;
+      }
+
+      privateToursHTML += `</div></div>`;
+
+      // ============ TASTER DAYS SECTION ============
+      const tasterDayEvents = Object.values(eventsMap).filter(e => e.event_type === 'taster_day').sort((a, b) =>
+        new Date(a.event_date) - new Date(b.event_date)
+      );
       const standaloneTasterDays = tasterDayBookings.filter(b => !b.event_id);
       const tasterPending = standaloneTasterDays.filter(b => b.status === 'pending');
       const tasterScheduled = standaloneTasterDays.filter(b => b.status === 'confirmed' && b.scheduled_date && !b.checked_in_at);
       const tasterCompleted = standaloneTasterDays.filter(b => b.checked_in_at);
-      const tasterOther = standaloneTasterDays.filter(b => !b.checked_in_at && b.status !== 'pending' && !(b.status === 'confirmed' && b.scheduled_date));
 
-      unifiedItems.push({
-        type: 'taster_day_pending',
-        id: 'taster-pending',
-        bookings: tasterPending,
-        sortKey: '0000-00-01' // Sort to top, just after private tour pending
-      });
+      let tasterDaysHTML = `
+        <div class="booking-section" style="margin-bottom: 2rem;">
+          <div style="background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%); color: white; padding: 1rem 1.5rem; border-radius: 8px 8px 0 0; display: flex; justify-content: space-between; align-items: center;">
+            <h2 style="margin: 0; font-size: 1.25rem; font-weight: 600;">TASTER DAYS</h2>
+            <span style="background: rgba(255,255,255,0.2); padding: 0.5rem 1rem; border-radius: 4px; font-weight: 600;">${tasterDayBookings.length} bookings</span>
+          </div>
+          <div style="background: white; border: 1px solid #e0e0e0; border-top: none; border-radius: 0 0 8px 8px;">
+      `;
 
-      unifiedItems.push({
-        type: 'taster_day_scheduled',
-        id: 'taster-scheduled',
-        bookings: tasterScheduled,
-        sortKey: tasterScheduled.length > 0 ? (tasterScheduled[0].scheduled_date || '5000-00-01') : '5000-00-01'
-      });
-
-      unifiedItems.push({
-        type: 'taster_day_completed',
-        id: 'taster-completed',
-        bookings: tasterCompleted,
-        sortKey: '9999-00-01'
-      });
-
-      unifiedItems.push({
-        type: 'taster_day_other',
-        id: 'taster-other',
-        bookings: tasterOther,
-        sortKey: '9999-99-98'
-      });
-
-      // Add Private Tour groups (always show even if empty)
-      const pending = privateTourBookings.filter(b => b.status === 'pending');
-      const scheduled = privateTourBookings.filter(b => b.status === 'confirmed' && b.scheduled_date && !b.checked_in_at);
-      const completed = privateTourBookings.filter(b => b.checked_in_at);
-      const other = privateTourBookings.filter(b => !b.checked_in_at && b.status !== 'pending' && !(b.status === 'confirmed' && b.scheduled_date));
-
-      unifiedItems.push({
-        type: 'private_tour_pending',
-        id: 'private-pending',
-        bookings: pending,
-        sortKey: '0000-00-00' // Sort to top by default
-      });
-
-      unifiedItems.push({
-        type: 'private_tour_scheduled',
-        id: 'private-scheduled',
-        bookings: scheduled,
-        sortKey: scheduled.length > 0 ? (scheduled[0].scheduled_date || '5000-00-00') : '5000-00-00'
-      });
-
-      unifiedItems.push({
-        type: 'private_tour_completed',
-        id: 'private-completed',
-        bookings: completed,
-        sortKey: '9999-00-00'
-      });
-
-      unifiedItems.push({
-        type: 'private_tour_other',
-        id: 'private-other',
-        bookings: other,
-        sortKey: '9999-99-99'
-      });
-
-      // Load custom sort order from localStorage
-      const savedOrder = localStorage.getItem('dashboard_booking_order');
-      if (savedOrder) {
-        try {
-          const orderArray = JSON.parse(savedOrder);
-          unifiedItems.sort((a, b) => {
-            const aIndex = orderArray.indexOf(a.id);
-            const bIndex = orderArray.indexOf(b.id);
-            if (aIndex === -1 && bIndex === -1) return a.sortKey.localeCompare(b.sortKey);
-            if (aIndex === -1) return 1;
-            if (bIndex === -1) return -1;
-            return aIndex - bIndex;
-          });
-        } catch (e) {
-          // If parsing fails, use default sort
-          unifiedItems.sort((a, b) => a.sortKey.localeCompare(b.sortKey));
-        }
-      } else {
-        // Default sort by sortKey
-        unifiedItems.sort((a, b) => a.sortKey.localeCompare(b.sortKey));
+      // Taster Day Events
+      if (tasterDayEvents.length > 0) {
+        tasterDayEvents.forEach(event => {
+          const eventBookings = tasterDayBookings.filter(b => b.event_id === event.id);
+          tasterDaysHTML += renderEventSection(event, eventBookings, 'taster_day');
+        });
       }
 
-      // Render unified list
-      container.innerHTML = unifiedItems.map(item => {
-        return renderUnifiedBookingItem(item);
-      }).join('');
+      // Standalone taster days
+      tasterDaysHTML += renderBookingGroup('Pending Requests', tasterPending, 'taster-pending', '#f39c12');
+      tasterDaysHTML += renderBookingGroup('Scheduled Taster Days', tasterScheduled, 'taster-scheduled', '#27ae60');
+      tasterDaysHTML += renderBookingGroup('Completed Taster Days', tasterCompleted, 'taster-completed', '#9b59b6');
 
-      // Add drag-and-drop event listeners
-      addDragAndDropListeners();
+      if (tasterDayBookings.length === 0 && tasterDayEvents.length === 0) {
+        tasterDaysHTML += `<div style="padding: 2rem; text-align: center; color: #666;">No taster day bookings</div>`;
+      }
+
+      tasterDaysHTML += `</div></div>`;
+
+      // Combine all sections
+      container.innerHTML = openDaysHTML + privateToursHTML + tasterDaysHTML;
 
       // Check for booking URL parameter and auto-expand/scroll to that booking
       handleBookingURLParameter();
     }
 
-    function renderUnifiedBookingItem(item) {
-      if (item.type === 'open_day') {
-        const event = item.event;
-        const eventBookings = item.bookings;
-        const pendingCount = eventBookings.filter(b => b.status === 'pending').length;
-        const confirmedCount = eventBookings.filter(b => b.status === 'confirmed').length;
-        const checkedInCount = eventBookings.filter(b => b.checked_in_at).length;
-        const totalCount = eventBookings.length;
+    // Render an event section (for Open Days and Taster Days)
+    function renderEventSection(event, eventBookings, eventType) {
+      const pendingCount = eventBookings.filter(b => b.status === 'pending').length;
+      const confirmedCount = eventBookings.filter(b => b.status === 'confirmed').length;
+      const checkedInCount = eventBookings.filter(b => b.checked_in_at).length;
+      const totalCount = eventBookings.length;
 
-        const maxCapacity = event.max_capacity || null;
-        const totalConfirmed = confirmedCount + checkedInCount;
-        const availableSpaces = maxCapacity ? maxCapacity - totalConfirmed : null;
+      const maxCapacity = event.max_capacity || null;
+      const totalConfirmed = confirmedCount + checkedInCount;
+      const availableSpaces = maxCapacity ? maxCapacity - totalConfirmed : null;
 
-        let spacesColor = '#27ae60';
-        if (availableSpaces !== null && maxCapacity) {
-          const percentFull = (totalConfirmed / maxCapacity) * 100;
-          if (percentFull >= 90) {
-            spacesColor = '#e74c3c';
-          } else if (percentFull >= 70) {
-            spacesColor = '#f39c12';
-          }
-        }
-
-        return `
-          <div class="draggable-booking-group" draggable="true" data-item-id="${item.id}" style="border-bottom: 1px solid #e0e0e0; padding: 1rem; cursor: move; background: white;">
-            <div style="display: flex; justify-content: space-between; align-items: center; ${eventBookings.length > 0 ? 'cursor: pointer;' : ''}" ${eventBookings.length > 0 ? `onclick="toggleEventBookings('dashboard-${item.id}')"` : ''}>
-              <div style="display: flex; align-items: center; gap: 0.75rem;">
-                <span style="font-size: 1.25rem;">⋮⋮</span>
-                <div>
-                  <div style="display: flex; align-items: center; gap: 0.5rem;">
-                    <span style="background: var(--award-gold); color: white; padding: 0.25rem 0.5rem; border-radius: 3px; font-size: 0.75rem; font-weight: 600;">OPEN DAY</span>
-                    <h3 style="margin: 0; font-size: 1.05rem;">${event.title}</h3>
-                  </div>
-                  <p style="margin: 0.25rem 0 0 0; color: #666; font-size: 0.875rem;">
-                    ${event.event_date ? new Date(event.event_date).toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : 'Date not set'}
-                  </p>
-                </div>
-              </div>
-              <div style="display: flex; gap: 0.75rem; align-items: center;">
-                <span style="background: #e0e0e0; color: #333; padding: 0.5rem 1rem; border-radius: 4px; font-size: 0.875rem; font-weight: 600;">${pendingCount} pending</span>
-                <span style="background: #e0e0e0; color: #333; padding: 0.5rem 1rem; border-radius: 4px; font-size: 0.875rem; font-weight: 600;">${confirmedCount} confirmed</span>
-                <span style="background: #e0e0e0; color: #333; padding: 0.5rem 1rem; border-radius: 4px; font-size: 0.875rem; font-weight: 600;">${checkedInCount} checked in</span>
-                ${availableSpaces !== null ? `
-                  <span style="background: ${spacesColor}; color: white; padding: 0.5rem 1rem; border-radius: 4px; font-size: 0.875rem; font-weight: 600;">
-                    ${availableSpaces} / ${maxCapacity} spaces
-                  </span>
-                ` : ''}
-                <span style="background: #e0e0e0; color: #333; padding: 0.5rem 1rem; border-radius: 4px; font-size: 0.875rem; font-weight: 600;">${totalCount} total</span>
-                ${eventBookings.length > 0 ? `<span id="dashboard-${item.id}-toggle" style="font-size: 1.05rem;">▼</span>` : ''}
-              </div>
-            </div>
-            ${eventBookings.length > 0 ? `
-              <div id="dashboard-${item.id}" style="display: none; margin-top: 1rem;">
-                ${eventBookings.map((b, idx) => renderBookingRow(b, idx)).join('')}
-              </div>
-            ` : ''}
-          </div>
-        `;
-      } else if (item.type === 'taster_day') {
-        const event = item.event;
-        const eventBookings = item.bookings;
-        const pendingCount = eventBookings.filter(b => b.status === 'pending').length;
-        const confirmedCount = eventBookings.filter(b => b.status === 'confirmed').length;
-        const checkedInCount = eventBookings.filter(b => b.checked_in_at).length;
-        const totalCount = eventBookings.length;
-
-        const maxCapacity = event.max_capacity || null;
-        const totalConfirmed = confirmedCount + checkedInCount;
-        const availableSpaces = maxCapacity ? maxCapacity - totalConfirmed : null;
-
-        let spacesColor = '#27ae60';
-        if (availableSpaces !== null && maxCapacity) {
-          const percentFull = (totalConfirmed / maxCapacity) * 100;
-          if (percentFull >= 90) {
-            spacesColor = '#e74c3c';
-          } else if (percentFull >= 70) {
-            spacesColor = '#f39c12';
-          }
-        }
-
-        return `
-          <div class="draggable-booking-group" draggable="true" data-item-id="${item.id}" style="border-bottom: 1px solid #e0e0e0; padding: 1rem; cursor: move; background: white;">
-            <div style="display: flex; justify-content: space-between; align-items: center; ${eventBookings.length > 0 ? 'cursor: pointer;' : ''}" ${eventBookings.length > 0 ? `onclick="toggleEventBookings('dashboard-${item.id}')"` : ''}>
-              <div style="display: flex; align-items: center; gap: 0.75rem;">
-                <span style="font-size: 1.25rem;">⋮⋮</span>
-                <div>
-                  <div style="display: flex; align-items: center; gap: 0.5rem;">
-                    <span style="background: #9b59b6; color: white; padding: 0.25rem 0.5rem; border-radius: 3px; font-size: 0.75rem; font-weight: 600;">TASTER DAY</span>
-                    <h3 style="margin: 0; font-size: 1.05rem;">${event.title}</h3>
-                  </div>
-                  <p style="margin: 0.25rem 0 0 0; color: #666; font-size: 0.875rem;">
-                    ${event.event_date ? new Date(event.event_date).toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : 'Date not set'}
-                  </p>
-                </div>
-              </div>
-              <div style="display: flex; gap: 0.75rem; align-items: center;">
-                <span style="background: #e0e0e0; color: #333; padding: 0.5rem 1rem; border-radius: 4px; font-size: 0.875rem; font-weight: 600;">${pendingCount} pending</span>
-                <span style="background: #e0e0e0; color: #333; padding: 0.5rem 1rem; border-radius: 4px; font-size: 0.875rem; font-weight: 600;">${confirmedCount} confirmed</span>
-                <span style="background: #e0e0e0; color: #333; padding: 0.5rem 1rem; border-radius: 4px; font-size: 0.875rem; font-weight: 600;">${checkedInCount} checked in</span>
-                ${availableSpaces !== null ? `
-                  <span style="background: ${spacesColor}; color: white; padding: 0.5rem 1rem; border-radius: 4px; font-size: 0.875rem; font-weight: 600;">
-                    ${availableSpaces} / ${maxCapacity} spaces
-                  </span>
-                ` : ''}
-                <span style="background: #e0e0e0; color: #333; padding: 0.5rem 1rem; border-radius: 4px; font-size: 0.875rem; font-weight: 600;">${totalCount} total</span>
-                ${eventBookings.length > 0 ? `<span id="dashboard-${item.id}-toggle" style="font-size: 1.05rem;">▼</span>` : ''}
-              </div>
-            </div>
-            ${eventBookings.length > 0 ? `
-              <div id="dashboard-${item.id}" style="display: none; margin-top: 1rem;">
-                ${eventBookings.map((b, idx) => renderBookingRow(b, idx)).join('')}
-              </div>
-            ` : ''}
-          </div>
-        `;
-      } else if (item.type === 'private_tour_pending') {
-        return `
-          <div class="draggable-booking-group" draggable="true" data-item-id="${item.id}" style="border-bottom: 1px solid #e0e0e0; padding: 1rem; cursor: move; background: white;">
-            <div style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="toggleEventBookings('dashboard-${item.id}')">
-              <div style="display: flex; align-items: center; gap: 0.75rem;">
-                <span style="font-size: 1.25rem;">⋮⋮</span>
-                <div style="display: flex; align-items: center; gap: 0.5rem;">
-                  <span style="background: #3498db; color: white; padding: 0.25rem 0.5rem; border-radius: 3px; font-size: 0.75rem; font-weight: 600;">PRIVATE TOUR</span>
-                  <h3 style="margin: 0;">Pending Tour Requests</h3>
-                  <span style="background: #e0e0e0; color: #333; padding: 0.5rem 1rem; border-radius: 4px; font-size: 0.875rem; font-weight: 600;">${item.bookings.length}</span>
-                </div>
-              </div>
-              <span id="dashboard-${item.id}-toggle" style="font-size: 0.95rem;">▼</span>
-            </div>
-            <div id="dashboard-${item.id}" style="display: none; margin-top: 1rem;">
-              ${item.bookings.map((b, idx) => renderBookingRow(b, idx)).join('')}
-            </div>
-          </div>
-        `;
-      } else if (item.type === 'private_tour_scheduled') {
-        return `
-          <div class="draggable-booking-group" draggable="true" data-item-id="${item.id}" style="border-bottom: 1px solid #e0e0e0; padding: 1rem; cursor: move; background: white;">
-            <div style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="toggleEventBookings('dashboard-${item.id}')">
-              <div style="display: flex; align-items: center; gap: 0.75rem;">
-                <span style="font-size: 1.25rem;">⋮⋮</span>
-                <div style="display: flex; align-items: center; gap: 0.5rem;">
-                  <span style="background: #3498db; color: white; padding: 0.25rem 0.5rem; border-radius: 3px; font-size: 0.75rem; font-weight: 600;">PRIVATE TOUR</span>
-                  <h3 style="margin: 0;">Scheduled Tours</h3>
-                  <span style="background: #e0e0e0; color: #333; padding: 0.5rem 1rem; border-radius: 4px; font-size: 0.875rem; font-weight: 600;">${item.bookings.length}</span>
-                </div>
-              </div>
-              <span id="dashboard-${item.id}-toggle" style="font-size: 0.95rem;">▼</span>
-            </div>
-            <div id="dashboard-${item.id}" style="display: none; margin-top: 1rem;">
-              ${item.bookings.map((b, idx) => renderBookingRow(b, idx)).join('')}
-            </div>
-          </div>
-        `;
-      } else if (item.type === 'private_tour_completed') {
-        return `
-          <div class="draggable-booking-group" draggable="true" data-item-id="${item.id}" style="border-bottom: 1px solid #e0e0e0; padding: 1rem; cursor: move; background: white;">
-            <div style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="toggleEventBookings('dashboard-${item.id}')">
-              <div style="display: flex; align-items: center; gap: 0.75rem;">
-                <span style="font-size: 1.25rem;">⋮⋮</span>
-                <div style="display: flex; align-items: center; gap: 0.5rem;">
-                  <span style="background: #3498db; color: white; padding: 0.25rem 0.5rem; border-radius: 3px; font-size: 0.75rem; font-weight: 600;">PRIVATE TOUR</span>
-                  <h3 style="margin: 0;">Completed Tours</h3>
-                  <span style="background: #e0e0e0; color: #333; padding: 0.5rem 1rem; border-radius: 4px; font-size: 0.875rem; font-weight: 600;">${item.bookings.length}</span>
-                </div>
-              </div>
-              <span id="dashboard-${item.id}-toggle" style="font-size: 0.95rem;">▼</span>
-            </div>
-            <div id="dashboard-${item.id}" style="display: none; margin-top: 1rem;">
-              ${item.bookings.map((b, idx) => renderBookingRow(b, idx)).join('')}
-            </div>
-          </div>
-        `;
-      } else if (item.type === 'private_tour_other') {
-        return `
-          <div class="draggable-booking-group" draggable="true" data-item-id="${item.id}" style="border-bottom: 1px solid #e0e0e0; padding: 1rem; cursor: move; background: white;">
-            <div style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="toggleEventBookings('dashboard-${item.id}')">
-              <div style="display: flex; align-items: center; gap: 0.75rem;">
-                <span style="font-size: 1.25rem;">⋮⋮</span>
-                <div style="display: flex; align-items: center; gap: 0.5rem;">
-                  <span style="background: #3498db; color: white; padding: 0.25rem 0.5rem; border-radius: 3px; font-size: 0.75rem; font-weight: 600;">PRIVATE TOUR</span>
-                  <h3 style="margin: 0;">Declined/Cancelled</h3>
-                  <span style="background: #e0e0e0; color: #333; padding: 0.5rem 1rem; border-radius: 4px; font-size: 0.875rem; font-weight: 600;">${item.bookings.length}</span>
-                </div>
-              </div>
-              <span id="dashboard-${item.id}-toggle" style="font-size: 0.95rem;">▼</span>
-            </div>
-            <div id="dashboard-${item.id}" style="display: none; margin-top: 1rem;">
-              ${item.bookings.map((b, idx) => renderBookingRow(b, idx)).join('')}
-            </div>
-          </div>
-        `;
-      } else if (item.type === 'taster_day_pending') {
-        return `
-          <div class="draggable-booking-group" draggable="true" data-item-id="${item.id}" style="border-bottom: 1px solid #e0e0e0; padding: 1rem; cursor: move; background: white;">
-            <div style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="toggleEventBookings('dashboard-${item.id}')">
-              <div style="display: flex; align-items: center; gap: 0.75rem;">
-                <span style="font-size: 1.25rem;">⋮⋮</span>
-                <div style="display: flex; align-items: center; gap: 0.5rem;">
-                  <span style="background: #9b59b6; color: white; padding: 0.25rem 0.5rem; border-radius: 3px; font-size: 0.75rem; font-weight: 600;">TASTER DAY</span>
-                  <h3 style="margin: 0;">Pending Taster Days</h3>
-                  <span style="background: #e0e0e0; color: #333; padding: 0.5rem 1rem; border-radius: 4px; font-size: 0.875rem; font-weight: 600;">${item.bookings.length}</span>
-                </div>
-              </div>
-              <span id="dashboard-${item.id}-toggle" style="font-size: 0.95rem;">▼</span>
-            </div>
-            <div id="dashboard-${item.id}" style="display: none; margin-top: 1rem;">
-              ${item.bookings.map((b, idx) => renderBookingRow(b, idx)).join('')}
-            </div>
-          </div>
-        `;
-      } else if (item.type === 'taster_day_scheduled') {
-        return `
-          <div class="draggable-booking-group" draggable="true" data-item-id="${item.id}" style="border-bottom: 1px solid #e0e0e0; padding: 1rem; cursor: move; background: white;">
-            <div style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="toggleEventBookings('dashboard-${item.id}')">
-              <div style="display: flex; align-items: center; gap: 0.75rem;">
-                <span style="font-size: 1.25rem;">⋮⋮</span>
-                <div style="display: flex; align-items: center; gap: 0.5rem;">
-                  <span style="background: #9b59b6; color: white; padding: 0.25rem 0.5rem; border-radius: 3px; font-size: 0.75rem; font-weight: 600;">TASTER DAY</span>
-                  <h3 style="margin: 0;">Scheduled Taster Days</h3>
-                  <span style="background: #e0e0e0; color: #333; padding: 0.5rem 1rem; border-radius: 4px; font-size: 0.875rem; font-weight: 600;">${item.bookings.length}</span>
-                </div>
-              </div>
-              <span id="dashboard-${item.id}-toggle" style="font-size: 0.95rem;">▼</span>
-            </div>
-            <div id="dashboard-${item.id}" style="display: none; margin-top: 1rem;">
-              ${item.bookings.map((b, idx) => renderBookingRow(b, idx)).join('')}
-            </div>
-          </div>
-        `;
-      } else if (item.type === 'taster_day_completed') {
-        return `
-          <div class="draggable-booking-group" draggable="true" data-item-id="${item.id}" style="border-bottom: 1px solid #e0e0e0; padding: 1rem; cursor: move; background: white;">
-            <div style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="toggleEventBookings('dashboard-${item.id}')">
-              <div style="display: flex; align-items: center; gap: 0.75rem;">
-                <span style="font-size: 1.25rem;">⋮⋮</span>
-                <div style="display: flex; align-items: center; gap: 0.5rem;">
-                  <span style="background: #9b59b6; color: white; padding: 0.25rem 0.5rem; border-radius: 3px; font-size: 0.75rem; font-weight: 600;">TASTER DAY</span>
-                  <h3 style="margin: 0;">Completed Taster Days</h3>
-                  <span style="background: #e0e0e0; color: #333; padding: 0.5rem 1rem; border-radius: 4px; font-size: 0.875rem; font-weight: 600;">${item.bookings.length}</span>
-                </div>
-              </div>
-              <span id="dashboard-${item.id}-toggle" style="font-size: 0.95rem;">▼</span>
-            </div>
-            <div id="dashboard-${item.id}" style="display: none; margin-top: 1rem;">
-              ${item.bookings.map((b, idx) => renderBookingRow(b, idx)).join('')}
-            </div>
-          </div>
-        `;
-      } else if (item.type === 'taster_day_other') {
-        return `
-          <div class="draggable-booking-group" draggable="true" data-item-id="${item.id}" style="border-bottom: 1px solid #e0e0e0; padding: 1rem; cursor: move; background: white;">
-            <div style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="toggleEventBookings('dashboard-${item.id}')">
-              <div style="display: flex; align-items: center; gap: 0.75rem;">
-                <span style="font-size: 1.25rem;">⋮⋮</span>
-                <div style="display: flex; align-items: center; gap: 0.5rem;">
-                  <span style="background: #9b59b6; color: white; padding: 0.25rem 0.5rem; border-radius: 3px; font-size: 0.75rem; font-weight: 600;">TASTER DAY</span>
-                  <h3 style="margin: 0;">Declined/Cancelled</h3>
-                  <span style="background: #e0e0e0; color: #333; padding: 0.5rem 1rem; border-radius: 4px; font-size: 0.875rem; font-weight: 600;">${item.bookings.length}</span>
-                </div>
-              </div>
-              <span id="dashboard-${item.id}-toggle" style="font-size: 0.95rem;">▼</span>
-            </div>
-            <div id="dashboard-${item.id}" style="display: none; margin-top: 1rem;">
-              ${item.bookings.map((b, idx) => renderBookingRow(b, idx)).join('')}
-            </div>
-          </div>
-        `;
+      let spacesColor = '#27ae60';
+      if (availableSpaces !== null && maxCapacity) {
+        const percentFull = (totalConfirmed / maxCapacity) * 100;
+        if (percentFull >= 90) spacesColor = '#e74c3c';
+        else if (percentFull >= 70) spacesColor = '#f39c12';
       }
+
+      const badgeColor = eventType === 'open_day' ? '#FF9F1C' : '#9b59b6';
+
+      return `
+        <div style="border-bottom: 1px solid #e0e0e0; padding: 1rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; ${eventBookings.length > 0 ? 'cursor: pointer;' : ''}" ${eventBookings.length > 0 ? `onclick="toggleEventBookings('dashboard-event-${event.id}')"` : ''}>
+            <div>
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <h3 style="margin: 0; font-size: 1.05rem;">${event.title}</h3>
+              </div>
+              <p style="margin: 0.25rem 0 0 0; color: #666; font-size: 0.875rem;">
+                ${event.event_date ? new Date(event.event_date).toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : 'Date not set'}
+              </p>
+            </div>
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+              <span style="background: #e0e0e0; color: #333; padding: 0.4rem 0.75rem; border-radius: 4px; font-size: 0.8rem; font-weight: 600;">${pendingCount} pending</span>
+              <span style="background: #e0e0e0; color: #333; padding: 0.4rem 0.75rem; border-radius: 4px; font-size: 0.8rem; font-weight: 600;">${confirmedCount} confirmed</span>
+              <span style="background: #e0e0e0; color: #333; padding: 0.4rem 0.75rem; border-radius: 4px; font-size: 0.8rem; font-weight: 600;">${checkedInCount} checked in</span>
+              ${availableSpaces !== null ? `
+                <span style="background: ${spacesColor}; color: white; padding: 0.4rem 0.75rem; border-radius: 4px; font-size: 0.8rem; font-weight: 600;">
+                  ${availableSpaces} / ${maxCapacity} spaces
+                </span>
+              ` : ''}
+              ${eventBookings.length > 0 ? `<span id="dashboard-event-${event.id}-toggle" style="font-size: 1rem;">▼</span>` : ''}
+            </div>
+          </div>
+          ${eventBookings.length > 0 ? `
+            <div id="dashboard-event-${event.id}" style="display: none; margin-top: 1rem;">
+              ${eventBookings.map((b, idx) => renderBookingRow(b, idx)).join('')}
+            </div>
+          ` : ''}
+        </div>
+      `;
     }
 
-    // Drag and drop functionality for bookings
-    let draggedBookingGroup = null;
+    // Render a booking group (Pending, Scheduled, Completed)
+    function renderBookingGroup(title, bookings, groupId, accentColor) {
+      if (bookings.length === 0) return '';
 
-    function addDragAndDropListeners() {
-      const draggables = document.querySelectorAll('.draggable-booking-group');
-
-      draggables.forEach(draggable => {
-        draggable.addEventListener('dragstart', (e) => {
-          draggedBookingGroup = draggable;
-          draggable.style.opacity = '0.5';
-          e.dataTransfer.effectAllowed = 'move';
-        });
-
-        draggable.addEventListener('dragend', (e) => {
-          draggable.style.opacity = '1';
-          draggedBookingGroup = null;
-        });
-
-        draggable.addEventListener('dragover', (e) => {
-          e.preventDefault();
-          e.dataTransfer.dropEffect = 'move';
-
-          if (draggedBookingGroup && draggedBookingGroup !== draggable) {
-            const container = draggable.parentNode;
-            const afterElement = getDragAfterElement(container, e.clientY);
-
-            if (afterElement == null) {
-              container.appendChild(draggedBookingGroup);
-            } else {
-              container.insertBefore(draggedBookingGroup, afterElement);
-            }
-          }
-        });
-
-        draggable.addEventListener('drop', (e) => {
-          e.preventDefault();
-          saveDragOrder();
-        });
-      });
-    }
-
-    function getDragAfterElement(container, y) {
-      const draggableElements = [...container.querySelectorAll('.draggable-booking-group:not(.dragging)')];
-
-      return draggableElements.reduce((closest, child) => {
-        const box = child.getBoundingClientRect();
-        const offset = y - box.top - box.height / 2;
-
-        if (offset < 0 && offset > closest.offset) {
-          return { offset: offset, element: child };
-        } else {
-          return closest;
-        }
-      }, { offset: Number.NEGATIVE_INFINITY }).element;
-    }
-
-    function saveDragOrder() {
-      const container = document.getElementById('dashboard-unified-list');
-      const items = container.querySelectorAll('.draggable-booking-group');
-      const order = Array.from(items).map(item => item.getAttribute('data-item-id'));
-      localStorage.setItem('dashboard_booking_order', JSON.stringify(order));
+      return `
+        <div style="border-bottom: 1px solid #e0e0e0; padding: 1rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="toggleEventBookings('dashboard-${groupId}')">
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+              <div style="width: 4px; height: 24px; background: ${accentColor}; border-radius: 2px;"></div>
+              <h3 style="margin: 0; font-size: 1rem;">${title}</h3>
+              <span style="background: #e0e0e0; color: #333; padding: 0.4rem 0.75rem; border-radius: 4px; font-size: 0.8rem; font-weight: 600;">${bookings.length}</span>
+            </div>
+            <span id="dashboard-${groupId}-toggle" style="font-size: 1rem;">▼</span>
+          </div>
+          <div id="dashboard-${groupId}" style="display: none; margin-top: 1rem;">
+            ${bookings.map((b, idx) => renderBookingRow(b, idx)).join('')}
+          </div>
+        </div>
+      `;
     }
 
     // Handle booking URL parameter - auto-expand and scroll to specific booking
