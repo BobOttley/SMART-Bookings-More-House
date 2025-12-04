@@ -1032,7 +1032,7 @@ app.post('/api/email-settings/test', requireAdminAuth, async (req, res) => {
 // ==================== EVENTS ENDPOINTS ====================
 
 // Get all events for a school
-app.get('/api/events', requireAdminAuth, async (req, res) => {
+app.get('/api/events', requireAdminOrApiKey, async (req, res) => {
   console.log('[API] GET /api/events - Query params:', req.query);
   try {
     const { schoolId, eventType, status, startDate, endDate, includeDeleted } = req.query;
