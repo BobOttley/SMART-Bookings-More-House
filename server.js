@@ -463,6 +463,25 @@ const requireAdminAuth = (req, res, next) => {
   });
 };
 
+// Admin auth check that also accepts API key (for cross-app communication)
+const requireAdminOrApiKey = (req, res, next) => {
+  // Check session auth first
+  if (req.session && req.session.adminEmail) {
+    return next();
+  }
+
+  // Check API key from header
+  const apiKey = req.headers['x-api-key'];
+  if (apiKey && process.env.ADMIN_API_KEY && apiKey === process.env.ADMIN_API_KEY) {
+    return next();
+  }
+
+  return res.status(401).json({
+    success: false,
+    error: 'Authentication required'
+  });
+};
+
 // Legacy authentication middleware (for old parent bookings system)
 const requireAuth = (req, res, next) => {
   if (req.session && req.session.userId) {
@@ -1730,7 +1749,7 @@ app.put('/api/bookings/:id', requireAdminAuth, async (req, res) => {
 });
 
 // Staff-initiated booking creation (from CRM)
-app.post('/api/bookings/staff-create', requireAdminAuth, async (req, res) => {
+app.post('/api/bookings/staff-create', requireAdminOrApiKey, async (req, res) => {
   console.log('[STAFF CREATE BOOKING] Received request:', JSON.stringify(req.body, null, 2));
   try {
     const {
@@ -6285,6 +6304,190 @@ app.get('/api/events/:id/briefing-cards', requireAdminAuth, async (req, res) => 
   } catch (error) {
     console.error('Get briefing cards error:', error);
     res.status(500).json({ success: false, error: 'Failed to get briefing cards data' });
+  }
+});
+
+// Get single booking briefing card data (for Private Tours and Taster Days)
+app.get('/api/bookings/:id/briefing-card', requireAdminAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Get booking with full details (same query pattern as briefing-cards)
+    const bookingResult = await pool.query(`
+      SELECT DISTINCT ON (b.id) b.*, e.title as event_title, e.event_date, e.start_time,
+             tg.name as guide_name,
+             i.age_group, i.entry_year, i.sciences, i.mathematics, i.english, i.languages, i.humanities,
+             i.business, i.drama, i.music, i.art, i.creative_writing, i.sport,
+             i.leadership, i.community_service, i.outdoor_education, i.academic_excellence,
+             i.pastoral_care, i.university_preparation, i.personal_development,
+             i.career_guidance, i.extracurricular_opportunities, i.hear_about_us
+      FROM bookings b
+      LEFT JOIN events e ON b.event_id = e.id
+      LEFT JOIN tour_guides tg ON b.assigned_guide_id = tg.id
+      LEFT JOIN inquiries i ON (b.inquiry_id = i.id OR (b.email = i.parent_email AND i.first_name = b.student_first_name))
+      WHERE b.id = $1
+    `, [id]);
+
+    if (bookingResult.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Booking not found' });
+    }
+
+    const booking = bookingResult.rows[0];
+
+    // Get school settings for logo
+    const settingsResult = await pool.query(
+      'SELECT school_name, logo_url, logo_data FROM booking_settings WHERE school_id = $1',
+      [booking.school_id || 2]
+    );
+    const settingsRow = settingsResult.rows[0] || {};
+    const settings = {
+      ...settingsRow,
+      logo_url: settingsRow.logo_data || settingsRow.logo_url
+    };
+
+    // Get notes
+    let notes = [];
+    if (booking.inquiry_id) {
+      const notesResult = await pool.query(
+        `SELECT
+          n.id,
+          n.note_text as content,
+          n.created_at,
+          n.created_by,
+          CONCAT(creator.first_name, ' ', creator.last_name) as admin_name,
+          creator.email as created_by_email
+        FROM inquiry_notes n
+        LEFT JOIN admin_users creator ON n.created_by = creator.id
+        WHERE n.inquiry_id = $1
+        ORDER BY n.created_at DESC`,
+        [booking.inquiry_id]
+      );
+      notes = notesResult.rows;
+    }
+
+    // Get email history
+    let emails = [];
+    if (booking.inquiry_id) {
+      const emailResult = await pool.query(
+        `SELECT
+          id,
+          enquiry_id,
+          direction,
+          from_email,
+          from_name,
+          to_email,
+          to_name,
+          subject,
+          body_text,
+          sent_at,
+          received_at,
+          admin_email
+        FROM email_history
+        WHERE enquiry_id = $1 AND is_deleted = false
+        ORDER BY COALESCE(sent_at, received_at) ASC`,
+        [booking.inquiry_id]
+      );
+
+      const aiEmailResult = await pool.query(
+        `SELECT
+          id,
+          inquiry_id as enquiry_id,
+          parent_email as from_email,
+          parent_name as from_name,
+          '' as to_email,
+          '' as to_name,
+          '' as subject,
+          original_email_text as original_text,
+          generated_email as body_text,
+          created_at as sent_at,
+          sentiment_score,
+          sentiment_label,
+          sentiment_reasoning,
+          'ai-generated' as direction
+        FROM email_generation_history
+        WHERE inquiry_id = $1
+        ORDER BY created_at ASC`,
+        [booking.inquiry_id]
+      );
+
+      const allEmails = [...emailResult.rows, ...aiEmailResult.rows].sort((a, b) => {
+        const timeA = new Date(a.sent_at || a.received_at);
+        const timeB = new Date(b.sent_at || b.received_at);
+        return timeA - timeB;
+      });
+      emails = allEmails;
+    }
+
+    // Get prospectus viewing visits from tracking_events table
+    let visits = [];
+    if (booking.inquiry_id) {
+      const eventsResult = await pool.query(`
+        SELECT
+          session_id,
+          event_type,
+          timestamp,
+          country,
+          event_data
+        FROM tracking_events
+        WHERE inquiry_id = $1
+        ORDER BY session_id, timestamp ASC
+      `, [booking.inquiry_id]);
+
+      const sessionsMap = new Map();
+
+      for (const event of eventsResult.rows) {
+        const sessionId = event.session_id;
+        if (!sessionsMap.has(sessionId)) {
+          sessionsMap.set(sessionId, {
+            session_id: sessionId,
+            started_at: event.timestamp,
+            ended_at: event.timestamp,
+            country: event.country,
+            sections: [],
+            total_time: 0
+          });
+        }
+
+        const session = sessionsMap.get(sessionId);
+        session.ended_at = event.timestamp;
+
+        if ((event.event_type === 'section_exit' || event.event_type === 'section_exit_enhanced') && event.event_data) {
+          const section = event.event_data.section;
+          const dwellSec = parseFloat(event.event_data.dwellSec) || 0;
+          if (section) {
+            session.sections.push({
+              section: section,
+              time_spent: dwellSec
+            });
+            session.total_time += dwellSec;
+          }
+        }
+      }
+
+      visits = Array.from(sessionsMap.values())
+        .sort((a, b) => new Date(b.started_at) - new Date(a.started_at))
+        .map((visit, index, arr) => ({
+          ...visit,
+          visit_number: arr.length - index
+        }));
+    }
+
+    const bookingWithFullData = {
+      ...booking,
+      notes: notes,
+      email_history: emails,
+      visits: visits
+    };
+
+    res.json({
+      success: true,
+      booking: bookingWithFullData,
+      settings: settings
+    });
+
+  } catch (error) {
+    console.error('Get single briefing card error:', error);
+    res.status(500).json({ success: false, error: 'Failed to get briefing card data' });
   }
 });
 

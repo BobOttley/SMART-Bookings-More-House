@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Briefing Card - More House School</title>
+    <style>
+        /* Reset and base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Georgia', serif;
+            font-size: 11pt;
+            line-height: 1.4;
+            color: #333;
+            background: #f5f5f5;
+        }
+
+        /* Screen-only styles */
+        @media screen {
+            .controls {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                background: #1a2b5c;
+                color: white;
+                padding: 15px 30px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                z-index: 1000;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            }
+
+            .controls h1 {
+                font-size: 18px;
+                font-weight: normal;
+            }
+
+            .controls-info {
+                display: flex;
+                gap: 15px;
+                align-items: center;
+            }
+
+            .controls-info span {
+                font-size: 14px;
+                opacity: 0.9;
+            }
+
+            .btn {
+                background: #FF6B9D;
+                color: white;
+                border: none;
+                padding: 10px 25px;
+                font-size: 14px;
+                cursor: pointer;
+                border-radius: 5px;
+                font-family: Arial, sans-serif;
+            }
+
+            .btn:hover {
+                background: #ff5588;
+            }
+
+            .btn-secondary {
+                background: transparent;
+                border: 1px solid white;
+            }
+
+            .btn-secondary:hover {
+                background: rgba(255,255,255,0.1);
+            }
+
+            .pack-container {
+                margin-top: 70px;
+                padding: 20px;
+            }
+
+            .family-pack {
+                background: white;
+                margin-bottom: 30px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            }
+        }
+
+        /* Print styles */
+        @media print {
+            .controls {
+                display: none !important;
+            }
+
+            body {
+                background: white;
+            }
+
+            .pack-container {
+                padding: 0;
+                margin: 0;
+            }
+
+            .family-pack {
+                box-shadow: none;
+                page-break-inside: avoid;
+            }
+        }
+
+        /* Pack styling */
+        .family-pack {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .pack-header {
+            background: #1a2b5c;
+            color: white;
+            padding: 20px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .pack-header-left h2 {
+            font-size: 18pt;
+            margin-bottom: 5px;
+        }
+
+        .pack-header-left p {
+            font-family: Arial, sans-serif;
+            font-size: 10pt;
+            opacity: 0.9;
+        }
+
+        .pack-header-right {
+            text-align: right;
+        }
+
+        .booking-type-badge {
+            background: #FF6B9D;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-family: Arial, sans-serif;
+            font-size: 10pt;
+            margin-bottom: 8px;
+            display: inline-block;
+        }
+
+        .guide-badge {
+            background: rgba(255,255,255,0.2);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-family: Arial, sans-serif;
+            font-size: 10pt;
+        }
+
+        .pack-content {
+            padding: 25px;
+        }
+
+        .section {
+            margin-bottom: 20px;
+        }
+
+        .section:last-child {
+            margin-bottom: 0;
+        }
+
+        .section-header {
+            background: #f8f9fa;
+            padding: 10px 15px;
+            font-family: Arial, sans-serif;
+            font-size: 10pt;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #1a2b5c;
+            font-weight: bold;
+            border-left: 4px solid #FF6B9D;
+            margin-bottom: 15px;
+        }
+
+        .section-content {
+            padding: 0 15px;
+        }
+
+        /* Details grid */
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .detail-label {
+            font-family: Arial, sans-serif;
+            font-size: 9pt;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 3px;
+        }
+
+        .detail-value {
+            font-size: 12pt;
+            color: #333;
+        }
+
+        .detail-value.highlight {
+            color: #1a2b5c;
+            font-weight: bold;
+        }
+
+        /* Full width items */
+        .detail-item.full-width {
+            grid-column: 1 / -1;
+        }
+
+        /* Interests tags */
+        .interests-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .interest-tag {
+            background: #FFE5EC;
+            color: #1a2b5c;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-family: Arial, sans-serif;
+            font-size: 10pt;
+        }
+
+        .interest-tag.priority {
+            background: #1a2b5c;
+            color: white;
+        }
+
+        /* Notes section */
+        .note-item {
+            padding: 10px;
+            background: #FFFBEB;
+            border-left: 3px solid #F59E0B;
+            margin-bottom: 10px;
+            font-size: 10pt;
+        }
+
+        .note-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .note-meta {
+            font-size: 9pt;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        /* Special requirements highlight */
+        .special-requirements {
+            background: #FEF3C7;
+            border: 2px solid #F59E0B;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .special-requirements h4 {
+            color: #92400E;
+            font-family: Arial, sans-serif;
+            font-size: 10pt;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .empty-state h2 {
+            color: #1a2b5c;
+            margin-bottom: 10px;
+        }
+
+        /* Loading state */
+        .loading {
+            text-align: center;
+            padding: 100px 20px;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #1a2b5c;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* School branding for header */
+        .school-logo {
+            width: 60px;
+            height: 60px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <div>
+            <h1>Tour Guide Briefing Card</h1>
+        </div>
+        <div class="controls-info">
+            <span id="bookingInfo">Loading...</span>
+            <button class="btn btn-secondary" onclick="window.close(); window.location.href='/';">Close</button>
+            <button class="btn" onclick="window.print()">Print</button>
+        </div>
+    </div>
+
+    <div class="pack-container" id="packContainer">
+        <div class="loading">
+            <div class="loading-spinner"></div>
+            <p>Loading briefing card...</p>
+        </div>
+    </div>
+
+    <script>
+        // Format section names to human-readable (same as admin app)
+        function formatSectionName(section) {
+            const SECTION_NAMES = {
+                cover_page: 'Welcome Page',
+                heads_welcome: "Head's Welcome",
+                academic_excellence: 'Academic Excellence',
+                about_more_house: 'About More House',
+                day_in_the_life: 'A Day at More House',
+                creative_arts_hero: 'Creative Arts',
+                your_journey: 'Your Journey',
+                london_extended_classroom: 'London Extended Classroom',
+                city_curriculum_days: 'City Curriculum Days',
+                values_hero: 'Values & Faith',
+                ethical_leaders: 'Ethical Leaders',
+                discover_video: 'Discover Video',
+                cta_begin_your_journey: 'Begin Your Journey'
+            };
+            return SECTION_NAMES[section] || (section ? section.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'Unknown Section');
+        }
+
+        // Format time in seconds to human-readable
+        function formatDuration(seconds) {
+            seconds = Math.round(seconds || 0);
+            if (seconds < 60) return `${seconds}s`;
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return secs > 0 ? `${mins}m ${secs}s` : `${mins}m`;
+        }
+
+        // Get booking ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const bookingId = urlParams.get('bookingId');
+
+        if (!bookingId) {
+            document.getElementById('packContainer').innerHTML = `
+                <div class="empty-state">
+                    <h2>No Booking Selected</h2>
+                    <p>Please select a booking from the dashboard to generate the briefing card.</p>
+                </div>
+            `;
+        } else {
+            loadBriefingCard();
+        }
+
+        async function loadBriefingCard() {
+            try {
+                const response = await fetch(`/api/bookings/${bookingId}/briefing-card`);
+                const data = await response.json();
+
+                if (!data.success) {
+                    throw new Error(data.error || 'Failed to load data');
+                }
+
+                const booking = data.booking;
+
+                // Format booking type for display
+                const bookingTypeDisplay = booking.booking_type === 'private_tour' ? 'Private Tour' :
+                                          booking.booking_type === 'taster_day' ? 'Taster Day' :
+                                          booking.booking_type === 'open_day' ? 'Open Day' : 'Booking';
+
+                // Format scheduled date/time
+                let scheduledInfo = '';
+                if (booking.scheduled_date) {
+                    const schedDate = new Date(booking.scheduled_date).toLocaleDateString('en-GB', {
+                        weekday: 'long',
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric'
+                    });
+                    scheduledInfo = `${schedDate}${booking.scheduled_time ? ` at ${booking.scheduled_time}` : ''}`;
+                }
+
+                // Update header info
+                document.getElementById('bookingInfo').textContent = `${booking.student_first_name} ${booking.parent_last_name} - ${bookingTypeDisplay}`;
+                document.title = `Briefing Card - ${booking.student_first_name} ${booking.parent_last_name}`;
+
+                // Render pack
+                renderPack(data.booking, data.settings, scheduledInfo, bookingTypeDisplay);
+
+            } catch (error) {
+                console.error('Error loading briefing card:', error);
+                document.getElementById('packContainer').innerHTML = `
+                    <div class="empty-state">
+                        <h2>Error Loading Data</h2>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        function renderPack(booking, settings, scheduledInfo, bookingTypeDisplay) {
+            const container = document.getElementById('packContainer');
+
+            // Build interests tags
+            const interests = [];
+            if (booking.sciences) interests.push('Sciences');
+            if (booking.mathematics) interests.push('Mathematics');
+            if (booking.english) interests.push('English');
+            if (booking.languages) interests.push('Languages');
+            if (booking.humanities) interests.push('Humanities');
+            if (booking.business) interests.push('Business');
+            if (booking.drama) interests.push('Drama');
+            if (booking.music) interests.push('Music');
+            if (booking.art) interests.push('Art');
+            if (booking.creative_writing) interests.push('Creative Writing');
+            if (booking.sport) interests.push('Sport');
+
+            // Build priorities tags
+            const priorities = [];
+            if (booking.leadership) priorities.push('Leadership');
+            if (booking.community_service) priorities.push('Community Service');
+            if (booking.outdoor_education) priorities.push('Outdoor Education');
+            if (booking.academic_excellence) priorities.push('Academic Excellence');
+            if (booking.pastoral_care) priorities.push('Pastoral Care');
+            if (booking.university_preparation) priorities.push('University Prep');
+            if (booking.personal_development) priorities.push('Personal Development');
+            if (booking.career_guidance) priorities.push('Career Guidance');
+            if (booking.extracurricular_opportunities) priorities.push('Extracurricular');
+
+            const interestsTags = interests.map(i => `<span class="interest-tag">${i}</span>`).join('');
+            const prioritiesTags = priorities.map(p => `<span class="interest-tag priority">${p}</span>`).join('');
+
+            // Notes section
+            const notesHtml = booking.notes && booking.notes.length > 0
+                ? booking.notes.map(note => `
+                    <div class="note-item">
+                        <div>${note.content}</div>
+                        <div class="note-meta">${note.admin_name || 'Staff'} - ${new Date(note.created_at).toLocaleDateString('en-GB')}</div>
+                    </div>
+                `).join('')
+                : '<p style="color: #666; font-style: italic;">No notes recorded</p>';
+
+            // Email history section
+            const emailHtml = booking.email_history && booking.email_history.length > 0
+                ? booking.email_history.map(email => {
+                    const emailDate = email.sent_at || email.received_at;
+                    const isAI = email.direction === 'ai-generated';
+                    const isReceived = email.direction === 'received';
+                    const date = new Date(emailDate).toLocaleDateString('en-GB', {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+
+                    if (isAI) {
+                        return `
+                        <div style="background: #fff; border: 1px solid #e0e0e0; border-radius: 6px; padding: 12px; margin-bottom: 10px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <div style="font-weight: 600; color: #1a2b5c;">From: ${email.from_name || 'Parent'}</div>
+                                <div style="font-size: 9pt; color: #666;">${date}</div>
+                            </div>
+                            <div style="background: #f8f9fa; border-left: 3px solid #1a2b5c; padding: 10px; margin-bottom: 8px;">
+                                <div style="font-size: 9pt; font-weight: 600; color: #666; margin-bottom: 4px;">PARENT EMAIL:</div>
+                                <div style="font-size: 10pt; line-height: 1.5; white-space: pre-wrap;">${email.original_text || ''}</div>
+                            </div>
+                            <div style="background: #FFFBEB; border-left: 3px solid #F59E0B; padding: 10px;">
+                                <div style="font-size: 9pt; font-weight: 600; color: #666; margin-bottom: 4px;">OUR RESPONSE:</div>
+                                <div style="font-size: 10pt; line-height: 1.5; white-space: pre-wrap;">${email.body_text || ''}</div>
+                            </div>
+                        </div>
+                        `;
+                    } else {
+                        const directionLabel = isReceived ? 'FROM PARENT' : 'FROM SCHOOL';
+                        const directionColor = isReceived ? '#1976d2' : '#2e7d32';
+                        return `
+                        <div style="background: #f8f9fa; padding: 10px; border-left: 3px solid ${directionColor}; margin-bottom: 8px; border-radius: 4px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                <span style="background: ${directionColor}; color: white; padding: 2px 8px; border-radius: 3px; font-size: 8pt; text-transform: uppercase;">${directionLabel}</span>
+                                <span style="font-size: 9pt; color: #666;">${date}</span>
+                            </div>
+                            ${email.subject ? `<div style="font-weight: 600; margin-bottom: 6px; font-size: 10pt;">${email.subject}</div>` : ''}
+                            <div style="font-size: 10pt; line-height: 1.5; white-space: pre-wrap;">${email.body_text || ''}</div>
+                        </div>
+                        `;
+                    }
+                }).join('')
+                : '<p style="color: #666; font-style: italic; padding: 10px;">No emails yet</p>';
+
+            // Special requirements (highlighted if present)
+            const specialReqHtml = booking.special_requirements
+                ? `
+                    <div class="special-requirements">
+                        <h4>Special Requirements / Notes</h4>
+                        <p>${booking.special_requirements}</p>
+                    </div>
+                `
+                : '';
+
+            // Prospectus viewing summary - concise for tour guides
+            let sessionsHtml = '';
+            if (booking.visits && booking.visits.length > 0) {
+                const totalVisits = booking.visits.length;
+                const totalTime = booking.visits.reduce((sum, v) => sum + (v.total_time || 0), 0);
+
+                const allSections = new Map();
+                booking.visits.forEach(visit => {
+                    (visit.sections || []).forEach(s => {
+                        const timeSpent = parseFloat(s.time_spent) || 0;
+                        if (!allSections.has(s.section)) {
+                            allSections.set(s.section, 0);
+                        }
+                        allSections.set(s.section, allSections.get(s.section) + timeSpent);
+                    });
+                });
+
+                const sortedSections = Array.from(allSections.entries())
+                    .sort((a, b) => b[1] - a[1])
+                    .map(([section, time]) => ({ section, time: time || 0 }));
+
+                sessionsHtml = `
+                    <div style="background: #f8fafc; border-radius: 6px; padding: 10px; border-left: 3px solid #1a2b5c;">
+                        <div style="display: flex; gap: 20px; margin-bottom: 8px;">
+                            <div style="text-align: center;">
+                                <div style="font-size: 14pt; font-weight: bold; color: #1a2b5c;">${totalVisits}</div>
+                                <div style="font-size: 7pt; color: #666;">Visit${totalVisits !== 1 ? 's' : ''}</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 14pt; font-weight: bold; color: #1a2b5c;">${formatDuration(totalTime)}</div>
+                                <div style="font-size: 7pt; color: #666;">Total Time</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 14pt; font-weight: bold; color: #1a2b5c;">${sortedSections.length}</div>
+                                <div style="font-size: 7pt; color: #666;">Sections</div>
+                            </div>
+                        </div>
+                        ${sortedSections.length > 0 ? `
+                            <div style="margin-top: 8px;">
+                                <div style="font-size: 8pt; font-weight: 600; color: #1a2b5c; margin-bottom: 4px;">Most interested in:</div>
+                                ${sortedSections.slice(0, 5).map((s, i) => `
+                                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 4px 6px; background: ${i === 0 ? '#e8f5e9' : '#f8f9fa'}; border-radius: 3px; margin-bottom: 2px; ${i === 0 ? 'border-left: 2px solid #4caf50;' : ''}">
+                                        <span style="font-size: 8pt; ${i === 0 ? 'font-weight: 600;' : ''}">${formatSectionName(s.section)}</span>
+                                        <span style="font-size: 7pt; color: #666;">${formatDuration(s.time)}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }
+
+            if (!sessionsHtml) {
+                sessionsHtml = '<p style="color: #666; font-style: italic; font-size: 9pt;">No prospectus viewing activity</p>';
+            }
+
+            container.innerHTML = `
+                <div class="family-pack">
+                    <div class="pack-header">
+                        <div class="pack-header-left">
+                            <h2>${booking.student_first_name} ${booking.parent_last_name}</h2>
+                            <p>${scheduledInfo || 'Date not scheduled'}</p>
+                        </div>
+                        <div class="pack-header-right">
+                            <div class="booking-type-badge">${bookingTypeDisplay}</div>
+                            ${booking.guide_name ? `<div class="guide-badge">${booking.guide_name}</div>` : ''}
+                        </div>
+                    </div>
+
+                    <div class="pack-content">
+                        ${specialReqHtml}
+
+                        <div class="section">
+                            <div class="section-header">Student & Family Details</div>
+                            <div class="section-content">
+                                <div class="details-grid">
+                                    <div class="detail-item">
+                                        <span class="detail-label">Student Name</span>
+                                        <span class="detail-value highlight">${booking.student_first_name} ${booking.student_last_name || ''}</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="detail-label">Age Group / Entry Year</span>
+                                        <span class="detail-value">${booking.age_group || 'Not specified'} ${booking.entry_year ? `(${booking.entry_year})` : ''}</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="detail-label">Parent Name</span>
+                                        <span class="detail-value">${booking.parent_first_name} ${booking.parent_last_name}</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="detail-label">Number Attending</span>
+                                        <span class="detail-value">${booking.num_attendees || 1} ${booking.num_attendees > 1 ? 'people' : 'person'}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="section">
+                            <div class="section-header">Contact Information</div>
+                            <div class="section-content">
+                                <div class="details-grid">
+                                    <div class="detail-item">
+                                        <span class="detail-label">Email</span>
+                                        <span class="detail-value">${booking.email}</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="detail-label">Phone</span>
+                                        <span class="detail-value">${booking.phone || 'Not provided'}</span>
+                                    </div>
+                                    ${booking.preferred_language ? `
+                                    <div class="detail-item">
+                                        <span class="detail-label">Preferred Language</span>
+                                        <span class="detail-value">${booking.preferred_language}</span>
+                                    </div>
+                                    ` : ''}
+                                    ${booking.hear_about_us ? `
+                                    <div class="detail-item">
+                                        <span class="detail-label">How They Heard About Us</span>
+                                        <span class="detail-value">${booking.hear_about_us}</span>
+                                    </div>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        </div>
+
+                        ${interests.length > 0 || priorities.length > 0 ? `
+                        <div class="section">
+                            <div class="section-header">Interests & Priorities</div>
+                            <div class="section-content">
+                                ${interests.length > 0 ? `
+                                <div style="margin-bottom: ${priorities.length > 0 ? '15px' : '0'}">
+                                    <span class="detail-label" style="display: block; margin-bottom: 8px;">Academic Interests</span>
+                                    <div class="interests-container">${interestsTags}</div>
+                                </div>
+                                ` : ''}
+                                ${priorities.length > 0 ? `
+                                <div>
+                                    <span class="detail-label" style="display: block; margin-bottom: 8px;">Priorities</span>
+                                    <div class="interests-container">${prioritiesTags}</div>
+                                </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                        ` : ''}
+
+                        <div class="section">
+                            <div class="section-header">Prospectus Viewing History</div>
+                            <div class="section-content">
+                                ${sessionsHtml}
+                            </div>
+                        </div>
+
+                        <div class="section">
+                            <div class="section-header">Staff Notes</div>
+                            <div class="section-content">
+                                ${notesHtml}
+                            </div>
+                        </div>
+
+                        <div class="section">
+                            <div class="section-header">Email Communication</div>
+                            <div class="section-content" style="max-height: 300px; overflow-y: auto;">
+                                ${emailHtml}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>

@@ -3022,6 +3022,13 @@
         `;
       }
 
+      // Print button for Private Tours and Taster Days (individual print, not batch)
+      if ((b.booking_type === 'private_tour' || b.booking_type === 'taster_day') && b.status === 'confirmed') {
+        buttons += `
+          <button class="btn btn-sm btn-secondary" onclick="event.stopPropagation(); window.open('/briefing-card.html?bookingId=${b.id}', '_blank')" style="background: #6b7280;">Print</button>
+        `;
+      }
+
       return buttons;
     }
 
