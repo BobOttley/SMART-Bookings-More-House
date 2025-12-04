@@ -5290,340 +5290,280 @@ async function sendInternalTemplateEmail(templateId, recipientEmail, templateDat
   }
 }
 
-// Send first reminder emails (configurable days before)
-async function send7DayReminders() {
+// ============================================================================
+// AUTOMATED EMAIL SYSTEM - Uses template automation_days settings
+// ============================================================================
+
+// Process all automated emails based on template settings
+async function processAutomatedEmails() {
   try {
-    // Get reminder timing from settings
-    const settingsResult = await pool.query(
-      'SELECT reminder_days_before_1 FROM booking_settings WHERE school_id = 2'
-    );
-    const reminderDays = settingsResult.rows[0]?.reminder_days_before_1 || 7;
+    console.log('\n[Email Automation] Processing automated emails based on template settings...');
 
-    console.log(`\n[First Reminder] Checking for bookings ${reminderDays} days from now`);
-
-    // Find bookings with events/tours X days from now
-    const result = await pool.query(`
-      SELECT DISTINCT ON (b.id) b.*, e.title as event_title, e.event_date, e.start_time,
-             tg.name as guide_name
-      FROM bookings b
-      LEFT JOIN events e ON b.event_id = e.id
-      LEFT JOIN tour_guides tg ON b.assigned_guide_id = tg.id
-      WHERE b.school_id = 2
-        AND b.status = 'confirmed'
-        AND (
-          (e.event_date = CURRENT_DATE + INTERVAL '1 day' * $1 AND b.booking_type = 'open_day')
-          OR (b.scheduled_date = CURRENT_DATE + INTERVAL '1 day' * $1 AND b.booking_type = 'private_tour')
-        )
-        AND NOT EXISTS (
-          SELECT 1 FROM scheduled_emails
-          WHERE booking_id = b.id
-          AND email_type = 'reminder_7day'
-          AND status IN ('sent', 'pending')
-        )
-      ORDER BY b.id
-    `, [reminderDays]);
-
-    console.log(`\n[First Reminder] Found ${result.rows.length} bookings`);
-
-    for (const booking of result.rows) {
-      const templateId = booking.booking_type === 'open_day' ? 3 : 9; // Template IDs for first reminders
-
-      // Create scheduled_emails record
-      await pool.query(
-        `INSERT INTO scheduled_emails (booking_id, email_type, scheduled_for, template_id, status)
-         VALUES ($1, $2, CURRENT_TIMESTAMP, $3, $4)
-         ON CONFLICT (booking_id, email_type) DO NOTHING`,
-        [booking.id, 'reminder_7day', templateId, 'pending']
-      );
-
-      await sendTemplateEmail(booking, templateId, 'reminder_7day');
-    }
-  } catch (error) {
-    console.error('Error in send7DayReminders:', error);
-  }
-}
-
-// Send second reminder emails (configurable days before)
-async function send1DayReminders() {
-  try {
-    // Get reminder timing from settings
-    const settingsResult = await pool.query(
-      'SELECT reminder_days_before_2 FROM booking_settings WHERE school_id = 2'
-    );
-    const reminderDays = settingsResult.rows[0]?.reminder_days_before_2 || 1;
-
-    console.log(`\n[Second Reminder] Checking for bookings ${reminderDays} day(s) from now`);
-
-    // Find bookings with events/tours X days from now
-    const result = await pool.query(`
-      SELECT DISTINCT ON (b.id) b.*, e.title as event_title, e.event_date, e.start_time,
-             tg.name as guide_name
-      FROM bookings b
-      LEFT JOIN events e ON b.event_id = e.id
-      LEFT JOIN tour_guides tg ON b.assigned_guide_id = tg.id
-      WHERE b.school_id = 2
-        AND b.status = 'confirmed'
-        AND (
-          (e.event_date = CURRENT_DATE + INTERVAL '1 day' * $1 AND b.booking_type = 'open_day')
-          OR (b.scheduled_date = CURRENT_DATE + INTERVAL '1 day' * $1 AND b.booking_type = 'private_tour')
-        )
-        AND NOT EXISTS (
-          SELECT 1 FROM scheduled_emails
-          WHERE booking_id = b.id
-          AND email_type = 'reminder_1day'
-          AND status IN ('sent', 'pending')
-        )
-      ORDER BY b.id
-    `, [reminderDays]);
-
-    console.log(`\n[Second Reminder] Found ${result.rows.length} bookings`);
-
-    for (const booking of result.rows) {
-      const templateId = booking.booking_type === 'open_day' ? 4 : 10; // Template IDs for second reminders
-
-      // Create scheduled_emails record
-      await pool.query(
-        `INSERT INTO scheduled_emails (booking_id, email_type, scheduled_for, template_id, status)
-         VALUES ($1, $2, CURRENT_TIMESTAMP, $3, $4)
-         ON CONFLICT (booking_id, email_type) DO NOTHING`,
-        [booking.id, 'reminder_1day', templateId, 'pending']
-      );
-
-      await sendTemplateEmail(booking, templateId, 'reminder_1day');
-    }
-  } catch (error) {
-    console.error('Error in send1DayReminders:', error);
-  }
-}
-
-// Send follow-up emails after events (configurable days after)
-async function sendFollowUpEmails() {
-  try {
-    // Get follow-up timing from settings
-    const settingsResult = await pool.query(
-      'SELECT followup_days_after FROM booking_settings WHERE school_id = 2'
-    );
-    const followupDays = settingsResult.rows[0]?.followup_days_after || 1;
-
-    console.log(`\n[Follow-ups] Checking for bookings ${followupDays} day(s) ago`);
-
-    // Find bookings with events/tours that happened X days ago and were checked in
-    const result = await pool.query(`
-      SELECT DISTINCT ON (b.id) b.*, e.title as event_title, e.event_date, e.start_time,
-             tg.name as guide_name, i.gender
-      FROM bookings b
-      LEFT JOIN events e ON b.event_id = e.id
-      LEFT JOIN tour_guides tg ON b.assigned_guide_id = tg.id
-      LEFT JOIN inquiries i ON b.inquiry_id = i.id
-      WHERE b.school_id = 2
-        AND b.checked_in_at IS NOT NULL
-        AND (
-          (e.event_date = CURRENT_DATE - INTERVAL '1 day' * $1 AND b.booking_type = 'open_day')
-          OR (b.scheduled_date = CURRENT_DATE - INTERVAL '1 day' * $1 AND b.booking_type = 'private_tour')
-          OR (b.scheduled_date = CURRENT_DATE - INTERVAL '1 day' * $1 AND b.booking_type = 'taster_day')
-        )
-        AND NOT EXISTS (
-          SELECT 1 FROM scheduled_emails
-          WHERE booking_id = b.id
-          AND email_type = 'followup'
-          AND status IN ('sent', 'pending')
-        )
-      ORDER BY b.id
-    `, [followupDays]);
-
-    console.log(`\n[Follow-ups] Found ${result.rows.length} bookings`);
-
-    for (const booking of result.rows) {
-      const templateId = booking.booking_type === 'open_day' ? 5
-        : booking.booking_type === 'taster_day' ? 14
-        : 11; // Template IDs for follow-ups
-
-      // Create scheduled_emails record
-      await pool.query(
-        `INSERT INTO scheduled_emails (booking_id, email_type, scheduled_for, template_id, status)
-         VALUES ($1, $2, CURRENT_TIMESTAMP, $3, $4)
-         ON CONFLICT (booking_id, email_type) DO NOTHING`,
-        [booking.id, 'followup', templateId, 'pending']
-      );
-
-      await sendTemplateEmail(booking, templateId, 'followup');
-    }
-  } catch (error) {
-    console.error('Error in sendFollowUpEmails:', error);
-  }
-}
-
-// Send first reminder to tour guides (configurable days before)
-async function sendGuideFirstReminders() {
-  try {
-    // Get reminder timing from settings
-    const settingsResult = await pool.query(
-      'SELECT guide_reminder_days_before_1 FROM booking_settings WHERE school_id = 2'
-    );
-    const reminderDays = settingsResult.rows[0]?.guide_reminder_days_before_1 || 3;
-
-    console.log(`\n[Guide First Reminder] Checking for tours ${reminderDays} days from now`);
-
-    // Find bookings with assigned guides for tours X days from now that haven't been sent
-    const result = await pool.query(`
-      SELECT DISTINCT ON (b.id) b.*, e.title as event_title, e.event_date, e.start_time,
-             tg.id as guide_id, tg.name as guide_name, tg.email as guide_email
-      FROM bookings b
-      LEFT JOIN events e ON b.event_id = e.id
-      LEFT JOIN tour_guides tg ON b.assigned_guide_id = tg.id
-      WHERE b.school_id = 2
-        AND b.status = 'confirmed'
-        AND b.assigned_guide_id IS NOT NULL
-        AND (
-          (e.event_date = CURRENT_DATE + INTERVAL '1 day' * $1 AND b.booking_type = 'open_day')
-          OR (b.scheduled_date = CURRENT_DATE + INTERVAL '1 day' * $1 AND b.booking_type = 'private_tour')
-        )
-        AND NOT EXISTS (
-          SELECT 1 FROM scheduled_emails
-          WHERE booking_id = b.id
-          AND email_type = 'guide_reminder_first'
-          AND status IN ('sent', 'pending')
-        )
-      ORDER BY b.id
-    `, [reminderDays]);
-
-    console.log(`\n[Guide First Reminder] Found ${result.rows.length} tours`);
-
-    for (const booking of result.rows) {
-      const guide = {
-        id: booking.guide_id,
-        name: booking.guide_name,
-        email: booking.guide_email
-      };
-
-      await sendTourGuideNotification(booking, guide, 'reminder_first');
-
-      // Mark as sent in scheduled_emails
-      await pool.query(
-        `INSERT INTO scheduled_emails (booking_id, email_type, scheduled_for, sent_at, status)
-         VALUES ($1, 'guide_reminder_first', NOW(), NOW(), 'sent')
-         ON CONFLICT (booking_id, email_type) DO UPDATE SET sent_at = NOW(), status = 'sent'`,
-        [booking.id]
-      );
-    }
-  } catch (error) {
-    console.error('Error in sendGuideFirstReminders:', error);
-  }
-}
-
-// Send final reminder to tour guides (configurable days before)
-async function sendGuideFinalReminders() {
-  try {
-    // Get reminder timing from settings
-    const settingsResult = await pool.query(
-      'SELECT guide_reminder_days_before_2 FROM booking_settings WHERE school_id = 2'
-    );
-    const reminderDays = settingsResult.rows[0]?.guide_reminder_days_before_2 || 1;
-
-    console.log(`\n[Guide Final Reminder] Checking for tours ${reminderDays} day(s) from now`);
-
-    // Find bookings with assigned guides for tours X days from now that haven't been sent
-    const result = await pool.query(`
-      SELECT DISTINCT ON (b.id) b.*, e.title as event_title, e.event_date, e.start_time,
-             tg.id as guide_id, tg.name as guide_name, tg.email as guide_email
-      FROM bookings b
-      LEFT JOIN events e ON b.event_id = e.id
-      LEFT JOIN tour_guides tg ON b.assigned_guide_id = tg.id
-      WHERE b.school_id = 2
-        AND b.status = 'confirmed'
-        AND b.assigned_guide_id IS NOT NULL
-        AND (
-          (e.event_date = CURRENT_DATE + INTERVAL '1 day' * $1 AND b.booking_type = 'open_day')
-          OR (b.scheduled_date = CURRENT_DATE + INTERVAL '1 day' * $1 AND b.booking_type = 'private_tour')
-        )
-        AND NOT EXISTS (
-          SELECT 1 FROM scheduled_emails
-          WHERE booking_id = b.id
-          AND email_type = 'guide_reminder_final'
-          AND status IN ('sent', 'pending')
-        )
-      ORDER BY b.id
-    `, [reminderDays]);
-
-    console.log(`\n[Guide Final Reminder] Found ${result.rows.length} tours`);
-
-    for (const booking of result.rows) {
-      const guide = {
-        id: booking.guide_id,
-        name: booking.guide_name,
-        email: booking.guide_email
-      };
-
-      await sendTourGuideNotification(booking, guide, 'reminder_final');
-
-      // Mark as sent in scheduled_emails
-      await pool.query(
-        `INSERT INTO scheduled_emails (booking_id, email_type, scheduled_for, sent_at, status)
-         VALUES ($1, 'guide_reminder_final', NOW(), NOW(), 'sent')
-         ON CONFLICT (booking_id, email_type) DO UPDATE SET sent_at = NOW(), status = 'sent'`,
-        [booking.id]
-      );
-    }
-  } catch (error) {
-    console.error('Error in sendGuideFinalReminders:', error);
-  }
-}
-
-// Send no-show follow-up emails
-async function sendNoShowFollowUps() {
-  try {
-    // Find bookings marked as no-show in the last 24 hours that haven't received a no-show email
-    const result = await pool.query(`
-      SELECT DISTINCT ON (b.id) b.*, e.title as event_title, e.event_date, e.start_time,
-             tg.name as guide_name
-      FROM bookings b
-      LEFT JOIN events e ON b.event_id = e.id
-      LEFT JOIN tour_guides tg ON b.assigned_guide_id = tg.id
-      WHERE b.school_id = 2
-        AND b.no_show_at IS NOT NULL
-        AND b.no_show_at >= CURRENT_TIMESTAMP - INTERVAL '24 hours'
-        AND NOT EXISTS (
-          SELECT 1 FROM scheduled_emails
-          WHERE booking_id = b.id
-          AND email_type = 'no_show_followup'
-          AND status IN ('sent', 'pending')
-        )
-      ORDER BY b.id
+    // Get all active templates with automation enabled
+    const templatesResult = await pool.query(`
+      SELECT id, name, booking_type, template_type, automation_trigger, automation_days, automation_timing
+      FROM email_templates
+      WHERE school_id = 2
+        AND is_active = true
+        AND enable_automation = true
+        AND automation_trigger IS NOT NULL
+      ORDER BY id
     `);
 
-    console.log(`\n[No-Show Follow-ups] Found ${result.rows.length} bookings`);
+    console.log(`[Email Automation] Found ${templatesResult.rows.length} automated templates`);
 
-    for (const booking of result.rows) {
-      // Template ID 12 for open days, 13 for private tours
-      const templateId = booking.booking_type === 'open_day' ? 12 : 13;
-
-      // Create scheduled_emails record
-      await pool.query(
-        `INSERT INTO scheduled_emails (booking_id, email_type, scheduled_for, template_id, status)
-         VALUES ($1, $2, CURRENT_TIMESTAMP, $3, $4)
-         ON CONFLICT (booking_id, email_type) DO NOTHING`,
-        [booking.id, 'no_show_followup', templateId, 'pending']
-      );
-
-      await sendTemplateEmail(booking, templateId, 'no_show_followup');
+    for (const template of templatesResult.rows) {
+      await processTemplateAutomation(template);
     }
   } catch (error) {
-    console.error('Error in sendNoShowFollowUps:', error);
+    console.error('[Email Automation] Error:', error);
   }
 }
 
-// Run email scheduler every hour
+// Process a single template's automation
+async function processTemplateAutomation(template) {
+  const { id: templateId, name, booking_type, template_type, automation_trigger, automation_days, automation_timing } = template;
+
+  try {
+    // Skip templates without proper timing config for scheduled emails
+    if (automation_trigger === 'before_tour' && automation_days === null) {
+      return;
+    }
+
+    let bookings = [];
+    let emailType = template_type;
+
+    // Handle different automation triggers
+    switch (automation_trigger) {
+      case 'before_tour':
+        // Reminder emails X days before the tour/event
+        bookings = await getBookingsForReminder(booking_type, automation_days, emailType, templateId);
+        break;
+
+      case 'on_check_in':
+        // Follow-up emails X days after check-in
+        if (automation_timing === 'after' && automation_days !== null) {
+          bookings = await getBookingsForFollowUp(booking_type, automation_days, emailType, templateId);
+        }
+        break;
+
+      case 'on_no_show':
+        // No-show follow-up emails X days after the event
+        if (automation_days !== null) {
+          bookings = await getBookingsForNoShowFollowUp(booking_type, automation_days, emailType, templateId);
+        }
+        break;
+
+      // Event-triggered emails (on_booking, on_decline, on_schedule, etc.)
+      // are handled in their respective API endpoints, not in cron
+      default:
+        return;
+    }
+
+    if (bookings.length > 0) {
+      console.log(`[${name}] Processing ${bookings.length} booking(s)`);
+    }
+
+    for (const booking of bookings) {
+      // Check if this is a guide reminder (internal template)
+      if (template_type === 'internal' && automation_trigger === 'before_tour') {
+        await processGuideReminder(booking, template);
+      } else {
+        await sendAutomatedEmail(booking, templateId, emailType);
+      }
+    }
+  } catch (error) {
+    console.error(`[${name}] Error:`, error.message);
+  }
+}
+
+// Get bookings that need reminder emails (X days before tour)
+async function getBookingsForReminder(bookingType, daysBefore, emailType, templateId) {
+  const emailTypeKey = daysBefore >= 5 ? 'reminder_first' : 'reminder_final';
+
+  // Build booking type filter
+  let bookingTypeFilter = '';
+  if (bookingType === 'open_day') {
+    bookingTypeFilter = "AND b.booking_type = 'open_day'";
+  } else if (bookingType === 'private_tour') {
+    bookingTypeFilter = "AND b.booking_type = 'private_tour'";
+  } else if (bookingType === 'taster_day') {
+    bookingTypeFilter = "AND b.booking_type = 'taster_day'";
+  }
+
+  const result = await pool.query(`
+    SELECT DISTINCT ON (b.id) b.*, e.title as event_title, e.event_date, e.start_time,
+           tg.name as guide_name, tg.email as guide_email
+    FROM bookings b
+    LEFT JOIN events e ON b.event_id = e.id
+    LEFT JOIN tour_guides tg ON b.assigned_guide_id = tg.id
+    WHERE b.school_id = 2
+      AND b.status = 'confirmed'
+      ${bookingTypeFilter}
+      AND (
+        (e.event_date = CURRENT_DATE + INTERVAL '1 day' * $1)
+        OR (b.scheduled_date = CURRENT_DATE + INTERVAL '1 day' * $1)
+      )
+      AND NOT EXISTS (
+        SELECT 1 FROM scheduled_emails
+        WHERE booking_id = b.id
+        AND template_id = $2
+        AND status IN ('sent', 'pending')
+      )
+    ORDER BY b.id
+  `, [daysBefore, templateId]);
+
+  return result.rows;
+}
+
+// Get bookings that need follow-up emails (X days after check-in)
+async function getBookingsForFollowUp(bookingType, daysAfter, emailType, templateId) {
+  let bookingTypeFilter = '';
+  if (bookingType === 'open_day') {
+    bookingTypeFilter = "AND b.booking_type = 'open_day'";
+  } else if (bookingType === 'private_tour') {
+    bookingTypeFilter = "AND b.booking_type = 'private_tour'";
+  } else if (bookingType === 'taster_day') {
+    bookingTypeFilter = "AND b.booking_type = 'taster_day'";
+  }
+
+  const result = await pool.query(`
+    SELECT DISTINCT ON (b.id) b.*, e.title as event_title, e.event_date, e.start_time,
+           tg.name as guide_name, i.gender
+    FROM bookings b
+    LEFT JOIN events e ON b.event_id = e.id
+    LEFT JOIN tour_guides tg ON b.assigned_guide_id = tg.id
+    LEFT JOIN inquiries i ON b.inquiry_id = i.id
+    WHERE b.school_id = 2
+      AND b.checked_in_at IS NOT NULL
+      ${bookingTypeFilter}
+      AND (
+        (e.event_date = CURRENT_DATE - INTERVAL '1 day' * $1)
+        OR (b.scheduled_date = CURRENT_DATE - INTERVAL '1 day' * $1)
+      )
+      AND NOT EXISTS (
+        SELECT 1 FROM scheduled_emails
+        WHERE booking_id = b.id
+        AND template_id = $2
+        AND status IN ('sent', 'pending')
+      )
+    ORDER BY b.id
+  `, [daysAfter, templateId]);
+
+  return result.rows;
+}
+
+// Get bookings that need no-show follow-up emails
+async function getBookingsForNoShowFollowUp(bookingType, daysAfter, emailType, templateId) {
+  let bookingTypeFilter = '';
+  if (bookingType === 'open_day') {
+    bookingTypeFilter = "AND b.booking_type = 'open_day'";
+  } else if (bookingType === 'private_tour') {
+    bookingTypeFilter = "AND b.booking_type = 'private_tour'";
+  } else if (bookingType === 'taster_day') {
+    bookingTypeFilter = "AND b.booking_type = 'taster_day'";
+  }
+
+  const result = await pool.query(`
+    SELECT DISTINCT ON (b.id) b.*, e.title as event_title, e.event_date, e.start_time,
+           tg.name as guide_name
+    FROM bookings b
+    LEFT JOIN events e ON b.event_id = e.id
+    LEFT JOIN tour_guides tg ON b.assigned_guide_id = tg.id
+    WHERE b.school_id = 2
+      AND b.no_show_at IS NOT NULL
+      ${bookingTypeFilter}
+      AND (
+        (e.event_date = CURRENT_DATE - INTERVAL '1 day' * $1)
+        OR (b.scheduled_date = CURRENT_DATE - INTERVAL '1 day' * $1)
+      )
+      AND NOT EXISTS (
+        SELECT 1 FROM scheduled_emails
+        WHERE booking_id = b.id
+        AND template_id = $2
+        AND status IN ('sent', 'pending')
+      )
+    ORDER BY b.id
+  `, [daysAfter, templateId]);
+
+  return result.rows;
+}
+
+// Process guide reminder (internal email to tour guide)
+async function processGuideReminder(booking, template) {
+  if (!booking.guide_email) return;
+
+  const guide = { name: booking.guide_name, email: booking.guide_email };
+  const notificationType = template.automation_days >= 5 ? 'reminder_first' : 'reminder_final';
+
+  await sendTourGuideNotification(booking, guide, notificationType);
+
+  // Log in scheduled_emails
+  await pool.query(
+    `INSERT INTO scheduled_emails (booking_id, email_type, scheduled_for, template_id, status, sent_at)
+     VALUES ($1, $2, CURRENT_TIMESTAMP, $3, 'sent', CURRENT_TIMESTAMP)
+     ON CONFLICT (booking_id, email_type) DO NOTHING`,
+    [booking.id, `guide_${notificationType}`, template.id]
+  );
+}
+
+// Send automated email using template
+async function sendAutomatedEmail(booking, templateId, emailType) {
+  try {
+    // Log in scheduled_emails
+    await pool.query(
+      `INSERT INTO scheduled_emails (booking_id, email_type, scheduled_for, template_id, status)
+       VALUES ($1, $2, CURRENT_TIMESTAMP, $3, 'pending')
+       ON CONFLICT (booking_id, email_type) DO NOTHING`,
+      [booking.id, emailType, templateId]
+    );
+
+    await sendTemplateEmail(booking, templateId, emailType);
+
+    console.log(`  ✓ Sent ${emailType} email to ${booking.email} (booking #${booking.id})`);
+  } catch (error) {
+    console.error(`  ✗ Failed ${emailType} for booking #${booking.id}:`, error.message);
+  }
+}
+
+// Legacy function wrappers for backward compatibility
+async function send7DayReminders() {
+  // Now handled by processAutomatedEmails()
+  console.log('[First Reminder] Using unified automation system');
+}
+
+async function send1DayReminders() {
+  // Now handled by processAutomatedEmails()
+  console.log('[Second Reminder] Using unified automation system');
+}
+
+async function sendFollowUpEmails() {
+  // Now handled by processAutomatedEmails()
+  console.log('[Follow-ups] Using unified automation system');
+}
+
+async function sendNoShowFollowUps() {
+  // Now handled by processAutomatedEmails()
+  console.log('[No-show Follow-ups] Using unified automation system');
+}
+
+async function sendGuideFirstReminders() {
+  // Now handled by processAutomatedEmails()
+  console.log('[Guide First Reminder] Using unified automation system');
+}
+
+async function sendGuideFinalReminders() {
+  // Now handled by processAutomatedEmails()
+  console.log('[Guide Final Reminder] Using unified automation system');
+}
+
+// Run email scheduler every hour - uses unified processAutomatedEmails()
 cron.schedule('0 * * * *', async () => {
   console.log('\n========================================');
   console.log(`Running automated email scheduler at ${new Date().toLocaleString()}`);
   console.log('========================================');
 
-  await send7DayReminders();
-  await send1DayReminders();
-  await sendFollowUpEmails();
-  await sendNoShowFollowUps();
-  await sendGuideFirstReminders();
-  await sendGuideFinalReminders();
+  await processAutomatedEmails();
 
   console.log('========================================\n');
 });
@@ -5631,12 +5571,7 @@ cron.schedule('0 * * * *', async () => {
 // Run once on startup (for testing/immediate execution)
 setTimeout(async () => {
   console.log('\n[Startup] Running initial email check...');
-  await send7DayReminders();
-  await send1DayReminders();
-  await sendFollowUpEmails();
-  await sendNoShowFollowUps();
-  await sendGuideFirstReminders();
-  await sendGuideFinalReminders();
+  await processAutomatedEmails();
 }, 5000);
 
 // Test email template

@@ -649,7 +649,6 @@
           <button class="settings-subtab-btn" data-subtab="tour-feedback"><span class="smart-text">SMART</span> Tour Feedback</button>
           <button class="settings-subtab-btn" data-subtab="email-templates"><span class="smart-text">SMART</span> Email Templates</button>
           <button class="settings-subtab-btn" data-subtab="email-config"><span class="smart-text">SMART</span> Email Configuration</button>
-          <button class="settings-subtab-btn" data-subtab="email-timing"><span class="smart-text">SMART</span> Email Timing</button>
           <button class="settings-subtab-btn" data-subtab="booking-settings"><span class="smart-text">SMART</span> Booking Settings</button>
           <button class="settings-subtab-btn" data-subtab="prospectus"><span class="smart-text">SMART</span> Prospectus Integration</button>
           <button class="settings-subtab-btn" data-subtab="branding"><span class="smart-text">SMART</span> Branding</button>
@@ -752,71 +751,6 @@
                 Send Test Email
               </button>
             </div>
-          </form>
-        </div>
-      </div>
-
-      <!-- Email Timing Sub-tab -->
-      <div class="settings-subtab-content" id="email-timing-subtab">
-        <div class="card" style="margin: 1.5rem; border-radius: 0;">
-          <div class="card-header">
-            <h2>Email Reminder Timing</h2>
-          </div>
-
-          <form id="email-timing-form">
-            <h3 style="font-size: 1.1rem; color: var(--blazer-navy); margin-bottom: 1.5rem; font-weight: 600;">
-              Parent Email Reminders
-            </h3>
-
-            <div class="form-group">
-              <label class="form-label">First Reminder (Days Before Event) *</label>
-              <input type="number" class="form-input" name="reminder_days_before_1" placeholder="7" min="0" max="365" required>
-              <small style="display: block; margin-top: 0.5rem; color: #6B7280;">
-                How many days before the event should the first reminder be sent? (e.g., 7 days)
-              </small>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Second Reminder (Days Before Event) *</label>
-              <input type="number" class="form-input" name="reminder_days_before_2" placeholder="1" min="0" max="365" required>
-              <small style="display: block; margin-top: 0.5rem; color: #6B7280;">
-                How many days before the event should the second reminder be sent? (e.g., 1 day)
-              </small>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Follow-up Email (Days After Event) *</label>
-              <input type="number" class="form-input" name="followup_days_after" placeholder="1" min="0" max="365" required>
-              <small style="display: block; margin-top: 0.5rem; color: #6B7280;">
-                How many days after the event should the follow-up email be sent? (e.g., 1 day)
-              </small>
-            </div>
-
-            <div style="margin-top: 2rem; padding-top: 2rem; border-top: 2px solid var(--border-grey);">
-              <h3 style="font-size: 1.1rem; color: var(--blazer-navy); margin-bottom: 1.5rem; font-weight: 600;">
-                Tour Guide Reminder Timing
-              </h3>
-
-              <div class="form-group">
-                <label class="form-label">First Reminder to Guide (Days Before Tour) *</label>
-                <input type="number" class="form-input" name="guide_reminder_days_before_1" placeholder="3" min="0" max="365" required>
-                <small style="display: block; margin-top: 0.5rem; color: #6B7280;">
-                  How many days before the tour should the first reminder be sent to the tour guide? (e.g., 3 days)
-                </small>
-              </div>
-
-              <div class="form-group">
-                <label class="form-label">Final Reminder to Guide (Days Before Tour) *</label>
-                <input type="number" class="form-input" name="guide_reminder_days_before_2" placeholder="1" min="0" max="365" required>
-                <small style="display: block; margin-top: 0.5rem; color: #6B7280;">
-                  How many days before the tour should the final reminder be sent to the tour guide? (e.g., 1 day)
-                </small>
-              </div>
-            </div>
-
-            <button type="submit" class="btn btn-primary" style="margin-top: 2rem;">
-              Save Timing Settings
-            </button>
           </form>
         </div>
       </div>
@@ -5621,15 +5555,6 @@
             emailForm.smtp_use_tls.checked = data.settings.smtp_use_tls !== false;
           }
 
-          // Populate email timing form
-          const timingForm = document.getElementById('email-timing-form');
-          if (timingForm) {
-            timingForm.reminder_days_before_1.value = data.settings.reminder_days_before_1 || 7;
-            timingForm.reminder_days_before_2.value = data.settings.reminder_days_before_2 || 1;
-            timingForm.followup_days_after.value = data.settings.followup_days_after || 1;
-            timingForm.guide_reminder_days_before_1.value = data.settings.guide_reminder_days_before_1 || 3;
-            timingForm.guide_reminder_days_before_2.value = data.settings.guide_reminder_days_before_2 || 1;
-          }
         }
       } catch (error) {
         console.error('Load email settings error:', error);
@@ -5668,39 +5593,6 @@
       } catch (error) {
         console.error('Save email settings error:', error);
         showEmailAlert('Failed to save email settings', 'error');
-      }
-    });
-
-    // Save email timing settings
-    document.getElementById('email-timing-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const form = e.target;
-      const formData = new FormData(form);
-
-      const data = {
-        reminder_days_before_1: parseInt(formData.get('reminder_days_before_1')),
-        reminder_days_before_2: parseInt(formData.get('reminder_days_before_2')),
-        followup_days_after: parseInt(formData.get('followup_days_after')),
-        guide_reminder_days_before_1: parseInt(formData.get('guide_reminder_days_before_1')),
-        guide_reminder_days_before_2: parseInt(formData.get('guide_reminder_days_before_2'))
-      };
-
-      try {
-        const res = await fetch(`${API_URL}/api/email-settings/${SCHOOL_ID}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data)
-        });
-
-        if (res.ok) {
-          showEmailAlert('Email timing settings saved successfully!', 'success');
-        } else {
-          const error = await res.json();
-          showEmailAlert('Failed to save email timing settings: ' + (error.error || 'Unknown error'), 'error');
-        }
-      } catch (error) {
-        console.error('Save email timing settings error:', error);
-        showEmailAlert('Failed to save email timing settings', 'error');
       }
     });
 
