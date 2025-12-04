@@ -3352,6 +3352,30 @@ app.post('/api/bookings/request-call', async (req, res) => {
       [booking.id]
     );
 
+    // Create follow-up reminder in CRM if booking has inquiry_id
+    if (booking.inquiry_id) {
+      try {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        await pool.query(
+          `INSERT INTO follow_ups (inquiry_id, follow_up_type, due_date, notes, status, priority, created_at, updated_at)
+           VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())`,
+          [
+            booking.inquiry_id,
+            'call',
+            today, // Due today - ASAP
+            `URGENT: Parent requested a callback regarding declined tour booking. Phone: ${booking.phone || 'Check enquiry'}. Original request: ${booking.booking_type === 'private_tour' ? 'Private Tour' : booking.booking_type === 'taster_day' ? 'Taster Day' : 'Open Day'}`,
+            'pending',
+            'high'
+          ]
+        );
+        console.log(`[REQUEST CALL] Created follow-up reminder for inquiry ${booking.inquiry_id}`);
+      } catch (followUpError) {
+        console.error('[REQUEST CALL] Failed to create follow-up:', followUpError.message);
+      }
+    }
+
     // Send notification email to admissions
     try {
       const mailOptions = {
