@@ -1838,6 +1838,7 @@
     // Organized bookings renderer - Clear sections for each booking type
     function renderUnifiedDashboardBookings(openDayBookings, tasterDayBookings, privateTourBookings, events, idPrefix = 'dashboard') {
       const container = document.getElementById(idPrefix === 'archive' ? 'archive-unified-list' : 'dashboard-unified-list');
+      const isArchive = idPrefix === 'archive';
 
       // Create events map
       const eventsMap = {};
@@ -1871,25 +1872,34 @@
       openDaysHTML += `</div></div>`;
 
       // ============ PRIVATE TOURS SECTION ============
-      const privatePending = privateTourBookings.filter(b => b.status === 'pending');
-      const privateScheduled = privateTourBookings.filter(b => b.status === 'confirmed' && b.scheduled_date && !b.checked_in_at);
-      const privateCompleted = privateTourBookings.filter(b => b.checked_in_at);
-
       let privateToursHTML = `
         <div class="booking-section" style="margin-bottom: 2rem;">
           <div style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); color: white; padding: 1rem 1.5rem; border-radius: 8px 8px 0 0; display: flex; justify-content: space-between; align-items: center;">
             <h2 style="margin: 0; font-size: 1.25rem; font-weight: 600;">PRIVATE TOURS</h2>
-            <span style="background: rgba(255,255,255,0.2); padding: 0.5rem 1rem; border-radius: 4px; font-weight: 600;">${privateTourBookings.length} bookings</span>
+            <span style="background: rgba(255,255,255,0.2); padding: 0.5rem 1rem; border-radius: 4px; font-weight: 600;">${privateTourBookings.length} booking${privateTourBookings.length !== 1 ? 's' : ''}</span>
           </div>
           <div style="background: white; border: 1px solid #e0e0e0; border-top: none; border-radius: 0 0 8px 8px;">
       `;
 
-      // Pending
-      privateToursHTML += renderBookingGroup('Pending Requests', privatePending, 'private-pending', '#f39c12', idPrefix);
-      // Scheduled
-      privateToursHTML += renderBookingGroup('Scheduled Tours', privateScheduled, 'private-scheduled', '#27ae60', idPrefix);
-      // Completed
-      privateToursHTML += renderBookingGroup('Completed Tours', privateCompleted, 'private-completed', '#3498db', idPrefix);
+      if (isArchive) {
+        // Archive uses Declined/Cancelled/Completed grouping
+        const privateDeclined = privateTourBookings.filter(b => b.status === 'declined');
+        const privateCancelled = privateTourBookings.filter(b => b.status === 'cancelled');
+        const privateCompleted = privateTourBookings.filter(b => b.checked_in_at);
+
+        privateToursHTML += renderBookingGroup('Declined', privateDeclined, 'private-declined', '#e74c3c', idPrefix);
+        privateToursHTML += renderBookingGroup('Cancelled', privateCancelled, 'private-cancelled', '#f39c12', idPrefix);
+        privateToursHTML += renderBookingGroup('Completed', privateCompleted, 'private-completed', '#27ae60', idPrefix);
+      } else {
+        // Dashboard uses Pending/Scheduled/Completed grouping
+        const privatePending = privateTourBookings.filter(b => b.status === 'pending');
+        const privateScheduled = privateTourBookings.filter(b => b.status === 'confirmed' && b.scheduled_date && !b.checked_in_at);
+        const privateCompleted = privateTourBookings.filter(b => b.checked_in_at);
+
+        privateToursHTML += renderBookingGroup('Pending Requests', privatePending, 'private-pending', '#f39c12', idPrefix);
+        privateToursHTML += renderBookingGroup('Scheduled Tours', privateScheduled, 'private-scheduled', '#27ae60', idPrefix);
+        privateToursHTML += renderBookingGroup('Completed Tours', privateCompleted, 'private-completed', '#3498db', idPrefix);
+      }
 
       if (privateTourBookings.length === 0) {
         privateToursHTML += `<div style="padding: 2rem; text-align: center; color: #666;">No private tour bookings</div>`;
@@ -1902,15 +1912,12 @@
         new Date(a.event_date) - new Date(b.event_date)
       );
       const standaloneTasterDays = tasterDayBookings.filter(b => !b.event_id);
-      const tasterPending = standaloneTasterDays.filter(b => b.status === 'pending');
-      const tasterScheduled = standaloneTasterDays.filter(b => b.status === 'confirmed' && b.scheduled_date && !b.checked_in_at);
-      const tasterCompleted = standaloneTasterDays.filter(b => b.checked_in_at);
 
       let tasterDaysHTML = `
         <div class="booking-section" style="margin-bottom: 2rem;">
           <div style="background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%); color: white; padding: 1rem 1.5rem; border-radius: 8px 8px 0 0; display: flex; justify-content: space-between; align-items: center;">
             <h2 style="margin: 0; font-size: 1.25rem; font-weight: 600;">TASTER DAYS</h2>
-            <span style="background: rgba(255,255,255,0.2); padding: 0.5rem 1rem; border-radius: 4px; font-weight: 600;">${tasterDayBookings.length} bookings</span>
+            <span style="background: rgba(255,255,255,0.2); padding: 0.5rem 1rem; border-radius: 4px; font-weight: 600;">${tasterDayBookings.length} booking${tasterDayBookings.length !== 1 ? 's' : ''}</span>
           </div>
           <div style="background: white; border: 1px solid #e0e0e0; border-top: none; border-radius: 0 0 8px 8px;">
       `;
@@ -1923,10 +1930,24 @@
         });
       }
 
-      // Standalone taster days
-      tasterDaysHTML += renderBookingGroup('Pending Requests', tasterPending, 'taster-pending', '#f39c12', idPrefix);
-      tasterDaysHTML += renderBookingGroup('Scheduled Taster Days', tasterScheduled, 'taster-scheduled', '#27ae60', idPrefix);
-      tasterDaysHTML += renderBookingGroup('Completed Taster Days', tasterCompleted, 'taster-completed', '#9b59b6', idPrefix);
+      // Standalone taster days - different grouping for archive vs dashboard
+      if (isArchive) {
+        const tasterDeclined = standaloneTasterDays.filter(b => b.status === 'declined');
+        const tasterCancelled = standaloneTasterDays.filter(b => b.status === 'cancelled');
+        const tasterCompleted = standaloneTasterDays.filter(b => b.checked_in_at);
+
+        tasterDaysHTML += renderBookingGroup('Declined', tasterDeclined, 'taster-declined', '#e74c3c', idPrefix);
+        tasterDaysHTML += renderBookingGroup('Cancelled', tasterCancelled, 'taster-cancelled', '#f39c12', idPrefix);
+        tasterDaysHTML += renderBookingGroup('Completed', tasterCompleted, 'taster-completed', '#27ae60', idPrefix);
+      } else {
+        const tasterPending = standaloneTasterDays.filter(b => b.status === 'pending');
+        const tasterScheduled = standaloneTasterDays.filter(b => b.status === 'confirmed' && b.scheduled_date && !b.checked_in_at);
+        const tasterCompleted = standaloneTasterDays.filter(b => b.checked_in_at);
+
+        tasterDaysHTML += renderBookingGroup('Pending Requests', tasterPending, 'taster-pending', '#f39c12', idPrefix);
+        tasterDaysHTML += renderBookingGroup('Scheduled Taster Days', tasterScheduled, 'taster-scheduled', '#27ae60', idPrefix);
+        tasterDaysHTML += renderBookingGroup('Completed Taster Days', tasterCompleted, 'taster-completed', '#9b59b6', idPrefix);
+      }
 
       if (tasterDayBookings.length === 0 && tasterDayEvents.length === 0) {
         tasterDaysHTML += `<div style="padding: 2rem; text-align: center; color: #666;">No taster day bookings</div>`;
