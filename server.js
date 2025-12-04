@@ -2509,13 +2509,38 @@ app.put('/api/bookings/:id/no-show', requireAdminAuth, async (req, res) => {
       );
 
       if (templateRes.rows.length > 0) {
+        // Get event details if this is an open day booking
+        let eventTitle = 'your scheduled visit';
+        let eventDate = '';
+
+        if (booking.event_id) {
+          const eventRes = await pool.query('SELECT title, event_date FROM events WHERE id = $1', [booking.event_id]);
+          if (eventRes.rows.length > 0) {
+            eventTitle = eventRes.rows[0].title;
+            eventDate = new Date(eventRes.rows[0].event_date).toLocaleDateString('en-GB', {
+              weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+            });
+          }
+        } else if (booking.scheduled_date) {
+          eventDate = new Date(booking.scheduled_date).toLocaleDateString('en-GB', {
+            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+          });
+        }
+
         const template = templateRes.rows[0];
 
         // Replace variables in subject and body
         const variables = {
           '{{parent_name}}': `${booking.parent_first_name} ${booking.parent_last_name}`,
+          '{{parent_first_name}}': booking.parent_first_name || '',
           '{{student_name}}': `${booking.student_first_name} ${booking.student_last_name || ''}`.trim(),
+          '{{student_first_name}}': booking.student_first_name || '',
+          '{{child_name}}': booking.student_first_name || '',
           '{{school_name}}': 'More House School',
+          '{{event_title}}': eventTitle,
+          '{{event_date}}': eventDate,
+          '{{scheduled_date}}': eventDate,
+          '{{tour_date}}': eventDate,
           '{{booking_type}}': booking.booking_type === 'open_day' ? 'Open Day'
             : booking.booking_type === 'taster_day' ? 'Taster Day'
             : 'Private Tour',
@@ -2529,12 +2554,13 @@ app.put('/api/bookings/:id/no-show', requireAdminAuth, async (req, res) => {
           body = body.replace(new RegExp(key, 'g'), variables[key]);
         });
 
-        // Send the email
-        await transporter.sendMail({
-          from: process.env.EMAIL_USER,
+        // Send the email using the configured transporter
+        await (await getEmailTransporter()).sendMail({
+          from: process.env.GMAIL_USER,
           to: booking.email,
           subject: subject,
-          html: body
+          text: body,
+          html: body.replace(/\n/g, '<br>')
         });
 
         console.log(`[NO-SHOW] No-show follow-up email sent to ${booking.email} for booking #${id}`);
