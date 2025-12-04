@@ -2122,6 +2122,12 @@
         }, 3000);
 
         console.log('[BOOKING URL] Successfully scrolled to and highlighted booking:', bookingId);
+
+        // Clear the URL parameter so refresh doesn't re-expand the booking
+        const url = new URL(window.location);
+        url.searchParams.delete('booking');
+        window.history.replaceState({}, '', url);
+        console.log('[BOOKING URL] Cleared booking parameter from URL');
       }, 200);
     }
 
