@@ -4038,26 +4038,43 @@
       }
 
       try {
+        console.log('[DECLINE] Sending decline request for booking:', bookingId);
         const res = await fetch(`${API_URL}/api/bookings/${bookingId}/decline`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify({
             decline_reason: declineReason,
             alternative_dates: alternativeDates
           })
         });
 
-        if (res.ok) {
+        const data = await res.json();
+        console.log('[DECLINE] Response:', data);
+
+        if (res.ok && data.success) {
+          console.log('[DECLINE] Success - booking status now:', data.booking?.status);
           alert('Tour declined. Email sent to parent with alternative dates.');
           closeModal('declineTourModal');
           e.target.reset();
-          loadDashboard();
+          // Reset alternative date fields
+          const container = document.getElementById('alternative-dates-container');
+          if (container) {
+            container.innerHTML = `
+              <div class="alternative-date-row" style="display: flex; gap: 1rem; margin-bottom: 0.5rem;">
+                <input type="date" class="form-input alt-date" style="flex: 1;">
+                <input type="time" class="form-input alt-time" style="width: 120px;">
+              </div>
+            `;
+          }
+          await loadDashboard();
+          console.log('[DECLINE] Dashboard reloaded');
         } else {
-          const error = await res.json();
-          alert('Failed to decline tour: ' + (error.error || 'Unknown error'));
+          console.error('[DECLINE] Failed:', data);
+          alert('Failed to decline tour: ' + (data.error || 'Unknown error'));
         }
       } catch (error) {
-        console.error('Decline tour error:', error);
+        console.error('[DECLINE] Error:', error);
         alert('Failed to decline tour. Please try again.');
       }
     });
