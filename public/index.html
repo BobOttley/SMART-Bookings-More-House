@@ -2756,10 +2756,6 @@
     // Search/Filter function for bookings
     function filterBookings(searchTerm) {
       const term = searchTerm.toLowerCase().trim();
-      const allGroups = document.querySelectorAll('.draggable-booking-group');
-
-      console.log('[SEARCH] Search term:', term);
-      console.log('[SEARCH] Found groups:', allGroups.length);
 
       // Remove any existing "no results" message first
       const existingMessage = document.getElementById('no-search-results');
@@ -2767,17 +2763,24 @@
         existingMessage.remove();
       }
 
+      // Get all booking sections and their content
+      const allSections = document.querySelectorAll('.booking-section');
+      const allCollapsibleDivs = document.querySelectorAll('[id^="dashboard-"]');
+
       if (!term) {
-        // Show all groups and reset highlighting
-        allGroups.forEach(group => {
-          group.style.display = 'block';
-          // Reset all child divs to original state
-          const allDivs = group.querySelectorAll('div');
-          allDivs.forEach(div => {
-            if (div.style.border && div.style.border.includes('solid')) {
-              div.style.border = '1px solid #e0e0e0';
-              div.style.background = '';
-              div.style.display = '';
+        // Show all sections and reset
+        allSections.forEach(section => section.style.display = 'block');
+        allCollapsibleDivs.forEach(div => {
+          // Reset all booking rows
+          const bookingRows = div.querySelectorAll('[id^="booking-"]');
+          bookingRows.forEach(row => {
+            if (row.id && !row.id.includes('-details') && !row.id.includes('-toggle')) {
+              const parent = row.closest('div[style*="border"]');
+              if (parent) {
+                parent.style.display = '';
+                parent.style.border = '';
+                parent.style.background = '';
+              }
             }
           });
         });
@@ -2786,49 +2789,41 @@
 
       let hasMatches = false;
 
-      allGroups.forEach(group => {
-        // Find the collapsible content div (contains all bookings for this event/group)
-        const contentDivs = group.querySelectorAll('[id^="dashboard-"]');
-        let groupHasMatch = false;
+      // Search through all collapsible content divs
+      allCollapsibleDivs.forEach(contentDiv => {
+        if (!contentDiv.id.startsWith('dashboard-')) return;
 
-        contentDivs.forEach(contentDiv => {
-          // Find all booking rows within this content div
-          // Each booking is wrapped in a div with border styling
-          const bookingDivs = contentDiv.querySelectorAll('div[style*="border"][style*="margin-bottom"]');
+        // Find all booking cards within this section
+        // Look for the booking row containers
+        const bookingContainers = contentDiv.querySelectorAll('div');
 
-          console.log('[SEARCH] Group has bookings:', bookingDivs.length);
+        bookingContainers.forEach(container => {
+          const text = container.textContent.toLowerCase();
 
-          if (bookingDivs.length === 0) return;
+          // Check if this looks like a booking row (has student name, parent contact, etc.)
+          if (container.querySelector('[id^="booking-"]') ||
+              (text.includes('student') && text.includes('parent')) ||
+              container.innerHTML.includes('CONFIRMED') ||
+              container.innerHTML.includes('PENDING')) {
 
-          bookingDivs.forEach(bookingDiv => {
-            const text = bookingDiv.textContent.toLowerCase();
             const matches = text.includes(term);
 
             if (matches) {
-              console.log('[SEARCH] MATCH found in:', text.substring(0, 50));
-              bookingDiv.style.display = 'block';
-              bookingDiv.style.border = '3px solid var(--award-gold)';
-              bookingDiv.style.background = '#FFF9E6';
-              groupHasMatch = true;
+              container.style.display = 'block';
+              container.style.border = '3px solid #FF9F1C';
+              container.style.background = '#FFF9E6';
+              container.style.borderRadius = '8px';
+              container.style.marginBottom = '0.5rem';
               hasMatches = true;
 
               // Auto-expand the parent section
               contentDiv.style.display = 'block';
               const toggle = document.getElementById(contentDiv.id + '-toggle');
-              if (toggle) {
-                toggle.textContent = '▲';
-              }
-            } else {
-              bookingDiv.style.display = 'none';
+              if (toggle) toggle.textContent = '▲';
             }
-          });
+          }
         });
-
-        // Show/hide the entire group based on matches
-        group.style.display = groupHasMatch ? 'block' : 'none';
       });
-
-      console.log('[SEARCH] Total matches:', hasMatches);
 
       // Show message if no matches found
       if (!hasMatches) {
