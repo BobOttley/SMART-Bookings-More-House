@@ -1934,7 +1934,10 @@
                   ${availableSpaces} / ${maxCapacity} spaces
                 </span>
               ` : ''}
-              ${eventBookings.length > 0 ? `<span id="${idPrefix}-event-${event.id}-toggle" style="font-size: 1rem;">▼</span>` : ''}
+              ${eventBookings.length > 0 ? `
+                <button onclick="event.stopPropagation(); printEventBookings(${event.id}, '${event.title.replace(/'/g, "\\'")}', '${event.event_date}')" style="background: #034674; color: white; border: none; padding: 0.4rem 0.75rem; border-radius: 4px; font-size: 0.8rem; font-weight: 600; cursor: pointer;">Print</button>
+                <span id="${idPrefix}-event-${event.id}-toggle" style="font-size: 1rem;">▼</span>
+              ` : ''}
             </div>
           </div>
           ${eventBookings.length > 0 ? `
@@ -2708,6 +2711,117 @@
     }
     // Make globally accessible for onclick handlers
     window.toggleEventBookings = toggleEventBookings;
+
+    // Print event bookings list
+    async function printEventBookings(eventId, eventTitle, eventDate) {
+      try {
+        // Fetch bookings for this event
+        const response = await fetch(`${API_URL}/api/bookings?schoolId=${SCHOOL_ID}&eventId=${eventId}`);
+        const data = await response.json();
+        const bookings = data.bookings || [];
+
+        if (bookings.length === 0) {
+          alert('No bookings to print');
+          return;
+        }
+
+        // Format the date
+        const formattedDate = eventDate ? new Date(eventDate).toLocaleDateString('en-GB', {
+          weekday: 'long',
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric'
+        }) : '';
+
+        // Generate print HTML
+        const printContent = `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>${eventTitle} - Bookings List</title>
+            <style>
+              * { margin: 0; padding: 0; box-sizing: border-box; }
+              body { font-family: Arial, sans-serif; padding: 20px; font-size: 11px; }
+              h1 { font-size: 18px; margin-bottom: 5px; }
+              h2 { font-size: 14px; color: #666; margin-bottom: 15px; font-weight: normal; }
+              table { width: 100%; border-collapse: collapse; }
+              th { background: #f5f5f5; text-align: left; padding: 8px; border: 1px solid #ddd; font-weight: 600; }
+              td { padding: 8px; border: 1px solid #ddd; vertical-align: top; }
+              tr:nth-child(even) { background: #fafafa; }
+              .number { width: 30px; text-align: center; font-weight: bold; }
+              .student { width: 150px; }
+              .parent { width: 200px; }
+              .details { width: 100px; }
+              .requirements { color: #e67e22; font-weight: 600; }
+              .status { text-align: center; }
+              .status-confirmed { color: #27ae60; }
+              .status-pending { color: #f39c12; }
+              .status-checked-in { color: #3498db; }
+              @media print {
+                body { padding: 10px; }
+              }
+            </style>
+          </head>
+          <body>
+            <h1>${eventTitle}</h1>
+            <h2>${formattedDate}</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th class="number">#</th>
+                  <th class="student">Student</th>
+                  <th class="parent">Parent Contact</th>
+                  <th class="details">Details</th>
+                  <th class="status">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${bookings.map((b, idx) => `
+                  <tr>
+                    <td class="number">${idx + 1}</td>
+                    <td class="student">
+                      <strong>${b.student_first_name || ''} ${b.student_last_name || ''}</strong><br>
+                      <span style="color: #666;">${b.age_group || ''}</span>
+                    </td>
+                    <td class="parent">
+                      ${b.parent_first_name} ${b.parent_last_name}<br>
+                      <span style="color: #666;">${b.email}</span><br>
+                      ${b.phone ? `<span style="color: #666;">${b.phone}</span>` : ''}
+                    </td>
+                    <td class="details">
+                      ${b.num_attendees} attendee${b.num_attendees !== 1 ? 's' : ''}
+                      ${b.special_requirements && b.special_requirements.trim() ? '<br><span class="requirements">Special Req.</span>' : ''}
+                    </td>
+                    <td class="status ${b.checked_in_at ? 'status-checked-in' : b.status === 'confirmed' ? 'status-confirmed' : 'status-pending'}">
+                      ${b.checked_in_at ? 'CHECKED IN' : b.status.toUpperCase()}
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+            <p style="margin-top: 15px; font-size: 10px; color: #999;">
+              Total: ${bookings.length} booking${bookings.length !== 1 ? 's' : ''} |
+              Printed: ${new Date().toLocaleString('en-GB')}
+            </p>
+          </body>
+          </html>
+        `;
+
+        // Open print window
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(printContent);
+        printWindow.document.close();
+        printWindow.focus();
+        setTimeout(() => {
+          printWindow.print();
+        }, 250);
+
+      } catch (error) {
+        console.error('Print error:', error);
+        alert('Failed to generate print view');
+      }
+    }
+    window.printEventBookings = printEventBookings;
 
     // Search/Filter function for bookings
     function filterBookings(searchTerm) {
