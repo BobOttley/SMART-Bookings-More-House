@@ -2808,7 +2808,13 @@
         `;
 
         // Open print window
-        const printWindow = window.open('', '_blank');
+        const printWindow = window.open('', '_blank', 'width=800,height=600');
+
+        if (!printWindow) {
+          alert('Please allow popups for this site to print the bookings list');
+          return;
+        }
+
         printWindow.document.write(printContent);
         printWindow.document.close();
         printWindow.focus();
@@ -2818,7 +2824,7 @@
 
       } catch (error) {
         console.error('Print error:', error);
-        alert('Failed to generate print view');
+        alert('Failed to generate print view. Please allow popups for this site.');
       }
     }
     window.printEventBookings = printEventBookings;
