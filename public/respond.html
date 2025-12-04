@@ -310,6 +310,7 @@
     async function loadBookingDetails() {
       const urlParams = new URLSearchParams(window.location.search);
       const token = urlParams.get('token');
+      const action = urlParams.get('action');
 
       if (!token) {
         showError('Invalid or missing booking token. Please use the link from your email.');
@@ -326,6 +327,13 @@
         }
 
         bookingData = data.booking;
+
+        // If action=call, immediately show call request flow
+        if (action === 'call') {
+          showCallRequestForm();
+          return;
+        }
+
         renderBookingDetails();
       } catch (error) {
         console.error('Load booking error:', error);
@@ -416,11 +424,15 @@
             <div id="alternatives-list"></div>
             <button class="btn" id="accept-btn" onclick="acceptAlternative()" disabled>Accept Selected Date</button>
             <button class="btn request-new-btn" onclick="requestNewDate()">Request a Different Date</button>
+            <p style="margin-top: 1.5rem; color: #6B7280;">Or if you'd prefer to discuss options:</p>
+            <button class="btn" onclick="showCallRequestForm()" style="background: #091825; margin-top: 0.5rem;">Request a Call from Admissions</button>
           </div>
         ` : `
           <div style="text-align: center; padding: 2rem 0;">
             <p style="color: #6B7280; margin-bottom: 1rem;">Unfortunately, we don't have alternative dates available at the moment.</p>
             <button class="btn" onclick="requestNewDate()">Request a New Date</button>
+            <p style="margin-top: 1.5rem; color: #6B7280;">Or if you'd prefer to discuss options:</p>
+            <button class="btn" onclick="showCallRequestForm()" style="background: #091825; margin-top: 0.5rem;">Request a Call from Admissions</button>
           </div>
         `}
       `;
@@ -511,6 +523,88 @@
 
     function requestNewDate() {
       window.location.href = '/book.html?request=private';
+    }
+
+    function showCallRequestForm() {
+      const content = document.getElementById('content');
+      content.innerHTML = `
+        <h2>Request a Call from Admissions</h2>
+
+        <div class="booking-details">
+          <h3>Your Details</h3>
+          <div class="detail-row">
+            <div class="detail-label">Name:</div>
+            <div class="detail-value">${bookingData.parent_first_name} ${bookingData.parent_last_name}</div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-label">Email:</div>
+            <div class="detail-value">${bookingData.email}</div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-label">Phone:</div>
+            <div class="detail-value">${bookingData.phone || 'Not provided'}</div>
+          </div>
+        </div>
+
+        <p style="color: #6B7280; margin-bottom: 1.5rem; line-height: 1.6;">
+          Click the button below to request a call from our admissions team. They will contact you to discuss alternative tour dates and answer any questions you may have.
+        </p>
+
+        <button class="btn" id="call-btn" onclick="submitCallRequest()">
+          Request a Call
+        </button>
+
+        <button class="btn request-new-btn" onclick="window.location.href='/respond.html?token=${bookingData.response_token}'" style="margin-top: 1rem;">
+          View Alternative Dates Instead
+        </button>
+      `;
+    }
+
+    async function submitCallRequest() {
+      const btn = document.getElementById('call-btn');
+      btn.disabled = true;
+      btn.textContent = 'Submitting...';
+
+      try {
+        const res = await fetch(`${API_URL}/api/bookings/request-call`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            token: bookingData.response_token
+          })
+        });
+
+        if (res.ok) {
+          showCallRequestSuccess();
+        } else {
+          const error = await res.json();
+          alert('Failed to submit request: ' + (error.error || 'Unknown error'));
+          btn.disabled = false;
+          btn.textContent = 'Request a Call';
+        }
+      } catch (error) {
+        console.error('Request call error:', error);
+        alert('Failed to submit request. Please try again.');
+        btn.disabled = false;
+        btn.textContent = 'Request a Call';
+      }
+    }
+
+    function showCallRequestSuccess() {
+      const content = document.getElementById('content');
+      content.innerHTML = `
+        <div class="success">
+          <div class="checkmark">✓</div>
+          <h2>Call Request Received</h2>
+          <p>Thank you for your request.</p>
+          <p style="margin-top: 1rem; color: #6B7280;">
+            A member of our admissions team will call you shortly to discuss your tour options.
+          </p>
+          <p style="margin-top: 1rem; color: #6B7280;">
+            You will receive a confirmation email at <strong>${bookingData.email}</strong>
+          </p>
+        </div>
+      `;
     }
 
     function showSuccess() {

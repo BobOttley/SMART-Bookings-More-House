@@ -3146,11 +3146,24 @@ app.post('/api/bookings/:id/decline', requireAdminAuth, async (req, res) => {
       let alternativesText = '';
       let alternativesHTML = '';
 
+      const appUrl = process.env.APP_URL || 'https://smart-bookings-more-house.onrender.com';
+
+      // Always include request a call option
+      const requestCallText = `\n\nWould you prefer us to call you? Request a callback:\n${appUrl}/respond.html?token=${responseToken}&action=call`;
+      const requestCallHTML = `
+        <p style="margin-top: 20px;">
+          <a href="${appUrl}/respond.html?token=${responseToken}&action=call"
+             style="display: inline-block; padding: 12px 24px; background: #091825; color: white; text-decoration: none; border-radius: 4px; font-weight: 600;">
+            Request a Call from Admissions
+          </a>
+        </p>
+      `;
+
       if (hasAlternatives) {
-        const appUrl = process.env.APP_URL || 'https://smart-bookings-more-house.onrender.com';
         alternativesText = '\n\nAlternative dates available:\n' +
           alternative_dates.map((alt, idx) => `${idx + 1}. ${alt.date} at ${alt.time}`).join('\n') +
-          `\n\nTo accept one of these alternatives, please visit:\n${appUrl}/respond.html?token=${responseToken}`;
+          `\n\nTo accept one of these alternatives, please visit:\n${appUrl}/respond.html?token=${responseToken}` +
+          requestCallText;
 
         alternativesHTML = `
           <h3 style="color: #091825; margin-top: 20px;">Alternative Dates Available</h3>
@@ -3167,7 +3180,12 @@ app.post('/api/bookings/:id/decline', requireAdminAuth, async (req, res) => {
               View & Accept Alternative Dates
             </a>
           </p>
+          <p style="margin-top: 10px; color: #666;">Or if you'd prefer to discuss options:</p>
+          ${requestCallHTML}
         `;
+      } else {
+        alternativesText = requestCallText;
+        alternativesHTML = requestCallHTML;
       }
 
       const mailOptions = {
@@ -3198,7 +3216,7 @@ More House School Admissions Team`,
 
             ${alternativesHTML}
 
-            ${!hasAlternatives ? '<p style="margin-top: 20px;">Please reply to this email to discuss alternative arrangements or submit a new tour request.</p>' : ''}
+            ${!hasAlternatives ? `<p style="margin-top: 20px;">Please reply to this email to discuss alternative arrangements or submit a new tour request.</p>${requestCallHTML}` : ''}
 
             <p style="margin-top: 30px; color: #666; font-size: 14px;">
               Best regards,<br>
@@ -3305,6 +3323,135 @@ More House School Admissions Team`,
   } catch (error) {
     console.error('Accept alternative error:', error);
     res.status(500).json({ success: false, error: 'Failed to accept alternative' });
+  }
+});
+
+// Request a call from admissions (Public endpoint)
+app.post('/api/bookings/request-call', async (req, res) => {
+  try {
+    const { token } = req.body;
+
+    const result = await pool.query(
+      'SELECT * FROM bookings WHERE response_token = $1',
+      [token]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Booking not found' });
+    }
+
+    const booking = result.rows[0];
+
+    // Update booking to mark call requested
+    await pool.query(
+      `UPDATE bookings SET
+        call_requested = true,
+        call_requested_at = NOW(),
+        updated_at = NOW()
+      WHERE id = $1`,
+      [booking.id]
+    );
+
+    // Send notification email to admissions
+    try {
+      const mailOptions = {
+        from: process.env.EMAIL_FROM,
+        to: process.env.GMAIL_USER, // Admissions email
+        subject: `Call Request - ${booking.parent_first_name} ${booking.parent_last_name}`,
+        text: `A parent has requested a call from admissions regarding their tour booking.
+
+Parent: ${booking.parent_first_name} ${booking.parent_last_name}
+Email: ${booking.email}
+Phone: ${booking.phone || 'Not provided'}
+Student: ${booking.student_first_name} ${booking.student_last_name}
+
+Original booking type: ${booking.booking_type}
+Original requested date: ${booking.scheduled_date || 'Not specified'}
+
+This booking was declined and the parent would like to discuss alternative arrangements.
+
+Please call them at your earliest convenience.`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #091825; border-bottom: 3px solid #FF9F1C; padding-bottom: 10px;">
+              Call Request from Parent
+            </h2>
+
+            <div style="background: #fff8e6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <h3 style="margin-top: 0; color: #091825;">Parent Details</h3>
+              <p><strong>Name:</strong> ${booking.parent_first_name} ${booking.parent_last_name}</p>
+              <p><strong>Email:</strong> <a href="mailto:${booking.email}">${booking.email}</a></p>
+              <p><strong>Phone:</strong> ${booking.phone || 'Not provided'}</p>
+              <p><strong>Student:</strong> ${booking.student_first_name} ${booking.student_last_name}</p>
+            </div>
+
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <h3 style="margin-top: 0; color: #091825;">Booking Details</h3>
+              <p><strong>Type:</strong> ${booking.booking_type === 'private_tour' ? 'Private Tour' : booking.booking_type === 'taster_day' ? 'Taster Day' : 'Open Day'}</p>
+              <p><strong>Original Date:</strong> ${booking.scheduled_date || 'Not specified'}</p>
+              ${booking.decline_reason ? `<p><strong>Decline Reason:</strong> ${booking.decline_reason}</p>` : ''}
+            </div>
+
+            <p style="background: #091825; color: white; padding: 15px; border-radius: 8px; text-align: center;">
+              <strong>Please call this parent at your earliest convenience.</strong>
+            </p>
+          </div>
+        `
+      };
+
+      await (await getEmailTransporter()).sendMail(mailOptions);
+
+      // Log the email
+      await pool.query(
+        `INSERT INTO booking_email_logs (booking_id, email_type, recipient, subject, sent_at)
+         VALUES ($1, $2, $3, $4, NOW())`,
+        [booking.id, 'call_requested', process.env.GMAIL_USER, mailOptions.subject]
+      );
+    } catch (emailError) {
+      console.error('Email send error:', emailError);
+    }
+
+    // Send confirmation to parent
+    try {
+      const confirmMailOptions = {
+        from: process.env.EMAIL_FROM,
+        to: booking.email,
+        subject: `More House School - Call Request Received`,
+        text: `Dear ${booking.parent_first_name},
+
+Thank you for your interest in More House School.
+
+We have received your request for a call from our admissions team. A member of our team will contact you shortly.
+
+If you need to reach us urgently, please call us directly.
+
+Best regards,
+More House School Admissions Team`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #091825;">Call Request Received</h2>
+            <p>Dear ${booking.parent_first_name},</p>
+            <p>Thank you for your interest in More House School.</p>
+            <p>We have received your request for a call from our admissions team. A member of our team will contact you shortly.</p>
+            <p>If you need to reach us urgently, please call us directly.</p>
+            <p style="margin-top: 30px; color: #666; font-size: 14px;">
+              Best regards,<br>
+              More House School<br>
+              Admissions Team
+            </p>
+          </div>
+        `
+      };
+
+      await (await getEmailTransporter()).sendMail(confirmMailOptions);
+    } catch (emailError) {
+      console.error('Confirmation email error:', emailError);
+    }
+
+    res.json({ success: true, message: 'Call request submitted' });
+  } catch (error) {
+    console.error('Request call error:', error);
+    res.status(500).json({ success: false, error: 'Failed to submit call request' });
   }
 });
 
