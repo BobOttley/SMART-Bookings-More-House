@@ -29,6 +29,11 @@
       display: block !important;
     }
 
+    /* Also target by ID pattern as backup */
+    [id^="booking-"][id$="-details"]:not(.expanded) {
+      display: none !important;
+    }
+
     * {
       margin: 0;
       padding: 0;
@@ -2556,8 +2561,8 @@
               <span id="booking-${b.id}-toggle" style="font-size: 0.875rem; color: #666;">▼</span>
             </div>
           </div>
-          <div id="booking-${b.id}-details" class="booking-details-panel" style="display: none; padding: 1rem; background: white; border-top: 1px solid #e0e0e0;">
-            ${renderBookingDetails(b)}
+          <div id="booking-${b.id}-details" class="booking-details-panel" style="padding: 1rem; background: white; border-top: 1px solid #e0e0e0;" data-booking-id="${b.id}">
+            <div class="booking-details-loading">Loading details...</div>
           </div>
         </div>
       `;
@@ -2863,10 +2868,24 @@
         element.classList.add('expanded');
         toggle.textContent = '▲';
 
-        // Load CRM data if not already loaded
-        if (!element.dataset.crmLoaded) {
-          element.dataset.crmLoaded = 'true';
-          await loadBookingCRMData(bookingId);
+        // Load details content if not already loaded
+        if (!element.dataset.detailsLoaded) {
+          element.dataset.detailsLoaded = 'true';
+          // Fetch booking data and render details
+          try {
+            const res = await fetch(`${API_URL}/api/bookings/${bookingId}`);
+            const data = await res.json();
+            if (data.success && data.booking) {
+              element.innerHTML = renderBookingDetails(data.booking);
+              // Then load CRM data
+              await loadBookingCRMData(bookingId);
+            } else {
+              element.innerHTML = '<div style="padding: 1rem; color: #dc3545;">Failed to load booking details</div>';
+            }
+          } catch (error) {
+            console.error('Load booking details error:', error);
+            element.innerHTML = '<div style="padding: 1rem; color: #dc3545;">Error loading details</div>';
+          }
         }
       } else {
         element.classList.remove('expanded');
