@@ -1836,8 +1836,8 @@
     }
 
     // Organized bookings renderer - Clear sections for each booking type
-    function renderUnifiedDashboardBookings(openDayBookings, tasterDayBookings, privateTourBookings, events) {
-      const container = document.getElementById('dashboard-unified-list');
+    function renderUnifiedDashboardBookings(openDayBookings, tasterDayBookings, privateTourBookings, events, idPrefix = 'dashboard') {
+      const container = document.getElementById(idPrefix === 'archive' ? 'archive-unified-list' : 'dashboard-unified-list');
 
       // Create events map
       const eventsMap = {};
@@ -1864,7 +1864,7 @@
       } else {
         openDayEvents.forEach(event => {
           const eventBookings = openDayBookings.filter(b => b.event_id === event.id);
-          openDaysHTML += renderEventSection(event, eventBookings, 'open_day');
+          openDaysHTML += renderEventSection(event, eventBookings, 'open_day', idPrefix);
         });
       }
 
@@ -1885,11 +1885,11 @@
       `;
 
       // Pending
-      privateToursHTML += renderBookingGroup('Pending Requests', privatePending, 'private-pending', '#f39c12');
+      privateToursHTML += renderBookingGroup('Pending Requests', privatePending, 'private-pending', '#f39c12', idPrefix);
       // Scheduled
-      privateToursHTML += renderBookingGroup('Scheduled Tours', privateScheduled, 'private-scheduled', '#27ae60');
+      privateToursHTML += renderBookingGroup('Scheduled Tours', privateScheduled, 'private-scheduled', '#27ae60', idPrefix);
       // Completed
-      privateToursHTML += renderBookingGroup('Completed Tours', privateCompleted, 'private-completed', '#3498db');
+      privateToursHTML += renderBookingGroup('Completed Tours', privateCompleted, 'private-completed', '#3498db', idPrefix);
 
       if (privateTourBookings.length === 0) {
         privateToursHTML += `<div style="padding: 2rem; text-align: center; color: #666;">No private tour bookings</div>`;
@@ -1919,14 +1919,14 @@
       if (tasterDayEvents.length > 0) {
         tasterDayEvents.forEach(event => {
           const eventBookings = tasterDayBookings.filter(b => b.event_id === event.id);
-          tasterDaysHTML += renderEventSection(event, eventBookings, 'taster_day');
+          tasterDaysHTML += renderEventSection(event, eventBookings, 'taster_day', idPrefix);
         });
       }
 
       // Standalone taster days
-      tasterDaysHTML += renderBookingGroup('Pending Requests', tasterPending, 'taster-pending', '#f39c12');
-      tasterDaysHTML += renderBookingGroup('Scheduled Taster Days', tasterScheduled, 'taster-scheduled', '#27ae60');
-      tasterDaysHTML += renderBookingGroup('Completed Taster Days', tasterCompleted, 'taster-completed', '#9b59b6');
+      tasterDaysHTML += renderBookingGroup('Pending Requests', tasterPending, 'taster-pending', '#f39c12', idPrefix);
+      tasterDaysHTML += renderBookingGroup('Scheduled Taster Days', tasterScheduled, 'taster-scheduled', '#27ae60', idPrefix);
+      tasterDaysHTML += renderBookingGroup('Completed Taster Days', tasterCompleted, 'taster-completed', '#9b59b6', idPrefix);
 
       if (tasterDayBookings.length === 0 && tasterDayEvents.length === 0) {
         tasterDaysHTML += `<div style="padding: 2rem; text-align: center; color: #666;">No taster day bookings</div>`;
@@ -1942,7 +1942,7 @@
     }
 
     // Render an event section (for Open Days and Taster Days)
-    function renderEventSection(event, eventBookings, eventType) {
+    function renderEventSection(event, eventBookings, eventType, idPrefix = 'dashboard') {
       const pendingCount = eventBookings.filter(b => b.status === 'pending').length;
       const confirmedCount = eventBookings.filter(b => b.status === 'confirmed').length;
       const checkedInCount = eventBookings.filter(b => b.checked_in_at).length;
@@ -1963,7 +1963,7 @@
 
       return `
         <div style="border-bottom: 1px solid #e0e0e0; padding: 1rem;">
-          <div style="display: flex; justify-content: space-between; align-items: center; ${eventBookings.length > 0 ? 'cursor: pointer;' : ''}" ${eventBookings.length > 0 ? `onclick="toggleEventBookings('dashboard-event-${event.id}')"` : ''}>
+          <div style="display: flex; justify-content: space-between; align-items: center; ${eventBookings.length > 0 ? 'cursor: pointer;' : ''}" ${eventBookings.length > 0 ? `onclick="toggleEventBookings('${idPrefix}-event-${event.id}')"` : ''}>
             <div>
               <div style="display: flex; align-items: center; gap: 0.5rem;">
                 <h3 style="margin: 0; font-size: 1.05rem;">${event.title}</h3>
@@ -1981,11 +1981,11 @@
                   ${availableSpaces} / ${maxCapacity} spaces
                 </span>
               ` : ''}
-              ${eventBookings.length > 0 ? `<span id="dashboard-event-${event.id}-toggle" style="font-size: 1rem;">▼</span>` : ''}
+              ${eventBookings.length > 0 ? `<span id="${idPrefix}-event-${event.id}-toggle" style="font-size: 1rem;">▼</span>` : ''}
             </div>
           </div>
           ${eventBookings.length > 0 ? `
-            <div id="dashboard-event-${event.id}" style="display: none; margin-top: 1rem;">
+            <div id="${idPrefix}-event-${event.id}" style="display: none; margin-top: 1rem;">
               ${eventBookings.map((b, idx) => renderBookingRow(b, idx)).join('')}
             </div>
           ` : ''}
@@ -1994,20 +1994,20 @@
     }
 
     // Render a booking group (Pending, Scheduled, Completed)
-    function renderBookingGroup(title, bookings, groupId, accentColor) {
+    function renderBookingGroup(title, bookings, groupId, accentColor, idPrefix = 'dashboard') {
       if (bookings.length === 0) return '';
 
       return `
         <div style="border-bottom: 1px solid #e0e0e0; padding: 1rem;">
-          <div style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="toggleEventBookings('dashboard-${groupId}')">
+          <div style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="toggleEventBookings('${idPrefix}-${groupId}')">
             <div style="display: flex; align-items: center; gap: 0.75rem;">
               <div style="width: 4px; height: 24px; background: ${accentColor}; border-radius: 2px;"></div>
               <h3 style="margin: 0; font-size: 1rem;">${title}</h3>
               <span style="background: #e0e0e0; color: #333; padding: 0.4rem 0.75rem; border-radius: 4px; font-size: 0.8rem; font-weight: 600;">${bookings.length}</span>
             </div>
-            <span id="dashboard-${groupId}-toggle" style="font-size: 1rem;">▼</span>
+            <span id="${idPrefix}-${groupId}-toggle" style="font-size: 1rem;">▼</span>
           </div>
-          <div id="dashboard-${groupId}" style="display: none; margin-top: 1rem;">
+          <div id="${idPrefix}-${groupId}" style="display: none; margin-top: 1rem;">
             ${bookings.map((b, idx) => renderBookingRow(b, idx)).join('')}
           </div>
         </div>
@@ -2194,45 +2194,39 @@
         return;
       }
 
-      // Reuse renderUnifiedDashboardBookings but target archive container
-      const oldContainer = document.getElementById('dashboard-unified-list');
-      const tempContainer = document.getElementById('archive-unified-list');
-
-      // Temporarily swap IDs to reuse the render function
-      oldContainer.id = 'temp-dash';
-      tempContainer.id = 'dashboard-unified-list';
-
-      renderUnifiedDashboardBookings(openDayBookings, tasterDayBookings, privateTourBookings, archivedEvents);
-
-      // Swap back
-      tempContainer.id = 'archive-unified-list';
-      oldContainer.id = 'dashboard-unified-list';
+      // Render archive with 'archive' prefix so IDs don't conflict with dashboard
+      renderUnifiedDashboardBookings(openDayBookings, tasterDayBookings, privateTourBookings, archivedEvents, 'archive');
     }
 
     // Archive search filter
     function filterArchive(searchTerm) {
       const term = searchTerm.toLowerCase().trim();
-      const allGroups = document.querySelectorAll('#archive-unified-list .draggable-booking-group');
+      const container = document.getElementById('archive-unified-list');
+
+      // Get all booking sections in archive
+      const allSections = container.querySelectorAll('.booking-section');
 
       console.log('[ARCHIVE SEARCH] Search term:', term);
-      console.log('[ARCHIVE SEARCH] Found groups:', allGroups.length);
+      console.log('[ARCHIVE SEARCH] Found sections:', allSections.length);
 
       // Remove any existing "no results" message first
-      const existingMessage = document.querySelector('#archive-unified-list #no-search-results');
+      const existingMessage = container.querySelector('#no-search-results');
       if (existingMessage) {
         existingMessage.remove();
       }
 
       if (!term) {
-        // Show all groups and reset highlighting
-        allGroups.forEach(group => {
-          group.style.display = 'block';
-          const allDivs = group.querySelectorAll('div');
-          allDivs.forEach(div => {
-            if (div.style.border && div.style.border.includes('solid')) {
-              div.style.border = '1px solid #e0e0e0';
-              div.style.background = '';
-              div.style.display = '';
+        // Show all sections and reset highlighting
+        allSections.forEach(section => {
+          section.style.display = 'block';
+          // Reset all booking highlights
+          const bookingDivs = section.querySelectorAll('[id^="booking-"]');
+          bookingDivs.forEach(div => {
+            const parent = div.parentElement;
+            if (parent) {
+              parent.style.border = '';
+              parent.style.background = '';
+              parent.style.display = '';
             }
           });
         });
@@ -2241,24 +2235,27 @@
 
       let hasMatches = false;
 
-      allGroups.forEach(group => {
-        const contentDivs = group.querySelectorAll('[id^="dashboard-"]');
-        let groupHasMatch = false;
+      allSections.forEach(section => {
+        // Get all collapsible content divs (with archive- prefix)
+        const contentDivs = section.querySelectorAll('[id^="archive-"]');
+        let sectionHasMatch = false;
 
         contentDivs.forEach(contentDiv => {
-          const bookingDivs = contentDiv.querySelectorAll('div[style*="border"][style*="margin-bottom"]');
+          // Find booking rows within this content div
+          const bookingRows = contentDiv.querySelectorAll('[id^="booking-"]');
 
-          if (bookingDivs.length === 0) return;
+          bookingRows.forEach(bookingRow => {
+            const parent = bookingRow.closest('div[style*="border-radius"]');
+            if (!parent) return;
 
-          bookingDivs.forEach(bookingDiv => {
-            const text = bookingDiv.textContent.toLowerCase();
+            const text = parent.textContent.toLowerCase();
             const matches = text.includes(term);
 
             if (matches) {
-              bookingDiv.style.display = 'block';
-              bookingDiv.style.border = '3px solid #6B7280';
-              bookingDiv.style.background = '#F3F4F6';
-              groupHasMatch = true;
+              parent.style.display = 'block';
+              parent.style.border = '3px solid #6B7280';
+              parent.style.background = '#F3F4F6';
+              sectionHasMatch = true;
               hasMatches = true;
 
               // Auto-expand the parent section
@@ -2268,17 +2265,16 @@
                 toggle.textContent = '▲';
               }
             } else {
-              bookingDiv.style.display = 'none';
+              parent.style.display = 'none';
             }
           });
         });
 
-        group.style.display = groupHasMatch ? 'block' : 'none';
+        section.style.display = sectionHasMatch ? 'block' : 'none';
       });
 
       // Show message if no matches found
       if (!hasMatches) {
-        const container = document.getElementById('archive-unified-list');
         const messageDiv = document.createElement('div');
         messageDiv.id = 'no-search-results';
         messageDiv.style.cssText = 'padding: 2rem; text-align: center; color: #6B7280; font-size: 0.95rem;';
