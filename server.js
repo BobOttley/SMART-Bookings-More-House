@@ -4919,18 +4919,26 @@ async function sendTemplateEmail(booking, templateId, emailType, smartFeedback =
       }
     }
 
+    // Format the date nicely
+    const formattedDate = eventDate ? new Date(eventDate).toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : '';
+
     const templateData = {
       booking_id: booking.id,
       parent_name: `${booking.parent_first_name} ${booking.parent_last_name || ''}`.trim(),
+      parent_first_name: booking.parent_first_name || '',
       student_name: `${booking.student_first_name} ${booking.student_last_name || ''}`.trim(),
+      student_first_name: booking.student_first_name || '',
+      child_name: booking.student_first_name || '',
       school_name: 'More House School',
-      tour_date: eventDate ? new Date(eventDate).toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : '',
+      tour_date: formattedDate,
       tour_time: eventTime || '',
-      event_date: eventDate ? new Date(eventDate).toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : '',
+      event_date: formattedDate,
+      scheduled_date: formattedDate,
       start_time: eventTime || '',
-      event_title: booking.event_title || 'Your Event',
+      event_title: booking.event_title || booking.title || 'your scheduled visit',
       num_attendees: booking.num_attendees || 1,
       tour_guide: booking.guide_name || 'our tour guide',
+      guide_name: booking.guide_name || 'our tour guide',
       feedback_link: feedbackUrl,
       pronoun_subject: pronounSubject,
       pronoun_object: pronounObject,
