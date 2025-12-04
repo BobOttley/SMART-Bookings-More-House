@@ -1735,21 +1735,13 @@
 
       console.log('[DASHBOARD] Filtered to', activeEvents.length, 'active events and', activeBookings.length, 'active bookings');
 
-      // Save the state of currently open sections and expanded booking details before re-rendering
+      // Save the state of currently open sections before re-rendering (NOT booking details - those should reset)
       const openSections = new Set();
-      const openBookingDetails = new Set();
 
       // Save open dashboard sections (events, private tour, and taster day categories)
       document.querySelectorAll('[id^="dashboard-"]').forEach(el => {
         if (el.style.display === 'block' && (el.id.includes('event-') || el.id.includes('private-') || el.id.includes('taster-'))) {
           openSections.add(el.id);
-        }
-      });
-
-      // Save expanded booking details
-      document.querySelectorAll('[id^="booking-"][id$="-details"]').forEach(el => {
-        if (el.style.display === 'block') {
-          openBookingDetails.add(el.id);
         }
       });
 
@@ -1814,7 +1806,7 @@
       // Render unified bookings list with drag-and-drop (using filtered activeEvents)
       renderUnifiedDashboardBookings(openDayBookings, tasterDayBookings, privateTourBookings, activeEvents);
 
-      // Restore the state of previously open sections
+      // Restore the state of previously open sections (but NOT booking details - those should stay collapsed)
       openSections.forEach(sectionId => {
         const element = document.getElementById(sectionId);
         const toggle = document.getElementById(sectionId + '-toggle');
@@ -1824,15 +1816,8 @@
         }
       });
 
-      // Restore the state of previously expanded booking details
-      openBookingDetails.forEach(detailsId => {
-        const element = document.getElementById(detailsId);
-        const toggle = document.getElementById(detailsId.replace('-details', '-toggle'));
-        if (element) {
-          element.style.display = 'block';
-          if (toggle) toggle.textContent = '▲';
-        }
-      });
+      // NOTE: We intentionally do NOT restore booking details - they should always start collapsed
+      // This prevents the confusing behavior where cards appear already expanded
     }
 
     // Organized bookings renderer - Clear sections for each booking type
@@ -2863,7 +2848,10 @@
       const element = document.getElementById(`booking-${bookingId}-details`);
       const toggle = document.getElementById(`booking-${bookingId}-toggle`);
 
-      if (element.style.display === 'none') {
+      // Check if currently hidden (either via inline style or not yet set)
+      const isHidden = !element.style.display || element.style.display === 'none';
+
+      if (isHidden) {
         element.style.display = 'block';
         toggle.textContent = '▲';
 
