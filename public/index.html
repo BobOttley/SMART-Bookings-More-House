@@ -2430,7 +2430,11 @@
         document.getElementById('edit-event-type').value = event.event_type;
         document.getElementById('edit-event-title').value = event.title;
         document.getElementById('edit-event-description').value = event.description || '';
-        document.getElementById('edit-event-date').value = event.event_date;
+        // Format date properly for date input (needs YYYY-MM-DD)
+        if (event.event_date) {
+          const eventDate = new Date(event.event_date);
+          document.getElementById('edit-event-date').value = eventDate.toISOString().split('T')[0];
+        }
         document.getElementById('edit-event-start-time').value = event.start_time;
         document.getElementById('edit-event-end-time').value = event.end_time;
         document.getElementById('edit-event-location').value = event.location || '';
