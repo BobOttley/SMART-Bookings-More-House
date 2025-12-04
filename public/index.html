@@ -3247,13 +3247,29 @@
       document.getElementById('schedule-booking-id').value = bookingId;
       document.getElementById('schedule-parent-name').textContent = parentName;
 
-      // Fetch the booking details to show parent's request
+      // Reset form fields
+      document.getElementById('schedule-date').value = '';
+      document.getElementById('schedule-time').value = '';
+
+      // Fetch the booking details
       try {
         const bookingRes = await fetch(`${API_URL}/api/bookings/${bookingId}`);
         const bookingData = await bookingRes.json();
+        const booking = bookingData.booking;
 
-        if (bookingData.booking && bookingData.booking.special_requirements) {
-          const specialReqs = bookingData.booking.special_requirements;
+        // For TASTER DAYS - date/time is already set by staff, just pre-fill it
+        if (booking && booking.booking_type === 'taster_day' && booking.scheduled_date) {
+          const date = new Date(booking.scheduled_date);
+          document.getElementById('schedule-date').value = date.toISOString().split('T')[0];
+          if (booking.scheduled_time) {
+            document.getElementById('schedule-time').value = booking.scheduled_time;
+          }
+          // Hide the parent request info for taster days
+          document.getElementById('parent-request-info').style.display = 'none';
+        }
+        // For PRIVATE TOURS - parse and pre-fill from parent's request
+        else if (booking && booking.special_requirements) {
+          const specialReqs = booking.special_requirements;
 
           // Parse the special requirements for PRIVATE TOUR REQUEST
           const lines = specialReqs.split('\n');
@@ -3279,7 +3295,30 @@
             }
           }
 
-          // Display the parent's request if we found any info
+          // Pre-fill the date if it's a valid date
+          if (preferredDate && preferredDate !== 'Flexible') {
+            // Try to parse the date
+            const parsedDate = new Date(preferredDate);
+            if (!isNaN(parsedDate.getTime())) {
+              document.getElementById('schedule-date').value = parsedDate.toISOString().split('T')[0];
+            }
+          }
+
+          // Pre-fill time based on preference
+          if (preferredTime && preferredTime !== 'Flexible') {
+            // Map common time preferences to actual times
+            if (preferredTime.includes('Morning') || preferredTime.includes('9am')) {
+              document.getElementById('schedule-time').value = '09:30';
+            } else if (preferredTime.includes('Afternoon') || preferredTime.includes('12pm') || preferredTime.includes('2pm')) {
+              document.getElementById('schedule-time').value = '14:00';
+            } else if (preferredTime.includes('10am')) {
+              document.getElementById('schedule-time').value = '10:00';
+            } else if (preferredTime.includes('11am')) {
+              document.getElementById('schedule-time').value = '11:00';
+            }
+          }
+
+          // Display the parent's request info
           if (preferredDate || preferredTime || additionalNotes) {
             const requestInfoDiv = document.getElementById('parent-request-info');
             const requestDetailsDiv = document.getElementById('request-details');
