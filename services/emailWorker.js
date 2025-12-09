@@ -197,6 +197,36 @@ async function sendPolicy(policyData) {
 }
 
 // ============================================================================
+// SIMPLE EMAIL SEND (with branded template)
+// ============================================================================
+
+/**
+ * Send a simple email through the email worker (uses branded template)
+ * @param {Object} options - Email options
+ * @param {string} options.to - Recipient email
+ * @param {string} options.subject - Email subject
+ * @param {string} options.text - Plain text body (will be wrapped in branded template)
+ * @param {string} options.html - HTML body (optional, will be wrapped in branded template)
+ * @param {string} options.cc - CC recipient (optional)
+ */
+async function sendEmail(options) {
+  try {
+    const response = await axios.post(`${EMAIL_WORKER_URL}/api/send`, {
+      to: options.to,
+      cc: options.cc,
+      subject: options.subject,
+      text: options.text,
+      html: options.html
+    }, { timeout: 30000 });
+
+    return response.data;
+  } catch (error) {
+    console.error('Error sending email via worker:', error.message);
+    return { success: false, error: error.message };
+  }
+}
+
+// ============================================================================
 // HEALTH CHECK
 // ============================================================================
 
@@ -236,6 +266,9 @@ module.exports = {
 
   // Policies
   sendPolicy,
+
+  // Simple email send (branded template)
+  sendEmail,
 
   // Utilities
   checkWorkerHealth,

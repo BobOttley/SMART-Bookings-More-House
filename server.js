@@ -11,6 +11,7 @@ const cron = require('node-cron');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const emailWorker = require('./services/emailWorker');
 
 // Configure multer for logo uploads
 const logoStorage = multer.diskStorage({
@@ -2028,22 +2029,21 @@ More House School Admissions Team`;
         `;
       }
 
-      const mailOptions = {
-        from: process.env.EMAIL_FROM,
+      const emailSubject = `More House School - ${eventTitle} Confirmation`;
+
+      // Send via email worker for branded template
+      await emailWorker.sendEmail({
         to: email,
-        replyTo: process.env.GMAIL_USER,
-        subject: `More House School - ${eventTitle} Confirmation`,
+        subject: emailSubject,
         text: emailText,
         html: emailHTML
-      };
-
-      await (await getEmailTransporter()).sendMail(mailOptions);
+      });
 
       // Log email
       await pool.query(
         `INSERT INTO booking_email_logs (booking_id, email_type, recipient, subject, sent_at)
          VALUES ($1, $2, $3, $4, NOW())`,
-        [booking.id, 'staff_confirmation', email, mailOptions.subject]
+        [booking.id, 'staff_confirmation', email, emailSubject]
       );
 
       console.log(`[STAFF CREATE BOOKING] Confirmation email sent to ${email}`);
@@ -2554,13 +2554,11 @@ app.put('/api/bookings/:id/no-show', requireAdminAuth, async (req, res) => {
           body = body.replace(new RegExp(key, 'g'), variables[key]);
         });
 
-        // Send the email using the configured transporter
-        await (await getEmailTransporter()).sendMail({
-          from: process.env.GMAIL_USER,
+        // Send the email via email worker for branded template
+        await emailWorker.sendEmail({
           to: booking.email,
           subject: subject,
-          text: body,
-          html: body.replace(/\n/g, '<br>')
+          text: body
         });
 
         console.log(`[NO-SHOW] No-show follow-up email sent to ${booking.email} for booking #${id}`);
@@ -2614,24 +2612,24 @@ app.put('/api/bookings/:id/status', requireAdminAuth, async (req, res) => {
         emailBody = '<p>Your booking has been cancelled.</p>';
       }
 
-      const mailOptions = {
-        from: process.env.EMAIL_FROM,
-        to: booking.email,
-        subject: emailSubject,
-        html: `
+      const emailHtml = `
           <h2>${emailSubject}</h2>
           <p>Dear ${booking.parent_first_name} ${booking.parent_last_name},</p>
           ${emailBody}
           <p>Booking Reference: #${booking.id}</p>
-        `
-      };
+        `;
 
-      await (await getEmailTransporter()).sendMail(mailOptions);
+      // Send via email worker for branded template
+      await emailWorker.sendEmail({
+        to: booking.email,
+        subject: emailSubject,
+        html: emailHtml
+      });
 
       await pool.query(
         `INSERT INTO booking_email_logs (booking_id, email_type, recipient, subject, sent_at)
          VALUES ($1, $2, $3, $4, NOW())`,
-        [booking.id, 'status_update', booking.email, mailOptions.subject]
+        [booking.id, 'status_update', booking.email, emailSubject]
       );
     } catch (emailError) {
       console.error('Email send error:', emailError);
@@ -3064,12 +3062,8 @@ app.post('/api/bookings/:id/schedule', requireAdminAuth, async (req, res) => {
     try {
       const scheduledDateTime = `${new Date(scheduled_date).toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} at ${scheduled_time}`;
 
-      const mailOptions = {
-        from: process.env.EMAIL_FROM,
-        to: booking.email,
-        replyTo: process.env.GMAIL_USER,
-        subject: `More House School - Tour Confirmed for ${scheduledDateTime}`,
-        text: `Dear ${booking.parent_first_name} ${booking.parent_last_name},
+      const emailSubject = `More House School - Tour Confirmed for ${scheduledDateTime}`;
+      const emailText = `Dear ${booking.parent_first_name} ${booking.parent_last_name},
 
 Great news! Your private tour request has been scheduled.
 
@@ -3082,11 +3076,12 @@ ${guide ? `- Your Tour Guide: ${guide.name}\n` : ''}
 
 We look forward to welcoming you to More House School!
 
-If you need to reschedule or have any questions, please reply to this email.
+If you need to reschedule or have any questions, please contact the admissions team.
 
 Best regards,
-More House School Admissions Team`,
-        html: `
+More House School Admissions Team`;
+
+      const emailHtml = `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <h2 style="color: #091825;">Tour Confirmed!</h2>
             <p>Dear ${booking.parent_first_name} ${booking.parent_last_name},</p>
@@ -3102,24 +3097,23 @@ More House School Admissions Team`,
             </table>
 
             <p style="margin-top: 20px;">We look forward to welcoming you to More House School!</p>
-            <p style="margin-top: 10px;">If you need to reschedule or have any questions, please reply to this email.</p>
-
-            <p style="margin-top: 30px; color: #666; font-size: 14px;">
-              Best regards,<br>
-              More House School<br>
-              Admissions Team
-            </p>
+            <p style="margin-top: 10px;">If you need to reschedule or have any questions, please contact the admissions team.</p>
           </div>
-        `
-      };
+        `;
 
-      await (await getEmailTransporter()).sendMail(mailOptions);
+      // Send via email worker for branded template
+      await emailWorker.sendEmail({
+        to: booking.email,
+        subject: emailSubject,
+        text: emailText,
+        html: emailHtml
+      });
 
       // Log email
       await pool.query(
         `INSERT INTO booking_email_logs (booking_id, email_type, recipient, subject, sent_at)
          VALUES ($1, $2, $3, $4, NOW())`,
-        [booking.id, 'tour_scheduled', booking.email, mailOptions.subject]
+        [booking.id, 'tour_scheduled', booking.email, emailSubject]
       );
     } catch (emailError) {
       console.error('Email send error:', emailError);
@@ -3214,12 +3208,8 @@ app.post('/api/bookings/:id/decline', requireAdminAuth, async (req, res) => {
         alternativesHTML = requestCallHTML;
       }
 
-      const mailOptions = {
-        from: process.env.EMAIL_FROM,
-        to: booking.email,
-        replyTo: process.env.GMAIL_USER,
-        subject: `More House School - Tour Request Update`,
-        text: `Dear ${booking.parent_first_name} ${booking.parent_last_name},
+      const emailSubject = `More House School - Tour Request Update`;
+      const emailText = `Dear ${booking.parent_first_name} ${booking.parent_last_name},
 
 Thank you for your interest in More House School.
 
@@ -3227,11 +3217,12 @@ Unfortunately, your requested date is not available.
 
 ${decline_reason ? `Reason: ${decline_reason}\n` : ''}${alternativesText}
 
-${!hasAlternatives ? 'Please reply to this email to discuss alternative arrangements or submit a new tour request.' : ''}
+${!hasAlternatives ? 'Please contact us to discuss alternative arrangements or submit a new tour request.' : ''}
 
 Best regards,
-More House School Admissions Team`,
-        html: `
+More House School Admissions Team`;
+
+      const emailHtml = `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <h2 style="color: #091825;">Tour Request Update</h2>
             <p>Dear ${booking.parent_first_name} ${booking.parent_last_name},</p>
@@ -3242,24 +3233,23 @@ More House School Admissions Team`,
 
             ${alternativesHTML}
 
-            ${!hasAlternatives ? `<p style="margin-top: 20px;">Please reply to this email to discuss alternative arrangements or submit a new tour request.</p>${requestCallHTML}` : ''}
-
-            <p style="margin-top: 30px; color: #666; font-size: 14px;">
-              Best regards,<br>
-              More House School<br>
-              Admissions Team
-            </p>
+            ${!hasAlternatives ? `<p style="margin-top: 20px;">Please contact us to discuss alternative arrangements or submit a new tour request.</p>${requestCallHTML}` : ''}
           </div>
-        `
-      };
+        `;
 
-      await (await getEmailTransporter()).sendMail(mailOptions);
+      // Send via email worker for branded template
+      await emailWorker.sendEmail({
+        to: booking.email,
+        subject: emailSubject,
+        text: emailText,
+        html: emailHtml
+      });
 
       // Log email
       await pool.query(
         `INSERT INTO booking_email_logs (booking_id, email_type, recipient, subject, sent_at)
          VALUES ($1, $2, $3, $4, NOW())`,
-        [booking.id, 'tour_declined', booking.email, mailOptions.subject]
+        [booking.id, 'tour_declined', booking.email, emailSubject]
       );
     } catch (emailError) {
       console.error('Email send error:', emailError);
@@ -3300,12 +3290,8 @@ app.post('/api/bookings/accept-alternative', requireAdminAuth, async (req, res) 
     try {
       const scheduledDateTime = `${new Date(selected_date).toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} at ${selected_time}`;
 
-      const mailOptions = {
-        from: process.env.EMAIL_FROM,
-        to: booking.email,
-        replyTo: process.env.GMAIL_USER,
-        subject: `More House School - Tour Confirmed for ${scheduledDateTime}`,
-        text: `Dear ${booking.parent_first_name} ${booking.parent_last_name},
+      const emailSubject = `More House School - Tour Confirmed for ${scheduledDateTime}`;
+      const emailText = `Dear ${booking.parent_first_name} ${booking.parent_last_name},
 
 Thank you for selecting an alternative date!
 
@@ -3315,8 +3301,9 @@ ${scheduledDateTime}
 We look forward to welcoming you to More House School!
 
 Best regards,
-More House School Admissions Team`,
-        html: `
+More House School Admissions Team`;
+
+      const emailHtml = `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <h2 style="color: #091825;">Tour Confirmed!</h2>
             <p>Dear ${booking.parent_first_name} ${booking.parent_last_name},</p>
@@ -3324,22 +3311,22 @@ More House School Admissions Team`,
             <p>Your tour has been <strong>confirmed</strong> for:</p>
             <p style="font-size: 18px; color: #091825; font-weight: 600;">${scheduledDateTime}</p>
             <p style="margin-top: 20px;">We look forward to welcoming you to More House School!</p>
-            <p style="margin-top: 30px; color: #666; font-size: 14px;">
-              Best regards,<br>
-              More House School<br>
-              Admissions Team
-            </p>
           </div>
-        `
-      };
+        `;
 
-      await (await getEmailTransporter()).sendMail(mailOptions);
+      // Send via email worker for branded template
+      await emailWorker.sendEmail({
+        to: booking.email,
+        subject: emailSubject,
+        text: emailText,
+        html: emailHtml
+      });
 
       // Log email
       await pool.query(
         `INSERT INTO booking_email_logs (booking_id, email_type, recipient, subject, sent_at)
          VALUES ($1, $2, $3, $4, NOW())`,
-        [booking.id, 'alternative_accepted', booking.email, mailOptions.subject]
+        [booking.id, 'alternative_accepted', booking.email, emailSubject]
       );
     } catch (emailError) {
       console.error('Email send error:', emailError);
@@ -3402,98 +3389,58 @@ app.post('/api/bookings/request-call', async (req, res) => {
       }
     }
 
-    // Send notification email to admissions
+    // Send notification email to admissions (via email worker for branded template)
     try {
-      const mailOptions = {
-        from: process.env.EMAIL_FROM,
-        to: process.env.ADMIN_EMAIL, // Admissions email
-        subject: `Call Request - ${booking.parent_first_name} ${booking.parent_last_name}`,
-        text: `A parent has requested a call from admissions regarding their tour booking.
+      const adminSubject = `Call Request - ${booking.parent_first_name} ${booking.parent_last_name}`;
+      const adminText = `A parent has requested a call from admissions regarding their tour booking.
 
 Parent: ${booking.parent_first_name} ${booking.parent_last_name}
 Email: ${booking.email}
 Phone: ${booking.phone || 'Not provided'}
 Student: ${booking.student_first_name} ${booking.student_last_name}
 
-Original booking type: ${booking.booking_type}
+Original booking type: ${booking.booking_type === 'private_tour' ? 'Private Tour' : booking.booking_type === 'taster_day' ? 'Taster Day' : 'Open Day'}
 Original requested date: ${booking.scheduled_date || 'Not specified'}
 
 This booking was declined and the parent would like to discuss alternative arrangements.
 
-Please call them at your earliest convenience.`,
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #091825; border-bottom: 3px solid #FF9F1C; padding-bottom: 10px;">
-              Call Request from Parent
-            </h2>
+Please call them at your earliest convenience.`;
 
-            <div style="background: #fff8e6; padding: 20px; border-radius: 8px; margin: 20px 0;">
-              <h3 style="margin-top: 0; color: #091825;">Parent Details</h3>
-              <p><strong>Name:</strong> ${booking.parent_first_name} ${booking.parent_last_name}</p>
-              <p><strong>Email:</strong> <a href="mailto:${booking.email}">${booking.email}</a></p>
-              <p><strong>Phone:</strong> ${booking.phone || 'Not provided'}</p>
-              <p><strong>Student:</strong> ${booking.student_first_name} ${booking.student_last_name}</p>
-            </div>
-
-            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
-              <h3 style="margin-top: 0; color: #091825;">Booking Details</h3>
-              <p><strong>Type:</strong> ${booking.booking_type === 'private_tour' ? 'Private Tour' : booking.booking_type === 'taster_day' ? 'Taster Day' : 'Open Day'}</p>
-              <p><strong>Original Date:</strong> ${booking.scheduled_date || 'Not specified'}</p>
-              ${booking.decline_reason ? `<p><strong>Decline Reason:</strong> ${booking.decline_reason}</p>` : ''}
-            </div>
-
-            <p style="background: #091825; color: white; padding: 15px; border-radius: 8px; text-align: center;">
-              <strong>Please call this parent at your earliest convenience.</strong>
-            </p>
-          </div>
-        `
-      };
-
-      await (await getEmailTransporter()).sendMail(mailOptions);
+      await emailWorker.sendEmail({
+        to: process.env.ADMIN_EMAIL,
+        subject: adminSubject,
+        text: adminText
+      });
 
       // Log the email
       await pool.query(
         `INSERT INTO booking_email_logs (booking_id, email_type, recipient, subject, sent_at)
          VALUES ($1, $2, $3, $4, NOW())`,
-        [booking.id, 'call_requested', process.env.ADMIN_EMAIL, mailOptions.subject]
+        [booking.id, 'call_requested', process.env.ADMIN_EMAIL, adminSubject]
       );
     } catch (emailError) {
       console.error('Email send error:', emailError);
     }
 
-    // Send confirmation to parent
+    // Send confirmation to parent (via email worker for branded template)
     try {
-      const confirmMailOptions = {
-        from: process.env.EMAIL_FROM,
-        to: booking.email,
-        subject: `More House School - Call Request Received`,
-        text: `Dear ${booking.parent_first_name},
+      const parentSubject = `More House School - Call Request Received`;
+      const parentText = `Dear ${booking.parent_first_name},
 
 Thank you for your interest in More House School.
 
 We have received your request for a call from our admissions team. A member of our team will contact you shortly.
 
-If you need to reach us urgently, please call us directly.
+If you need to reach us urgently, please call us directly on 020 7235 2855.
 
 Best regards,
-More House School Admissions Team`,
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #091825;">Call Request Received</h2>
-            <p>Dear ${booking.parent_first_name},</p>
-            <p>Thank you for your interest in More House School.</p>
-            <p>We have received your request for a call from our admissions team. A member of our team will contact you shortly.</p>
-            <p>If you need to reach us urgently, please call us directly.</p>
-            <p style="margin-top: 30px; color: #666; font-size: 14px;">
-              Best regards,<br>
-              More House School<br>
-              Admissions Team
-            </p>
-          </div>
-        `
-      };
+More House School Admissions Team`;
 
-      await (await getEmailTransporter()).sendMail(confirmMailOptions);
+      await emailWorker.sendEmail({
+        to: booking.email,
+        subject: parentSubject,
+        text: parentText
+      });
     } catch (emailError) {
       console.error('Confirmation email error:', emailError);
     }
@@ -5145,9 +5092,8 @@ async function sendTemplateEmail(booking, templateId, emailType, smartFeedback =
       </html>
     `;
 
-    // Send email
-    await (await getEmailTransporter()).sendMail({
-      from: process.env.GMAIL_USER,
+    // Send email via email worker for branded template
+    await emailWorker.sendEmail({
       to: booking.email,
       subject: subject,
       text: body,
