@@ -6,7 +6,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <title>Booking Admin - SMART CRM</title>
+  <title>Booking Admin</title>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -535,13 +535,13 @@
 
   <div class="container">
     <div class="tabs">
-      <button class="tab-btn active" data-tab="dashboard"><span class="smart-text">SMART</span> Dashboard</button>
-      <button class="tab-btn" data-tab="archive"><span class="smart-text">SMART</span> Archive</button>
-      <button class="tab-btn" data-tab="events"><span class="smart-text">SMART</span> Events & Tours</button>
-      <button class="tab-btn" data-tab="guides"><span class="smart-text">SMART</span> Tour Guides</button>
-      <button class="tab-btn" data-tab="form-builder"><span class="smart-text">SMART</span> Form Builder</button>
-      <button class="tab-btn" data-tab="survey-analytics"><span class="smart-text">SMART</span> Survey Analytics</button>
-      <button class="tab-btn" data-tab="settings"><span class="smart-text">SMART</span> Settings</button>
+      <button class="tab-btn active" data-tab="dashboard">Dashboard</button>
+      <button class="tab-btn" data-tab="archive">Archive</button>
+      <button class="tab-btn" data-tab="events">Events & Tours</button>
+      <button class="tab-btn" data-tab="guides">Tour Guides</button>
+      <button class="tab-btn" data-tab="form-builder">Form Builder</button>
+      <button class="tab-btn" data-tab="survey-analytics">Survey Analytics</button>
+      <button class="tab-btn" data-tab="settings">Settings</button>
     </div>
 
     <!-- Dashboard Tab -->
@@ -645,13 +645,13 @@
     <div class="tab-content" id="settings-tab">
       <div style="background: white; border-bottom: 2px solid var(--border-grey); padding: 1rem 1rem 0;">
         <div class="tabs" style="border: none; padding: 0;">
-          <button class="settings-subtab-btn active" data-subtab="survey-questions"><span class="smart-text">SMART</span> Survey Questions</button>
-          <button class="settings-subtab-btn" data-subtab="tour-feedback"><span class="smart-text">SMART</span> Tour Feedback</button>
-          <button class="settings-subtab-btn" data-subtab="email-templates"><span class="smart-text">SMART</span> Email Templates</button>
-          <button class="settings-subtab-btn" data-subtab="email-config"><span class="smart-text">SMART</span> Email Configuration</button>
-          <button class="settings-subtab-btn" data-subtab="booking-settings"><span class="smart-text">SMART</span> Booking Settings</button>
-          <button class="settings-subtab-btn" data-subtab="prospectus"><span class="smart-text">SMART</span> Prospectus Integration</button>
-          <button class="settings-subtab-btn" data-subtab="branding"><span class="smart-text">SMART</span> Branding</button>
+          <button class="settings-subtab-btn active" data-subtab="survey-questions">Survey Questions</button>
+          <button class="settings-subtab-btn" data-subtab="tour-feedback">Tour Feedback</button>
+          <button class="settings-subtab-btn" data-subtab="email-templates">Email Templates</button>
+          <button class="settings-subtab-btn" data-subtab="email-config">Email Configuration</button>
+          <button class="settings-subtab-btn" data-subtab="booking-settings">Booking Settings</button>
+          <button class="settings-subtab-btn" data-subtab="prospectus">Prospectus Integration</button>
+          <button class="settings-subtab-btn" data-subtab="branding">Branding</button>
         </div>
       </div>
 
@@ -1133,6 +1133,19 @@
         <div class="form-group">
           <label class="form-label">Number of Attendees *</label>
           <input type="number" class="form-input" id="edit-num-attendees" min="1" required>
+        </div>
+
+        <div id="edit-schedule-fields" style="display: none;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+              <label class="form-label">Scheduled Date</label>
+              <input type="date" class="form-input" id="edit-scheduled-date">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Scheduled Time</label>
+              <input type="time" class="form-input" id="edit-scheduled-time">
+            </div>
+          </div>
         </div>
 
         <div class="form-group">
@@ -3949,6 +3962,22 @@
         document.getElementById('edit-special-requirements').value = booking.special_requirements || '';
         document.getElementById('edit-preferred-language').value = booking.preferred_language || '';
 
+        // Show/hide and populate scheduled date/time for private tours and taster days
+        const scheduleFields = document.getElementById('edit-schedule-fields');
+        if (booking.booking_type === 'private_tour' || booking.booking_type === 'taster_day') {
+          scheduleFields.style.display = 'block';
+          // Format date for input (YYYY-MM-DD)
+          if (booking.scheduled_date) {
+            const dateObj = new Date(booking.scheduled_date);
+            document.getElementById('edit-scheduled-date').value = dateObj.toISOString().split('T')[0];
+          } else {
+            document.getElementById('edit-scheduled-date').value = '';
+          }
+          document.getElementById('edit-scheduled-time').value = booking.scheduled_time || '';
+        } else {
+          scheduleFields.style.display = 'none';
+        }
+
         // Populate tour guides dropdown
         const guideSelect = document.getElementById('edit-assigned-guide');
         guideSelect.innerHTML = '<option value="">No guide assigned</option>';
@@ -4007,7 +4036,9 @@
         num_attendees: parseInt(document.getElementById('edit-num-attendees').value),
         special_requirements: document.getElementById('edit-special-requirements').value || null,
         preferred_language: document.getElementById('edit-preferred-language').value || null,
-        assigned_guide_id: newGuideId ? parseInt(newGuideId) : null
+        assigned_guide_id: newGuideId ? parseInt(newGuideId) : null,
+        scheduled_date: document.getElementById('edit-scheduled-date').value || null,
+        scheduled_time: document.getElementById('edit-scheduled-time').value || null
       };
 
       console.log('Update data:', updateData);

@@ -367,17 +367,15 @@
 
     async function loadForm() {
       try {
-        // First, load booking details to determine tour type
-        const bookingRes = await fetch(`${API_URL}/api/bookings?schoolId=2`);
-        const allBookings = await bookingRes.json();
+        // First, load booking details by feedback token
+        const bookingRes = await fetch(`${API_URL}/api/feedback/booking/${token}`);
+        const bookingResult = await bookingRes.json();
 
-        // Find booking by token
-        const booking = allBookings.bookings?.find(b => b.feedback_token === token);
-
-        if (!booking) {
+        if (!bookingResult.success || !bookingResult.booking) {
           throw new Error('Invalid or expired token');
         }
 
+        const booking = bookingResult.booking;
         bookingData = booking;
 
         // Map booking type to tour_type parameter
