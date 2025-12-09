@@ -1413,7 +1413,7 @@ app.get('/api/bookings/:id', requireAdminAuth, async (req, res) => {
 });
 
 // Create new booking (Public endpoint)
-app.post('/api/bookings', requireAdminAuth, async (req, res) => {
+app.post('/api/bookings', requireAdminOrApiKey, async (req, res) => {
   console.log('[CREATE BOOKING] Received request body:', JSON.stringify(req.body, null, 2));
   try {
     const {
