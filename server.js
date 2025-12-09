@@ -3406,7 +3406,7 @@ app.post('/api/bookings/request-call', async (req, res) => {
     try {
       const mailOptions = {
         from: process.env.EMAIL_FROM,
-        to: process.env.GMAIL_USER, // Admissions email
+        to: process.env.ADMIN_EMAIL, // Admissions email
         subject: `Call Request - ${booking.parent_first_name} ${booking.parent_last_name}`,
         text: `A parent has requested a call from admissions regarding their tour booking.
 
@@ -3455,7 +3455,7 @@ Please call them at your earliest convenience.`,
       await pool.query(
         `INSERT INTO booking_email_logs (booking_id, email_type, recipient, subject, sent_at)
          VALUES ($1, $2, $3, $4, NOW())`,
-        [booking.id, 'call_requested', process.env.GMAIL_USER, mailOptions.subject]
+        [booking.id, 'call_requested', process.env.ADMIN_EMAIL, mailOptions.subject]
       );
     } catch (emailError) {
       console.error('Email send error:', emailError);
