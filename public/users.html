@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Management - Booking Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --blazer-navy: #091825;
+      --award-gold: #FF9F1C;
+      --sport-blue: #034674;
+      --text-primary: #2C3E50;
+      --white: #FFFFFF;
+      --light-grey: #F8FAFC;
+      --border-grey: #E5E7EB;
+      --success: #10B981;
+      --danger: #EF4444;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #FAFBFC;
+      min-height: 100vh;
+      color: var(--text-primary);
+    }
+
+    .header {
+      background: var(--blazer-navy);
+      color: white;
+      padding: 2rem;
+      border-bottom: 3px solid var(--award-gold);
+      text-align: center;
+      position: relative;
+    }
+
+    .header h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 2rem;
+    }
+
+    .header p {
+      margin-top: 0.5rem;
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    .back-btn, .logout-btn {
+      position: absolute;
+      top: 1rem;
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.875rem;
+      transition: all 0.2s;
+      text-decoration: none;
+    }
+
+    .back-btn { left: 1rem; }
+    .logout-btn { right: 1rem; }
+
+    .back-btn:hover, .logout-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: white;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+
+    .card {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      padding: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .card h2 {
+      font-family: 'Playfair Display', serif;
+      color: var(--blazer-navy);
+      margin-bottom: 1.5rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--award-gold);
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .form-group label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: var(--text-primary);
+    }
+
+    .form-group input, .form-group select {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid var(--border-grey);
+      border-radius: 4px;
+      font-size: 1rem;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .form-group input:focus, .form-group select:focus {
+      outline: none;
+      border-color: var(--sport-blue);
+      box-shadow: 0 0 0 3px rgba(3, 70, 116, 0.1);
+    }
+
+    .checkbox-group {
+      display: flex;
+      gap: 2rem;
+      margin-top: 0.5rem;
+    }
+
+    .checkbox-group label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: normal;
+      cursor: pointer;
+    }
+
+    .checkbox-group input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+    }
+
+    .btn {
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 4px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .btn-primary {
+      background: var(--blazer-navy);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--sport-blue);
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: #DC2626;
+    }
+
+    .btn-small {
+      padding: 0.5rem 1rem;
+      font-size: 0.875rem;
+    }
+
+    .users-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+
+    .users-table th, .users-table td {
+      padding: 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border-grey);
+    }
+
+    .users-table th {
+      background: var(--light-grey);
+      font-weight: 600;
+      color: var(--blazer-navy);
+    }
+
+    .users-table tr:hover {
+      background: var(--light-grey);
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .badge-success {
+      background: #D1FAE5;
+      color: #065F46;
+    }
+
+    .badge-danger {
+      background: #FEE2E2;
+      color: #991B1B;
+    }
+
+    .badge-info {
+      background: #DBEAFE;
+      color: #1E40AF;
+    }
+
+    .actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .alert {
+      padding: 1rem;
+      border-radius: 4px;
+      margin-bottom: 1rem;
+      display: none;
+    }
+
+    .alert-success {
+      background: #D1FAE5;
+      color: #065F46;
+      border: 1px solid #A7F3D0;
+    }
+
+    .alert-error {
+      background: #FEE2E2;
+      color: #991B1B;
+      border: 1px solid #FECACA;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 2rem;
+      color: #6B7280;
+    }
+
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 8px;
+      padding: 2rem;
+      max-width: 500px;
+      width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .modal-header h3 {
+      font-family: 'Playfair Display', serif;
+      color: var(--blazer-navy);
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: #6B7280;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 1rem;
+      justify-content: flex-end;
+      margin-top: 1.5rem;
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <a href="/" class="back-btn">&larr; Back to Dashboard</a>
+    <h1>User Management</h1>
+    <p>Manage admin users for the booking system</p>
+    <button class="logout-btn" onclick="logout()">Logout</button>
+  </header>
+
+  <div class="container">
+    <!-- Alert Messages -->
+    <div id="alert-success" class="alert alert-success"></div>
+    <div id="alert-error" class="alert alert-error"></div>
+
+    <!-- Add New User -->
+    <div class="card">
+      <h2>Add New User</h2>
+      <form id="add-user-form" onsubmit="addUser(event)">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="email">Email Address *</label>
+            <input type="email" id="email" name="email" required placeholder="user@example.com">
+          </div>
+          <div class="form-group">
+            <label for="password">Password *</label>
+            <input type="password" id="password" name="password" required minlength="6" placeholder="Minimum 6 characters">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="role">Role</label>
+            <select id="role" name="role">
+              <option value="admin">Admin</option>
+              <option value="super_admin">Super Admin</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Permissions</label>
+            <div class="checkbox-group">
+              <label>
+                <input type="checkbox" id="can_access_booking" name="can_access_booking" checked>
+                Booking App
+              </label>
+              <label>
+                <input type="checkbox" id="can_access_crm" name="can_access_crm" checked>
+                CRM Access
+              </label>
+            </div>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Add User</button>
+      </form>
+    </div>
+
+    <!-- Existing Users -->
+    <div class="card">
+      <h2>Existing Users</h2>
+      <div id="users-loading" class="loading">Loading users...</div>
+      <table class="users-table" id="users-table" style="display: none;">
+        <thead>
+          <tr>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Permissions</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="users-tbody">
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Edit User Modal -->
+  <div class="modal" id="edit-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Edit User</h3>
+        <button class="modal-close" onclick="closeModal()">&times;</button>
+      </div>
+      <form id="edit-user-form" onsubmit="updateUser(event)">
+        <input type="hidden" id="edit-id">
+        <div class="form-group">
+          <label for="edit-email">Email Address</label>
+          <input type="email" id="edit-email" name="email" required>
+        </div>
+        <div class="form-group">
+          <label for="edit-password">New Password (leave blank to keep current)</label>
+          <input type="password" id="edit-password" name="password" minlength="6" placeholder="Leave blank to keep current">
+        </div>
+        <div class="form-group">
+          <label for="edit-role">Role</label>
+          <select id="edit-role" name="role">
+            <option value="admin">Admin</option>
+            <option value="super_admin">Super Admin</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Permissions</label>
+          <div class="checkbox-group">
+            <label>
+              <input type="checkbox" id="edit-can_access_booking" name="can_access_booking">
+              Booking App
+            </label>
+            <label>
+              <input type="checkbox" id="edit-can_access_crm" name="can_access_crm">
+              CRM Access
+            </label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>
+            <input type="checkbox" id="edit-is_active" name="is_active">
+            Active
+          </label>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn" onclick="closeModal()" style="background: #6B7280; color: white;">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // Check authentication
+    async function checkAuth() {
+      const res = await fetch('/api/admin/check-auth');
+      const data = await res.json();
+      if (!data.authenticated) {
+        window.location.href = '/login.html';
+      }
+    }
+
+    // Load users
+    async function loadUsers() {
+      try {
+        const res = await fetch('/api/admin/users');
+        const data = await res.json();
+
+        document.getElementById('users-loading').style.display = 'none';
+        document.getElementById('users-table').style.display = 'table';
+
+        const tbody = document.getElementById('users-tbody');
+        tbody.innerHTML = '';
+
+        if (data.users && data.users.length > 0) {
+          data.users.forEach(user => {
+            const perms = user.permissions || {};
+            const permBadges = [];
+            if (perms.can_access_booking) permBadges.push('<span class="badge badge-info">Booking</span>');
+            if (perms.can_access_crm) permBadges.push('<span class="badge badge-info">CRM</span>');
+
+            tbody.innerHTML += `
+              <tr>
+                <td>${user.email}</td>
+                <td><span class="badge badge-info">${user.role || 'admin'}</span></td>
+                <td>${permBadges.join(' ') || '-'}</td>
+                <td>
+                  <span class="badge ${user.is_active ? 'badge-success' : 'badge-danger'}">
+                    ${user.is_active ? 'Active' : 'Inactive'}
+                  </span>
+                </td>
+                <td class="actions">
+                  <button class="btn btn-primary btn-small" onclick="editUser(${user.id}, '${user.email}', '${user.role}', ${user.is_active}, ${perms.can_access_booking || false}, ${perms.can_access_crm || false})">Edit</button>
+                  <button class="btn btn-danger btn-small" onclick="deleteUser(${user.id}, '${user.email}')">Delete</button>
+                </td>
+              </tr>
+            `;
+          });
+        } else {
+          tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #6B7280;">No users found</td></tr>';
+        }
+      } catch (error) {
+        showAlert('error', 'Failed to load users: ' + error.message);
+      }
+    }
+
+    // Add user
+    async function addUser(e) {
+      e.preventDefault();
+      const form = e.target;
+
+      const userData = {
+        email: form.email.value,
+        password: form.password.value,
+        role: form.role.value,
+        can_access_booking: form.can_access_booking.checked,
+        can_access_crm: form.can_access_crm.checked
+      };
+
+      try {
+        const res = await fetch('/api/admin/users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(userData)
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+          showAlert('success', `User ${userData.email} created successfully`);
+          form.reset();
+          form.can_access_booking.checked = true;
+          form.can_access_crm.checked = true;
+          loadUsers();
+        } else {
+          showAlert('error', data.error || 'Failed to create user');
+        }
+      } catch (error) {
+        showAlert('error', 'Failed to create user: ' + error.message);
+      }
+    }
+
+    // Edit user - open modal
+    function editUser(id, email, role, isActive, canBooking, canCrm) {
+      document.getElementById('edit-id').value = id;
+      document.getElementById('edit-email').value = email;
+      document.getElementById('edit-password').value = '';
+      document.getElementById('edit-role').value = role || 'admin';
+      document.getElementById('edit-is_active').checked = isActive;
+      document.getElementById('edit-can_access_booking').checked = canBooking;
+      document.getElementById('edit-can_access_crm').checked = canCrm;
+      document.getElementById('edit-modal').classList.add('active');
+    }
+
+    // Update user
+    async function updateUser(e) {
+      e.preventDefault();
+      const id = document.getElementById('edit-id').value;
+
+      const userData = {
+        email: document.getElementById('edit-email').value,
+        role: document.getElementById('edit-role').value,
+        is_active: document.getElementById('edit-is_active').checked,
+        can_access_booking: document.getElementById('edit-can_access_booking').checked,
+        can_access_crm: document.getElementById('edit-can_access_crm').checked
+      };
+
+      const password = document.getElementById('edit-password').value;
+      if (password) {
+        userData.password = password;
+      }
+
+      try {
+        const res = await fetch(`/api/admin/users/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(userData)
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+          showAlert('success', 'User updated successfully');
+          closeModal();
+          loadUsers();
+        } else {
+          showAlert('error', data.error || 'Failed to update user');
+        }
+      } catch (error) {
+        showAlert('error', 'Failed to update user: ' + error.message);
+      }
+    }
+
+    // Delete user
+    async function deleteUser(id, email) {
+      if (!confirm(`Are you sure you want to delete user ${email}?`)) {
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/admin/users/${id}`, {
+          method: 'DELETE'
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+          showAlert('success', `User ${email} deleted successfully`);
+          loadUsers();
+        } else {
+          showAlert('error', data.error || 'Failed to delete user');
+        }
+      } catch (error) {
+        showAlert('error', 'Failed to delete user: ' + error.message);
+      }
+    }
+
+    // Close modal
+    function closeModal() {
+      document.getElementById('edit-modal').classList.remove('active');
+    }
+
+    // Show alert
+    function showAlert(type, message) {
+      const alertEl = document.getElementById(`alert-${type}`);
+      alertEl.textContent = message;
+      alertEl.style.display = 'block';
+      setTimeout(() => {
+        alertEl.style.display = 'none';
+      }, 5000);
+    }
+
+    // Logout
+    async function logout() {
+      await fetch('/api/admin/logout', { method: 'POST' });
+      window.location.href = '/login.html';
+    }
+
+    // Initialize
+    checkAuth();
+    loadUsers();
+  </script>
+</body>
+</html>

@@ -658,6 +658,168 @@ app.get('/api/admin/check-auth', (req, res) => {
   });
 });
 
+// ============================================================================
+// USER MANAGEMENT API
+// ============================================================================
+
+/**
+ * GET /api/admin/users
+ * List all admin users
+ */
+app.get('/api/admin/users', requireAdminAuth, async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT id, email, role, is_active, permissions, created_at, updated_at
+      FROM admin_users
+      WHERE school_id = 2
+      ORDER BY created_at DESC
+    `);
+    res.json({ success: true, users: result.rows });
+  } catch (error) {
+    console.error('[USER MGMT] Error listing users:', error);
+    res.status(500).json({ success: false, error: 'Failed to list users' });
+  }
+});
+
+/**
+ * POST /api/admin/users
+ * Create a new admin user
+ */
+app.post('/api/admin/users', requireAdminAuth, async (req, res) => {
+  try {
+    const { email, password, role = 'admin', can_access_booking = true, can_access_crm = true } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ success: false, error: 'Email and password are required' });
+    }
+
+    // Check if user already exists
+    const existing = await pool.query('SELECT id FROM admin_users WHERE email = $1', [email.toLowerCase()]);
+    if (existing.rows.length > 0) {
+      return res.status(400).json({ success: false, error: 'User with this email already exists' });
+    }
+
+    // Hash password
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    // Create user
+    const result = await pool.query(`
+      INSERT INTO admin_users (email, password_hash, role, is_active, permissions, school_id, created_at, updated_at)
+      VALUES ($1, $2, $3, true, $4, 2, NOW(), NOW())
+      RETURNING id, email, role, is_active, permissions, created_at
+    `, [
+      email.toLowerCase(),
+      passwordHash,
+      role,
+      JSON.stringify({ can_access_booking, can_access_crm })
+    ]);
+
+    console.log(`[USER MGMT] Created user: ${email}`);
+    res.json({ success: true, user: result.rows[0] });
+  } catch (error) {
+    console.error('[USER MGMT] Error creating user:', error);
+    res.status(500).json({ success: false, error: 'Failed to create user' });
+  }
+});
+
+/**
+ * PUT /api/admin/users/:id
+ * Update an admin user
+ */
+app.put('/api/admin/users/:id', requireAdminAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { email, password, role, is_active, can_access_booking, can_access_crm } = req.body;
+
+    // Build update query dynamically
+    const updates = [];
+    const values = [];
+    let paramCount = 1;
+
+    if (email) {
+      updates.push(`email = $${paramCount++}`);
+      values.push(email.toLowerCase());
+    }
+    if (password) {
+      const passwordHash = await bcrypt.hash(password, 10);
+      updates.push(`password_hash = $${paramCount++}`);
+      values.push(passwordHash);
+    }
+    if (role) {
+      updates.push(`role = $${paramCount++}`);
+      values.push(role);
+    }
+    if (typeof is_active === 'boolean') {
+      updates.push(`is_active = $${paramCount++}`);
+      values.push(is_active);
+    }
+    if (typeof can_access_booking === 'boolean' || typeof can_access_crm === 'boolean') {
+      // Get current permissions first
+      const current = await pool.query('SELECT permissions FROM admin_users WHERE id = $1', [id]);
+      const currentPerms = current.rows[0]?.permissions || {};
+      const newPerms = {
+        ...currentPerms,
+        ...(typeof can_access_booking === 'boolean' ? { can_access_booking } : {}),
+        ...(typeof can_access_crm === 'boolean' ? { can_access_crm } : {})
+      };
+      updates.push(`permissions = $${paramCount++}`);
+      values.push(JSON.stringify(newPerms));
+    }
+
+    if (updates.length === 0) {
+      return res.status(400).json({ success: false, error: 'No fields to update' });
+    }
+
+    updates.push(`updated_at = NOW()`);
+    values.push(id);
+
+    const result = await pool.query(`
+      UPDATE admin_users
+      SET ${updates.join(', ')}
+      WHERE id = $${paramCount}
+      RETURNING id, email, role, is_active, permissions, updated_at
+    `, values);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'User not found' });
+    }
+
+    console.log(`[USER MGMT] Updated user ID: ${id}`);
+    res.json({ success: true, user: result.rows[0] });
+  } catch (error) {
+    console.error('[USER MGMT] Error updating user:', error);
+    res.status(500).json({ success: false, error: 'Failed to update user' });
+  }
+});
+
+/**
+ * DELETE /api/admin/users/:id
+ * Delete an admin user
+ */
+app.delete('/api/admin/users/:id', requireAdminAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Don't allow deleting yourself
+    const currentUser = await pool.query('SELECT id FROM admin_users WHERE email = $1', [req.session.adminEmail]);
+    if (currentUser.rows[0]?.id === parseInt(id)) {
+      return res.status(400).json({ success: false, error: 'Cannot delete your own account' });
+    }
+
+    const result = await pool.query('DELETE FROM admin_users WHERE id = $1 RETURNING email', [id]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'User not found' });
+    }
+
+    console.log(`[USER MGMT] Deleted user: ${result.rows[0].email}`);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('[USER MGMT] Error deleting user:', error);
+    res.status(500).json({ success: false, error: 'Failed to delete user' });
+  }
+});
+
 /**
  * POST /api/admin/request-password-reset
  * Request password reset link
