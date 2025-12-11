@@ -670,7 +670,7 @@ app.get('/api/admin/users', requireAdminAuth, async (req, res) => {
   try {
     // Show users for school_id = 2 (More House) only - not the super admin
     const result = await pool.query(`
-      SELECT id, email, role, is_active, permissions, school_id, created_at
+      SELECT id, email, notification_email, role, is_active, permissions, school_id, created_at
       FROM admin_users
       WHERE school_id = 2
       ORDER BY created_at DESC
@@ -688,7 +688,7 @@ app.get('/api/admin/users', requireAdminAuth, async (req, res) => {
  */
 app.post('/api/admin/users', requireAdminAuth, async (req, res) => {
   try {
-    const { email, password, role = 'admin', can_access_booking = true, can_access_crm = true } = req.body;
+    const { email, notification_email, password, role = 'admin', can_access_booking = true, can_access_crm = true } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({ success: false, error: 'Email and password are required' });
@@ -705,11 +705,12 @@ app.post('/api/admin/users', requireAdminAuth, async (req, res) => {
 
     // Create user
     const result = await pool.query(`
-      INSERT INTO admin_users (email, password_hash, role, is_active, permissions, school_id, created_at)
-      VALUES ($1, $2, $3, true, $4, 2, NOW())
-      RETURNING id, email, role, is_active, permissions, created_at
+      INSERT INTO admin_users (email, notification_email, password_hash, role, is_active, permissions, school_id, created_at)
+      VALUES ($1, $2, $3, $4, true, $5, 2, NOW())
+      RETURNING id, email, notification_email, role, is_active, permissions, created_at
     `, [
       email.toLowerCase(),
+      notification_email ? notification_email.toLowerCase() : null,
       passwordHash,
       role,
       JSON.stringify({ can_access_booking, can_access_crm })
@@ -730,7 +731,7 @@ app.post('/api/admin/users', requireAdminAuth, async (req, res) => {
 app.put('/api/admin/users/:id', requireAdminAuth, async (req, res) => {
   try {
     const { id } = req.params;
-    const { email, password, role, is_active, can_access_booking, can_access_crm } = req.body;
+    const { email, notification_email, password, role, is_active, can_access_booking, can_access_crm } = req.body;
 
     // Build update query dynamically
     const updates = [];
@@ -740,6 +741,11 @@ app.put('/api/admin/users/:id', requireAdminAuth, async (req, res) => {
     if (email) {
       updates.push(`email = $${paramCount++}`);
       values.push(email.toLowerCase());
+    }
+    // Handle notification_email - can be set to null or a value
+    if (notification_email !== undefined) {
+      updates.push(`notification_email = $${paramCount++}`);
+      values.push(notification_email ? notification_email.toLowerCase() : null);
     }
     if (password) {
       const passwordHash = await bcrypt.hash(password, 10);
@@ -777,7 +783,7 @@ app.put('/api/admin/users/:id', requireAdminAuth, async (req, res) => {
       UPDATE admin_users
       SET ${updates.join(', ')}
       WHERE id = $${paramCount}
-      RETURNING id, email, role, is_active, permissions, created_at
+      RETURNING id, email, notification_email, role, is_active, permissions, created_at
     `, values);
 
     if (result.rows.length === 0) {

@@ -327,15 +327,21 @@
       <form id="add-user-form" onsubmit="addUser(event)" autocomplete="off">
         <div class="form-row">
           <div class="form-group">
-            <label for="email">Email Address *</label>
+            <label for="email">Login Email *</label>
             <input type="email" id="email" name="email" required placeholder="user@example.com" autocomplete="off">
+            <small style="color: #6B7280;">Used for logging in (must be unique)</small>
           </div>
+          <div class="form-group">
+            <label for="notification_email">Notification Email</label>
+            <input type="email" id="notification_email" name="notification_email" placeholder="Where to send notifications">
+            <small style="color: #6B7280;">Leave blank to use login email</small>
+          </div>
+        </div>
+        <div class="form-row">
           <div class="form-group">
             <label for="password">Password *</label>
             <input type="password" id="password" name="password" required minlength="6" placeholder="Minimum 6 characters" autocomplete="new-password">
           </div>
-        </div>
-        <div class="form-row">
           <div class="form-group">
             <label for="role">Role</label>
             <select id="role" name="role">
@@ -343,6 +349,8 @@
               <option value="read_only">Read Only</option>
             </select>
           </div>
+        </div>
+        <div class="form-row">
           <div class="form-group">
             <label>Permissions</label>
             <div class="checkbox-group">
@@ -368,7 +376,8 @@
       <table class="users-table" id="users-table" style="display: none;">
         <thead>
           <tr>
-            <th>Email</th>
+            <th>Login Email</th>
+            <th>Notification Email</th>
             <th>Role</th>
             <th>Permissions</th>
             <th>Status</th>
@@ -391,8 +400,14 @@
       <form id="edit-user-form" onsubmit="updateUser(event)">
         <input type="hidden" id="edit-id">
         <div class="form-group">
-          <label for="edit-email">Email Address</label>
+          <label for="edit-email">Login Email</label>
           <input type="email" id="edit-email" name="email" required>
+          <small style="color: #6B7280;">Used for logging in</small>
+        </div>
+        <div class="form-group">
+          <label for="edit-notification_email">Notification Email</label>
+          <input type="email" id="edit-notification_email" name="notification_email" placeholder="Where to send notifications">
+          <small style="color: #6B7280;">Leave blank to use login email</small>
         </div>
         <div class="form-group">
           <label for="edit-password">New Password (leave blank to keep current)</label>
@@ -467,9 +482,13 @@
             if (perms.can_access_booking) permBadges.push('<span class="badge badge-info">Booking</span>');
             if (perms.can_access_crm) permBadges.push('<span class="badge badge-info">CRM</span>');
 
+            const notifEmail = user.notification_email || user.email;
+            const escapedNotifEmail = (user.notification_email || '').replace(/'/g, "\\'");
+
             tbody.innerHTML += `
               <tr>
                 <td>${user.email}</td>
+                <td>${notifEmail}${user.notification_email && user.notification_email !== user.email ? '' : ' <small style="color:#6B7280">(same as login)</small>'}</td>
                 <td><span class="badge badge-info">${user.role || 'admin'}</span></td>
                 <td>${permBadges.join(' ') || '-'}</td>
                 <td>
@@ -478,14 +497,14 @@
                   </span>
                 </td>
                 <td class="actions">
-                  <button class="btn btn-primary btn-small" onclick="editUser(${user.id}, '${user.email}', '${user.role}', ${user.is_active}, ${perms.can_access_booking || false}, ${perms.can_access_crm || false})">Edit</button>
+                  <button class="btn btn-primary btn-small" onclick="editUser(${user.id}, '${user.email}', '${escapedNotifEmail}', '${user.role}', ${user.is_active}, ${perms.can_access_booking || false}, ${perms.can_access_crm || false})">Edit</button>
                   <button class="btn btn-danger btn-small" onclick="deleteUser(${user.id}, '${user.email}')">Delete</button>
                 </td>
               </tr>
             `;
           });
         } else {
-          tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #6B7280;">No booking app users found. Add a user with Booking App permission.</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #6B7280;">No booking app users found. Add a user with Booking App permission.</td></tr>';
         }
       } catch (error) {
         showAlert('error', 'Failed to load users: ' + error.message);
@@ -499,6 +518,7 @@
 
       const userData = {
         email: form.email.value,
+        notification_email: form.notification_email.value || null,
         password: form.password.value,
         role: form.role.value,
         can_access_booking: form.can_access_booking.checked,
@@ -529,9 +549,10 @@
     }
 
     // Edit user - open modal
-    function editUser(id, email, role, isActive, canBooking, canCrm) {
+    function editUser(id, email, notificationEmail, role, isActive, canBooking, canCrm) {
       document.getElementById('edit-id').value = id;
       document.getElementById('edit-email').value = email;
+      document.getElementById('edit-notification_email').value = notificationEmail || '';
       document.getElementById('edit-password').value = '';
       document.getElementById('edit-role').value = role || 'admin';
       document.getElementById('edit-is_active').checked = isActive;
@@ -547,6 +568,7 @@
 
       const userData = {
         email: document.getElementById('edit-email').value,
+        notification_email: document.getElementById('edit-notification_email').value || null,
         role: document.getElementById('edit-role').value,
         is_active: document.getElementById('edit-is_active').checked,
         can_access_booking: document.getElementById('edit-can_access_booking').checked,
