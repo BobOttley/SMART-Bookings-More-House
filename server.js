@@ -669,9 +669,12 @@ app.get('/api/admin/check-auth', (req, res) => {
 app.get('/api/admin/users', requireAdminAuth, async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT id, email, role, is_active, permissions, created_at, updated_at
+      SELECT id, email, role, is_active, permissions, school_id, created_at, updated_at
       FROM admin_users
       WHERE school_id = 2
+         OR school_id IS NULL
+         OR role = 'super_admin'
+         OR (permissions->>'can_access_booking')::boolean = true
       ORDER BY created_at DESC
     `);
     res.json({ success: true, users: result.rows });
