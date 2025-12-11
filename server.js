@@ -777,7 +777,7 @@ app.put('/api/admin/users/:id', requireAdminAuth, async (req, res) => {
       UPDATE admin_users
       SET ${updates.join(', ')}
       WHERE id = $${paramCount}
-      RETURNING id, email, role, is_active, permissions, updated_at
+      RETURNING id, email, role, is_active, permissions, created_at
     `, values);
 
     if (result.rows.length === 0) {
