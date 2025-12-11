@@ -324,15 +324,15 @@
     <!-- Add New User -->
     <div class="card">
       <h2>Add New User</h2>
-      <form id="add-user-form" onsubmit="addUser(event)">
+      <form id="add-user-form" onsubmit="addUser(event)" autocomplete="off">
         <div class="form-row">
           <div class="form-group">
             <label for="email">Email Address *</label>
-            <input type="email" id="email" name="email" required placeholder="user@example.com">
+            <input type="email" id="email" name="email" required placeholder="user@example.com" autocomplete="off">
           </div>
           <div class="form-group">
             <label for="password">Password *</label>
-            <input type="password" id="password" name="password" required minlength="6" placeholder="Minimum 6 characters">
+            <input type="password" id="password" name="password" required minlength="6" placeholder="Minimum 6 characters" autocomplete="new-password">
           </div>
         </div>
         <div class="form-row">
@@ -442,7 +442,7 @@
       }
     }
 
-    // Load users
+    // Load users - only show users with booking app access
     async function loadUsers() {
       try {
         const res = await fetch('/api/admin/users');
@@ -454,8 +454,14 @@
         const tbody = document.getElementById('users-tbody');
         tbody.innerHTML = '';
 
-        if (data.users && data.users.length > 0) {
-          data.users.forEach(user => {
+        // Filter to only show users with booking app permission
+        const bookingUsers = (data.users || []).filter(user => {
+          const perms = user.permissions || {};
+          return perms.can_access_booking === true;
+        });
+
+        if (bookingUsers.length > 0) {
+          bookingUsers.forEach(user => {
             const perms = user.permissions || {};
             const permBadges = [];
             if (perms.can_access_booking) permBadges.push('<span class="badge badge-info">Booking</span>');
@@ -479,7 +485,7 @@
             `;
           });
         } else {
-          tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #6B7280;">No users found</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #6B7280;">No booking app users found. Add a user with Booking App permission.</td></tr>';
         }
       } catch (error) {
         showAlert('error', 'Failed to load users: ' + error.message);
