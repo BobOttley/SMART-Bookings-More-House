@@ -2095,169 +2095,64 @@ app.post('/api/bookings/staff-create', requireAdminOrApiKey, async (req, res) =>
       }
     }
 
-    // Send confirmation email
+    // Send confirmation email via AI Email Worker
     try {
+      // Get event details if applicable
       let event = null;
       if (finalEventId) {
         const eventResult = await pool.query('SELECT * FROM events WHERE id = $1', [finalEventId]);
         event = eventResult.rows[0];
       }
 
-      const eventTitle = event ? event.title : (bookingType === 'private_tour' ? 'Private Tour' : bookingType === 'taster_day' ? 'Taster Day' : 'Your Booking');
-      let emailText, emailHTML;
+      // Build booking data for the AI email worker
+      const bookingDataForEmail = {
+        booking_id: booking.id,
+        booking_type: bookingType,
+        parent_email: email,
+        parent_first_name: parentFirstName,
+        parent_last_name: parentLastName,
+        parent_name: `${parentFirstName} ${parentLastName}`,
+        student_first_name: studentFirstName,
+        student_last_name: studentLastName,
+        child_name: studentFirstName,
+        scheduled_date: finalScheduledDate,
+        scheduled_time: finalScheduledTime,
+        num_attendees: numAttendees || 1,
+        inquiry_id: inquiryId,
+        event_id: finalEventId,
+        event_title: event?.title,
+        event_date: event?.event_date,
+        start_time: event?.start_time,
+        end_time: event?.end_time,
+        location: event?.location,
+        // Pass interests from the booking form
+        music: req.body.music,
+        drama: req.body.drama,
+        art: req.body.art,
+        sport: req.body.sport,
+        sciences: req.body.sciences,
+        mathematics: req.body.mathematics,
+        english: req.body.english,
+        languages: req.body.languages,
+        humanities: req.body.humanities,
+        source: 'staff_booking'
+      };
 
-      if (bookingType === 'private_tour') {
-        emailText = `Dear ${parentFirstName} ${parentLastName},
+      // Trigger the AI-generated email via the email worker
+      const emailResult = await emailWorker.triggerBookingConfirmation(bookingDataForEmail);
 
-Thank you for your private tour booking.
+      if (emailResult.success) {
+        console.log(`[STAFF CREATE BOOKING] AI email triggered for ${email}`);
 
-Your booking has been confirmed by our admissions team.
-
-Booking Details:
-- Type: Private Tour
-- Date: ${finalScheduledDate || 'To be confirmed'}
-- Time: ${finalScheduledTime || 'To be confirmed'}
-- Number of Attendees: ${numAttendees || 1}
-${studentFirstName ? `- Student: ${studentFirstName} ${studentLastName}\n` : ''}
-
-If you need to make changes or have questions, please reply to this email.
-
-Best regards,
-More House School Admissions Team`;
-
-        emailHTML = `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #091825;">Your Private Tour Booking Confirmed</h2>
-            <p>Dear ${parentFirstName} ${parentLastName},</p>
-            <p>Your private tour booking has been <strong>confirmed</strong> by our admissions team.</p>
-
-            <h3 style="color: #091825;">Booking Details</h3>
-            <table style="width: 100%; border-collapse: collapse;">
-              <tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Type:</strong></td><td style="padding: 8px; border-bottom: 1px solid #ddd;">Private Tour</td></tr>
-              <tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Date:</strong></td><td style="padding: 8px; border-bottom: 1px solid #ddd;">${finalScheduledDate || 'To be confirmed'}</td></tr>
-              <tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Time:</strong></td><td style="padding: 8px; border-bottom: 1px solid #ddd;">${finalScheduledTime || 'To be confirmed'}</td></tr>
-              <tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Attendees:</strong></td><td style="padding: 8px; border-bottom: 1px solid #ddd;">${numAttendees || 1}</td></tr>
-              ${studentFirstName ? `<tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Student:</strong></td><td style="padding: 8px; border-bottom: 1px solid #ddd;">${studentFirstName} ${studentLastName}</td></tr>` : ''}
-            </table>
-
-            <p style="margin-top: 20px;">If you need to make changes or have questions, please reply to this email.</p>
-
-            <p style="margin-top: 30px; color: #666; font-size: 14px;">
-              Best regards,<br>
-              More House School<br>
-              Admissions Team
-            </p>
-          </div>
-        `;
-      } else if (event) {
-        emailText = `Dear ${parentFirstName} ${parentLastName},
-
-Thank you for booking ${event.title}.
-
-Your booking has been confirmed.
-
-Booking Details:
-- Event: ${event.title}
-- Date: ${event.event_date}
-- Time: ${event.start_time} - ${event.end_time}
-- Location: ${event.location || 'TBC'}
-- Number of Attendees: ${numAttendees || 1}
-${studentFirstName ? `- Student: ${studentFirstName} ${studentLastName}\n` : ''}
-
-If you need to cancel or reschedule, please reply to this email.
-
-Best regards,
-More House School Admissions Team`;
-
-        emailHTML = `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #091825;">Booking Confirmed</h2>
-            <p>Dear ${parentFirstName} ${parentLastName},</p>
-            <p>Your booking for <strong>${event.title}</strong> has been confirmed.</p>
-
-            <h3 style="color: #091825;">Booking Details</h3>
-            <table style="width: 100%; border-collapse: collapse;">
-              <tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Event:</strong></td><td style="padding: 8px; border-bottom: 1px solid #ddd;">${event.title}</td></tr>
-              <tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Date:</strong></td><td style="padding: 8px; border-bottom: 1px solid #ddd;">${event.event_date}</td></tr>
-              <tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Time:</strong></td><td style="padding: 8px; border-bottom: 1px solid #ddd;">${event.start_time} - ${event.end_time}</td></tr>
-              <tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Location:</strong></td><td style="padding: 8px; border-bottom: 1px solid #ddd;">${event.location || 'TBC'}</td></tr>
-              <tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Attendees:</strong></td><td style="padding: 8px; border-bottom: 1px solid #ddd;">${numAttendees || 1}</td></tr>
-              ${studentFirstName ? `<tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Student:</strong></td><td style="padding: 8px; border-bottom: 1px solid #ddd;">${studentFirstName} ${studentLastName}</td></tr>` : ''}
-            </table>
-
-            <p style="margin-top: 20px;">If you need to cancel or reschedule your booking, please reply to this email.</p>
-
-            <p style="margin-top: 30px; color: #666; font-size: 14px;">
-              Best regards,<br>
-              More House School<br>
-              Admissions Team
-            </p>
-          </div>
-        `;
+        // Log email
+        await pool.query(
+          `INSERT INTO booking_email_logs (booking_id, email_type, recipient, subject, sent_at)
+           VALUES ($1, $2, $3, $4, NOW())`,
+          [booking.id, 'ai_confirmation', email, `${bookingType} booking confirmation`]
+        );
       } else {
-        // Taster day without event
-        emailText = `Dear ${parentFirstName} ${parentLastName},
-
-Thank you for your taster day booking.
-
-Your booking has been confirmed.
-
-Booking Details:
-- Type: Taster Day
-- Date: ${finalScheduledDate || 'To be confirmed'}
-- Time: ${finalScheduledTime || 'To be confirmed'}
-- Number of Attendees: ${numAttendees || 1}
-${studentFirstName ? `- Student: ${studentFirstName} ${studentLastName}\n` : ''}
-
-If you need to make changes or have questions, please reply to this email.
-
-Best regards,
-More House School Admissions Team`;
-
-        emailHTML = `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #091825;">Taster Day Booking Confirmed</h2>
-            <p>Dear ${parentFirstName} ${parentLastName},</p>
-            <p>Your taster day booking has been <strong>confirmed</strong>.</p>
-
-            <h3 style="color: #091825;">Booking Details</h3>
-            <table style="width: 100%; border-collapse: collapse;">
-              <tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Type:</strong></td><td style="padding: 8px; border-bottom: 1px solid #ddd;">Taster Day</td></tr>
-              <tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Date:</strong></td><td style="padding: 8px; border-bottom: 1px solid #ddd;">${finalScheduledDate || 'To be confirmed'}</td></tr>
-              <tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Time:</strong></td><td style="padding: 8px; border-bottom: 1px solid #ddd;">${finalScheduledTime || 'To be confirmed'}</td></tr>
-              <tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Attendees:</strong></td><td style="padding: 8px; border-bottom: 1px solid #ddd;">${numAttendees || 1}</td></tr>
-              ${studentFirstName ? `<tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Student:</strong></td><td style="padding: 8px; border-bottom: 1px solid #ddd;">${studentFirstName} ${studentLastName}</td></tr>` : ''}
-            </table>
-
-            <p style="margin-top: 20px;">If you need to make changes or have questions, please reply to this email.</p>
-
-            <p style="margin-top: 30px; color: #666; font-size: 14px;">
-              Best regards,<br>
-              More House School<br>
-              Admissions Team
-            </p>
-          </div>
-        `;
+        console.error('[STAFF CREATE BOOKING] AI email failed:', emailResult.error);
       }
-
-      const emailSubject = `More House School - ${eventTitle} Confirmation`;
-
-      // Send via email worker for branded template
-      await emailWorker.sendEmail({
-        to: email,
-        subject: emailSubject,
-        text: emailText,
-        html: emailHTML
-      });
-
-      // Log email
-      await pool.query(
-        `INSERT INTO booking_email_logs (booking_id, email_type, recipient, subject, sent_at)
-         VALUES ($1, $2, $3, $4, NOW())`,
-        [booking.id, 'staff_confirmation', email, emailSubject]
-      );
-
-      console.log(`[STAFF CREATE BOOKING] Confirmation email sent to ${email}`);
     } catch (emailError) {
       console.error('[STAFF CREATE BOOKING] Email send error:', emailError);
       // Don't fail the booking if email fails
