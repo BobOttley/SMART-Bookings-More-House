@@ -449,6 +449,55 @@ const ADMIN_USERS = [
 
 console.log(`[BOOKING APP] Loaded ${ADMIN_USERS.length} admin user(s) from environment`);
 
+// Sync admin users from environment to database on startup
+async function syncAdminUsersToDatabase() {
+  if (ADMIN_USERS.length === 0) {
+    console.log('[BOOKING APP] No admin users to sync from environment');
+    return;
+  }
+
+  console.log(`[BOOKING APP] Syncing ${ADMIN_USERS.length} admin user(s) to database...`);
+
+  for (const user of ADMIN_USERS) {
+    try {
+      // Check if user already exists
+      const existingUser = await pool.query(
+        'SELECT id, email FROM admin_users WHERE email = $1',
+        [user.email.toLowerCase()]
+      );
+
+      if (existingUser.rows.length > 0) {
+        // User exists - update password hash
+        const passwordHash = await bcrypt.hash(user.password, 10);
+        await pool.query(
+          `UPDATE admin_users
+           SET password_hash = $1, is_active = true, updated_at = NOW()
+           WHERE email = $2`,
+          [passwordHash, user.email.toLowerCase()]
+        );
+        console.log(`[BOOKING APP] Updated existing user: ${user.email}`);
+      } else {
+        // Create new user with booking permissions
+        const passwordHash = await bcrypt.hash(user.password, 10);
+        await pool.query(
+          `INSERT INTO admin_users (email, password_hash, role, is_active, permissions, school_id, created_at, updated_at)
+           VALUES ($1, $2, 'admin', true, $3, 2, NOW(), NOW())`,
+          [
+            user.email.toLowerCase(),
+            passwordHash,
+            JSON.stringify({ can_access_booking: true, can_access_crm: true })
+          ]
+        );
+        console.log(`[BOOKING APP] Created new user: ${user.email}`);
+      }
+    } catch (error) {
+      console.error(`[BOOKING APP] Error syncing user ${user.email}:`, error.message);
+    }
+  }
+
+  console.log('[BOOKING APP] Admin user sync complete');
+}
+
 // ============================================================================
 // AUTHENTICATION MIDDLEWARE
 // ============================================================================
@@ -6578,6 +6627,13 @@ app.get('/api/bookings/:id/briefing-card', requireAdminAuth, async (req, res) =>
 });
 
 // Start server
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`Booking server running on http://localhost:${PORT}`);
+
+  // Sync admin users from environment variables to database
+  try {
+    await syncAdminUsersToDatabase();
+  } catch (error) {
+    console.error('[BOOKING APP] Failed to sync admin users:', error.message);
+  }
 });
