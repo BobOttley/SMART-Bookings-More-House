@@ -668,8 +668,9 @@ app.get('/api/admin/check-auth', (req, res) => {
  */
 app.get('/api/admin/users', requireAdminAuth, async (req, res) => {
   try {
+    // Show users for school_id = 2 (More House) only - not the super admin
     const result = await pool.query(`
-      SELECT id, email, role, is_active, permissions, school_id, created_at, updated_at
+      SELECT id, email, role, is_active, permissions, school_id, created_at
       FROM admin_users
       WHERE school_id = 2
       ORDER BY created_at DESC
@@ -704,8 +705,8 @@ app.post('/api/admin/users', requireAdminAuth, async (req, res) => {
 
     // Create user
     const result = await pool.query(`
-      INSERT INTO admin_users (email, password_hash, role, is_active, permissions, school_id, created_at, updated_at)
-      VALUES ($1, $2, $3, true, $4, 2, NOW(), NOW())
+      INSERT INTO admin_users (email, password_hash, role, is_active, permissions, school_id, created_at)
+      VALUES ($1, $2, $3, true, $4, 2, NOW())
       RETURNING id, email, role, is_active, permissions, created_at
     `, [
       email.toLowerCase(),
@@ -770,7 +771,6 @@ app.put('/api/admin/users/:id', requireAdminAuth, async (req, res) => {
       return res.status(400).json({ success: false, error: 'No fields to update' });
     }
 
-    updates.push(`updated_at = NOW()`);
     values.push(id);
 
     const result = await pool.query(`
