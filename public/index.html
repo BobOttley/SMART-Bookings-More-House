@@ -2318,6 +2318,7 @@
                 <td><span class="badge badge-${e.status}">${e.status}</span></td>
                 <td>
                   <button class="btn btn-sm" onclick="window.open('/briefing-cards.html?eventId=${e.id}', '_blank')" style="margin-right: 0.5rem; background: #10B981; color: white;" title="Print briefing packs for tour guides">Print Packs</button>
+                  <button class="btn btn-sm" onclick="downloadEventCSV(${e.id}, '${e.title.replace(/'/g, "\\'")}', '${e.event_date}')" style="margin-right: 0.5rem; background: #6366F1; color: white;" title="Download attendee list as CSV">CSV</button>
                   <button class="btn btn-sm btn-primary" onclick="showEditEventModal(${e.id})" style="margin-right: 0.5rem;">Edit</button>
                   <button class="btn btn-sm btn-danger" onclick="deleteEvent(${e.id})">Delete</button>
                 </td>
@@ -2381,6 +2382,119 @@
         }
       } catch (error) {
         console.error('Delete event error:', error);
+      }
+    }
+
+    // Download event attendees as CSV
+    async function downloadEventCSV(eventId, eventTitle, eventDate) {
+      try {
+        const res = await fetch(`${API_URL}/api/events/${eventId}/briefing-cards`);
+        const data = await res.json();
+
+        if (!data.success || !data.bookings) {
+          alert('Failed to load event data');
+          return;
+        }
+
+        // Build CSV headers
+        const headers = [
+          'Student First Name',
+          'Student Last Name',
+          'Parent First Name',
+          'Parent Last Name',
+          'Email',
+          'Phone',
+          'Age Group',
+          'Entry Year',
+          'Number Attending',
+          'Tour Guide',
+          'Special Requirements',
+          'How Heard About Us',
+          'Interests',
+          'Priorities',
+          'Booking Status',
+          'Booked At'
+        ];
+
+        // Build CSV rows
+        const rows = data.bookings.map(b => {
+          // Build interests list
+          const interests = [];
+          if (b.sciences) interests.push('Sciences');
+          if (b.mathematics) interests.push('Mathematics');
+          if (b.english) interests.push('English');
+          if (b.languages) interests.push('Languages');
+          if (b.humanities) interests.push('Humanities');
+          if (b.business) interests.push('Business');
+          if (b.drama) interests.push('Drama');
+          if (b.music) interests.push('Music');
+          if (b.art) interests.push('Art');
+          if (b.creative_writing) interests.push('Creative Writing');
+          if (b.sport) interests.push('Sport');
+
+          // Build priorities list
+          const priorities = [];
+          if (b.leadership) priorities.push('Leadership');
+          if (b.community_service) priorities.push('Community Service');
+          if (b.outdoor_education) priorities.push('Outdoor Education');
+          if (b.academic_excellence) priorities.push('Academic Excellence');
+          if (b.pastoral_care) priorities.push('Pastoral Care');
+          if (b.university_preparation) priorities.push('University Prep');
+          if (b.personal_development) priorities.push('Personal Development');
+          if (b.career_guidance) priorities.push('Career Guidance');
+          if (b.extracurricular_opportunities) priorities.push('Extracurricular');
+
+          return [
+            b.student_first_name || '',
+            b.student_last_name || '',
+            b.parent_first_name || '',
+            b.parent_last_name || '',
+            b.email || '',
+            b.phone || '',
+            b.age_group || '',
+            b.entry_year || '',
+            b.num_attendees || 1,
+            b.guide_name || 'Unassigned',
+            b.special_requirements || '',
+            b.hear_about_us || '',
+            interests.join('; '),
+            priorities.join('; '),
+            b.status || 'confirmed',
+            b.created_at ? new Date(b.created_at).toLocaleString() : ''
+          ];
+        });
+
+        // Convert to CSV string
+        const escapeCSV = (val) => {
+          if (val === null || val === undefined) return '';
+          const str = String(val);
+          if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+            return '"' + str.replace(/"/g, '""') + '"';
+          }
+          return str;
+        };
+
+        const csvContent = [
+          headers.map(escapeCSV).join(','),
+          ...rows.map(row => row.map(escapeCSV).join(','))
+        ].join('\n');
+
+        // Create and download file
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        const formattedDate = new Date(eventDate).toISOString().split('T')[0];
+        const safeTitle = eventTitle.replace(/[^a-z0-9]/gi, '_');
+        link.href = url;
+        link.download = `${safeTitle}_${formattedDate}_attendees.csv`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+
+      } catch (error) {
+        console.error('CSV download error:', error);
+        alert('Failed to download CSV');
       }
     }
 
