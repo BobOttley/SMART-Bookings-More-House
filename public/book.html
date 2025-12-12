@@ -573,6 +573,10 @@
             firstName = nameParts[0] || '';
             lastName = nameParts.slice(1).join(' ') || '';
           }
+          // Use family_surname as fallback for parent last name if not found from name split
+          if (!lastName && parent.family_surname) {
+            lastName = parent.family_surname;
+          }
 
           // Use age_group directly from inquiry
           const ageGroup = parent.age_group || null;
