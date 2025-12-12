@@ -436,7 +436,8 @@
             <h2>Booking Confirmed!</h2>
             <p>Thank you for booking. You will receive a confirmation email shortly with all the details.</p>
             <p style="margin-top: 1rem;">We look forward to seeing you!</p>
-            <button class="btn btn-primary" onclick="location.reload()">Book Another Visit</button>
+            <p id="redirect-countdown" style="margin-top: 1.5rem; color: #6B7280; font-size: 0.9rem;">Redirecting to More House School website in <span id="countdown-seconds">5</span> seconds...</p>
+            <button class="btn btn-primary" onclick="window.location.href='https://www.morehouse.org.uk/'">Return to School Website</button>
           </div>
         </div>
       </div>
@@ -531,7 +532,8 @@
             <h2>Request Received!</h2>
             <p>Thank you for your interest. Our admissions team will contact you shortly to schedule your private tour.</p>
             <p style="margin-top: 1rem;">We look forward to welcoming you!</p>
-            <button class="btn btn-primary" onclick="location.reload()">Submit Another Request</button>
+            <p id="tour-redirect-countdown" style="margin-top: 1.5rem; color: #6B7280; font-size: 0.9rem;">Redirecting to More House School website in <span id="tour-countdown-seconds">5</span> seconds...</p>
+            <button class="btn btn-primary" onclick="window.location.href='https://www.morehouse.org.uk/'">Return to School Website</button>
           </div>
         </div>
       </div>
@@ -775,6 +777,8 @@
         if (res.ok) {
           document.getElementById('openday-form').style.display = 'none';
           document.getElementById('success-container').style.display = 'block';
+          // Start countdown to redirect to school website
+          startRedirectCountdown('countdown-seconds', 5);
         } else {
           showAlert('error', result.error || 'Failed to create booking. Please try again.');
           submitBtn.disabled = false;
@@ -841,6 +845,8 @@ ${formData.get('special_requirements') || ''}
         if (res.ok) {
           document.getElementById('private-tour-form').style.display = 'none';
           document.getElementById('tour-success-container').style.display = 'block';
+          // Start countdown to redirect to school website
+          startRedirectCountdown('tour-countdown-seconds', 5);
         } else {
           showTourAlert('error', result.error || 'Failed to submit request. Please try again.');
           submitBtn.disabled = false;
@@ -872,23 +878,56 @@ ${formData.get('special_requirements') || ''}
       document.getElementById('tour-alert-container').innerHTML = '';
     }
 
-    // Check for prospectus URL and show banner if popup was blocked
+    // Redirect countdown after successful booking
+    function startRedirectCountdown(countdownElementId, seconds = 5) {
+      let remaining = seconds;
+      const countdownEl = document.getElementById(countdownElementId);
+
+      const interval = setInterval(() => {
+        remaining--;
+        if (countdownEl) {
+          countdownEl.textContent = remaining;
+        }
+        if (remaining <= 0) {
+          clearInterval(interval);
+          window.location.href = 'https://www.morehouse.org.uk/';
+        }
+      }, 1000);
+    }
+
+    // Check for prospectus URL - try to auto-open and show helpful message
     function checkProspectusUrl() {
       const prospectusUrl = sessionStorage.getItem('prospectus_url');
       if (prospectusUrl) {
-        console.log('Found blocked prospectus URL, showing banner:', prospectusUrl);
+        console.log('Found prospectus URL:', prospectusUrl);
 
-        // Create banner at top of page
+        // Try to open prospectus in new tab automatically
+        const prospectusWindow = window.open(prospectusUrl, '_blank');
+        const popupBlocked = !prospectusWindow || prospectusWindow.closed || typeof prospectusWindow.closed === 'undefined';
+
+        if (!popupBlocked) {
+          console.log('Prospectus opened successfully in new tab');
+        } else {
+          console.log('Popup was blocked');
+        }
+
+        // Create banner at top of page with helpful message
         const banner = document.createElement('div');
+        banner.id = 'prospectus-banner';
         banner.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; background: linear-gradient(135deg, #091825, #FF9F1C); color: white; padding: 15px; text-align: center; z-index: 10000; box-shadow: 0 4px 12px rgba(0,0,0,0.3); font-family: Arial, sans-serif;';
+
+        // Different message based on whether popup worked
+        const openedMessage = popupBlocked
+          ? '<br><a href="' + prospectusUrl + '" target="_blank" style="display: inline-block; margin-top: 10px; padding: 10px 30px; background: white; color: #091825; text-decoration: none; border-radius: 25px; font-weight: 600;">View Your Prospectus Now</a>'
+          : '<br><span style="display: inline-block; margin-top: 8px; font-size: 14px; opacity: 0.9;">(Opening in a new tab...)</span>';
+
         banner.innerHTML = `
           <div style="max-width: 900px; margin: 0 auto;">
             <strong style="font-size: 18px;">🎓 Your Personalised Prospectus is Ready!</strong>
             <br>
-            <a href="${prospectusUrl}" target="_blank" style="display: inline-block; margin-top: 10px; padding: 10px 30px; background: white; color: #091825; text-decoration: none; border-radius: 25px; font-weight: 600; transition: all 0.3s;">
-              View Your Prospectus Now
-            </a>
-            <button onclick="this.parentElement.parentElement.remove(); sessionStorage.removeItem('prospectus_url');" style="margin-left: 15px; padding: 10px 20px; background: transparent; color: white; border: 2px solid white; border-radius: 25px; cursor: pointer; font-weight: 600;">
+            <span style="font-size: 14px; opacity: 0.9;">We've also emailed a copy to you for future reference.</span>
+            ${openedMessage}
+            <button onclick="document.getElementById('prospectus-banner').remove(); sessionStorage.removeItem('prospectus_url'); document.body.style.paddingTop = '0';" style="margin-left: 15px; padding: 10px 20px; background: transparent; color: white; border: 2px solid white; border-radius: 25px; cursor: pointer; font-weight: 600;">
               Dismiss
             </button>
           </div>
@@ -898,8 +937,8 @@ ${formData.get('special_requirements') || ''}
         // Add padding to body so content isn't hidden
         document.body.style.paddingTop = '100px';
 
-        // Clear from sessionStorage after showing (user can still click link)
-        // sessionStorage.removeItem('prospectus_url');
+        // Clear from sessionStorage after showing
+        sessionStorage.removeItem('prospectus_url');
       }
     }
 
