@@ -3374,8 +3374,8 @@ More House School Admissions Team`;
   }
 });
 
-// Parent accepts alternative date (Public endpoint)
-app.post('/api/bookings/accept-alternative', requireAdminAuth, async (req, res) => {
+// Parent accepts alternative date (Public endpoint - no auth, uses token)
+app.post('/api/bookings/accept-alternative', async (req, res) => {
   try {
     const { token, selected_date, selected_time } = req.body;
 
