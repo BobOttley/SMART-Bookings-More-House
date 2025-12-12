@@ -7,9 +7,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --blazer-navy: #091825;
-      --award-gold: #FF9F1C;
-      --sport-blue: #034674;
+      --blazer-navy: #00045B;
+      --award-gold: #F59BB1;
+      --sport-blue: #1a1a7a;
       --text-primary: #2C3E50;
       --white: #FFFFFF;
       --light-grey: #F8FAFC;
@@ -914,11 +914,11 @@ ${formData.get('special_requirements') || ''}
         // Create banner at top of page with helpful message
         const banner = document.createElement('div');
         banner.id = 'prospectus-banner';
-        banner.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; background: linear-gradient(135deg, #091825, #FF9F1C); color: white; padding: 15px; text-align: center; z-index: 10000; box-shadow: 0 4px 12px rgba(0,0,0,0.3); font-family: Arial, sans-serif;';
+        banner.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; background: linear-gradient(135deg, #00045B, #F59BB1); color: white; padding: 15px; text-align: center; z-index: 10000; box-shadow: 0 4px 12px rgba(0,0,0,0.3); font-family: Arial, sans-serif;';
 
         // Different message based on whether popup worked
         const openedMessage = popupBlocked
-          ? '<br><a href="' + prospectusUrl + '" target="_blank" style="display: inline-block; margin-top: 10px; padding: 10px 30px; background: white; color: #091825; text-decoration: none; border-radius: 25px; font-weight: 600;">View Your Prospectus Now</a>'
+          ? '<br><a href="' + prospectusUrl + '" target="_blank" style="display: inline-block; margin-top: 10px; padding: 10px 30px; background: white; color: #00045B; text-decoration: none; border-radius: 25px; font-weight: 600;">View Your Prospectus Now</a>'
           : '<br><span style="display: inline-block; margin-top: 8px; font-size: 14px; opacity: 0.9;">(Opening in a new tab...)</span>';
 
         banner.innerHTML = `
