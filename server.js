@@ -318,7 +318,7 @@ async function sendFeedbackNotification(booking, responses, submissionNumber) {
   }
 }
 
-// Send booking notification to admissions team
+// Send booking notification to admissions team (via email worker for branded template)
 async function sendAdmissionsBookingNotification(booking) {
   try {
     const parentName = `${booking.parent_first_name} ${booking.parent_last_name}`;
@@ -332,7 +332,7 @@ async function sendAdmissionsBookingNotification(booking) {
     }
 
     // Format dates
-    const bookedAt = new Date(booking.booked_at).toLocaleString('en-GB', {
+    const bookedAt = new Date().toLocaleString('en-GB', {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
@@ -350,42 +350,76 @@ async function sendAdmissionsBookingNotification(booking) {
         month: 'long',
         day: 'numeric'
       });
-      eventTime = `${event.start_time} - ${event.end_time}`;
+      eventTime = event.start_time ? `${event.start_time}${event.end_time ? ' - ' + event.end_time : ''}` : '';
     }
 
-    // Prepare template data
-    const templateData = {
-      parent_name: parentName,
-      student_name: studentName,
-      email: booking.email,
-      phone: booking.phone,
-      event_title: event ? event.title : '',
-      event_date: eventDate,
-      event_time: eventTime,
-      scheduled_date: booking.scheduled_date || 'To be confirmed',
-      scheduled_time: booking.scheduled_time || 'To be confirmed',
-      num_attendees: booking.num_attendees,
-      special_requirements: booking.special_requirements || '',
-      preferred_language: booking.preferred_language || '',
-      status: booking.status.charAt(0).toUpperCase() + booking.status.slice(1),
-      booked_at: bookedAt
-    };
+    // Format preferred date/time for private tours
+    let preferredDateFormatted = 'To be confirmed';
+    let preferredTimeFormatted = 'To be confirmed';
+    if (booking.scheduled_date) {
+      preferredDateFormatted = new Date(booking.scheduled_date).toLocaleDateString('en-GB', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    }
+    if (booking.scheduled_time) {
+      preferredTimeFormatted = booking.scheduled_time;
+    }
 
     // Get admin email from environment
     const adminEmail = process.env.ADMIN_EMAIL;
 
-    // Get the appropriate template ID based on booking type
-    const templateId = await getTemplateId(booking.booking_type, 'admissions_notification', booking.school_id);
+    // Determine booking type title
+    const bookingTypeTitle = booking.booking_type === 'private_tour' ? 'Private Tour Request' :
+                            booking.booking_type === 'taster_day' ? 'Taster Day Request' :
+                            'Open Day Booking';
 
-    if (templateId) {
-      // Send notification using template, CC parent for transparency
-      await sendInternalTemplateEmail(templateId, adminEmail, templateData, [], booking.email);
-      console.log(`✓ Admissions booking notification sent to ${adminEmail} (CC: ${booking.email}) for ${booking.booking_type} booking`);
-      return true;
-    } else {
-      console.error(`❌ No admissions notification template found for booking_type: ${booking.booking_type}`);
-      return false;
-    }
+    // Build HTML content for admin notification
+    const htmlContent = `
+      <h2>New ${bookingTypeTitle}</h2>
+      <p>A new ${booking.booking_type.replace('_', ' ')} booking has been made.</p>
+
+      <h3>Booking Details</h3>
+      <table style="border-collapse: collapse; width: 100%; max-width: 500px;">
+        <tr><td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Parent:</strong></td><td style="padding: 8px; border-bottom: 1px solid #eee;">${parentName}</td></tr>
+        <tr><td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Student:</strong></td><td style="padding: 8px; border-bottom: 1px solid #eee;">${studentName}</td></tr>
+        <tr><td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Email:</strong></td><td style="padding: 8px; border-bottom: 1px solid #eee;"><a href="mailto:${booking.email}">${booking.email}</a></td></tr>
+        <tr><td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Phone:</strong></td><td style="padding: 8px; border-bottom: 1px solid #eee;">${booking.phone || 'Not provided'}</td></tr>
+        ${event ? `
+        <tr><td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Event:</strong></td><td style="padding: 8px; border-bottom: 1px solid #eee;">${event.title}</td></tr>
+        <tr><td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Date:</strong></td><td style="padding: 8px; border-bottom: 1px solid #eee;">${eventDate}</td></tr>
+        <tr><td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Time:</strong></td><td style="padding: 8px; border-bottom: 1px solid #eee;">${eventTime}</td></tr>
+        ` : `
+        <tr><td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Preferred Date:</strong></td><td style="padding: 8px; border-bottom: 1px solid #eee;">${preferredDateFormatted}</td></tr>
+        <tr><td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Preferred Time:</strong></td><td style="padding: 8px; border-bottom: 1px solid #eee;">${preferredTimeFormatted}</td></tr>
+        `}
+        <tr><td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Attendees:</strong></td><td style="padding: 8px; border-bottom: 1px solid #eee;">${booking.num_attendees}</td></tr>
+        <tr><td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Status:</strong></td><td style="padding: 8px; border-bottom: 1px solid #eee;"><span style="background: ${booking.status === 'confirmed' ? '#10B981' : '#F59E0B'}; color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px; text-transform: uppercase;">${booking.status}</span></td></tr>
+        <tr><td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Requested At:</strong></td><td style="padding: 8px; border-bottom: 1px solid #eee;">${bookedAt}</td></tr>
+      </table>
+
+      ${booking.special_requirements ? `
+      <h3>Special Requirements</h3>
+      <p style="background: #f8f9fa; padding: 12px; border-radius: 6px;">${booking.special_requirements}</p>
+      ` : ''}
+
+      <p style="margin-top: 24px;">
+        <a href="https://smart-crm-more-house.onrender.com/bookings.html" style="display: inline-block; background: #FF9F1C; color: #091825; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600;">View in CRM</a>
+      </p>
+    `;
+
+    // Send via email worker for branded template
+    await emailWorker.sendEmail({
+      to: adminEmail,
+      cc: booking.email,
+      subject: `New ${bookingTypeTitle} - ${parentName}`,
+      html: htmlContent
+    });
+
+    console.log(`✓ Admissions booking notification sent via email worker to ${adminEmail} (CC: ${booking.email}) for ${booking.booking_type} booking`);
+    return true;
   } catch (error) {
     console.error('Error sending admissions booking notification:', error);
     return false;
