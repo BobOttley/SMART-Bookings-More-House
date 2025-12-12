@@ -752,7 +752,8 @@
         num_attendees: parseInt(formData.get('num_attendees')),
         special_requirements: formData.get('special_requirements'),
         booking_type: 'open_day',
-        inquiry_id: inquiryId || null
+        inquiry_id: inquiryId || null,
+        age_group: formData.get('age_group') || null
       };
 
       submitBtn.disabled = true;
@@ -817,7 +818,8 @@ ${formData.get('special_requirements') || ''}
         booking_type: 'private_tour',
         inquiry_id: inquiryId || null,
         preferred_date: preferredDate || null,
-        preferred_time: preferredTime || null
+        preferred_time: preferredTime || null,
+        age_group: formData.get('age_group') || null
       };
 
       submitBtn.disabled = true;
