@@ -7,9 +7,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --blazer-navy: #00045B;
-      --award-gold: #F59BB1;
-      --sport-blue: #1a1a7a;
+      --school-navy: #00045B;
+      --school-pink: #F59BB1;
+      --school-navy-light: #1a1a7a;
       --text-primary: #2C3E50;
       --white: #FFFFFF;
       --light-grey: #F8FAFC;
@@ -26,7 +26,7 @@
 
     body {
       font-family: 'Inter', sans-serif;
-      background: linear-gradient(135deg, var(--blazer-navy) 0%, var(--sport-blue) 100%);
+      background: linear-gradient(135deg, var(--school-navy) 0%, var(--school-navy-light) 100%);
       min-height: 100vh;
       padding: 2rem 1rem;
     }
@@ -76,13 +76,13 @@
 
     .tab-btn:hover {
       background: rgba(255, 255, 255, 0.2);
-      border-color: var(--award-gold);
+      border-color: var(--school-pink);
     }
 
     .tab-btn.active {
       background: white;
-      color: var(--blazer-navy);
-      border-color: var(--award-gold);
+      color: var(--school-navy);
+      border-color: var(--school-pink);
     }
 
     .tab-content {
@@ -115,19 +115,19 @@
     }
 
     .event-card:hover {
-      border-color: var(--award-gold);
+      border-color: var(--school-pink);
       box-shadow: 0 4px 12px rgba(255, 159, 28, 0.2);
     }
 
     .event-card.selected {
-      border-color: var(--award-gold);
+      border-color: var(--school-pink);
       background: rgba(255, 159, 28, 0.05);
     }
 
     .event-title {
       font-size: 1.25rem;
       font-weight: 700;
-      color: var(--blazer-navy);
+      color: var(--school-navy);
       margin-bottom: 0.5rem;
     }
 
@@ -178,7 +178,7 @@
 
     .form-section h3 {
       font-size: 1.25rem;
-      color: var(--blazer-navy);
+      color: var(--school-navy);
       margin-bottom: 1.5rem;
     }
 
@@ -213,7 +213,7 @@
 
     .form-input:focus, .form-select:focus, .form-textarea:focus {
       outline: none;
-      border-color: var(--award-gold);
+      border-color: var(--school-pink);
       box-shadow: 0 0 0 3px rgba(255, 159, 28, 0.1);
     }
 
@@ -237,12 +237,12 @@
     }
 
     .btn-primary {
-      background: var(--blazer-navy);
+      background: var(--school-navy);
       color: white;
     }
 
     .btn-primary:hover {
-      background: var(--award-gold);
+      background: var(--school-pink);
       transform: translateY(-2px);
       box-shadow: 0 6px 20px rgba(255, 159, 28, 0.3);
     }
@@ -335,7 +335,7 @@
     }
 
     .footer-badge span {
-      color: var(--award-gold);
+      color: var(--school-pink);
       font-weight: 600;
     }
   </style>
@@ -361,7 +361,7 @@
         <div id="alert-container"></div>
 
         <div id="events-container">
-          <h3 style="color: var(--blazer-navy); margin-bottom: 1.5rem;">Select an Open Day</h3>
+          <h3 style="color: var(--school-navy); margin-bottom: 1.5rem;">Select an Open Day</h3>
           <div class="events-grid" id="events-list"></div>
         </div>
 
@@ -446,7 +446,7 @@
       <div class="tab-content" id="private-tour-tab">
         <div id="tour-alert-container"></div>
 
-        <h3 style="color: var(--blazer-navy); margin-bottom: 1.5rem;">Request a Private Tour</h3>
+        <h3 style="color: var(--school-navy); margin-bottom: 1.5rem;">Request a Private Tour</h3>
         <p style="color: #6B7280; margin-bottom: 2rem;">
           Fill out the form below and we'll contact you to schedule a private tour at your convenience.
         </p>

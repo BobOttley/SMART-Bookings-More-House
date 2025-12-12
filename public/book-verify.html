@@ -7,9 +7,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --blazer-navy: #00045B;
-      --award-gold: #F59BB1;
-      --sport-blue: #1a1a7a;
+      --school-navy: #00045B;
+      --school-pink: #F59BB1;
+      --school-navy-light: #1a1a7a;
       --text-primary: #2C3E50;
       --white: #FFFFFF;
       --light-grey: #F8FAFC;
@@ -26,7 +26,7 @@
 
     body {
       font-family: 'Inter', sans-serif;
-      background: linear-gradient(135deg, var(--blazer-navy) 0%, var(--sport-blue) 100%);
+      background: linear-gradient(135deg, var(--school-navy) 0%, var(--school-navy-light) 100%);
       min-height: 100vh;
       padding: 2rem 1rem;
     }
@@ -63,7 +63,7 @@
 
     .card h2 {
       font-family: 'Playfair Display', serif;
-      color: var(--blazer-navy);
+      color: var(--school-navy);
       font-size: 1.75rem;
       margin-bottom: 1.5rem;
     }
@@ -91,7 +91,7 @@
       padding: 1.25rem 2rem;
       font-size: 1rem;
       font-weight: 600;
-      border: 2px solid var(--blazer-navy);
+      border: 2px solid var(--school-navy);
       border-radius: 8px;
       cursor: pointer;
       transition: all 0.3s;
@@ -100,13 +100,13 @@
     }
 
     .btn-primary {
-      background: var(--award-gold);
-      color: var(--blazer-navy);
-      border-color: var(--award-gold);
+      background: var(--school-pink);
+      color: var(--school-navy);
+      border-color: var(--school-pink);
     }
 
     .btn-primary:hover {
-      background: var(--blazer-navy);
+      background: var(--school-navy);
       color: white;
       transform: translateY(-2px);
       box-shadow: 0 4px 12px rgba(9, 24, 37, 0.3);
@@ -114,11 +114,11 @@
 
     .btn-secondary {
       background: white;
-      color: var(--blazer-navy);
+      color: var(--school-navy);
     }
 
     .btn-secondary:hover {
-      background: var(--blazer-navy);
+      background: var(--school-navy);
       color: white;
     }
 
@@ -144,7 +144,7 @@
 
     .form-input:focus {
       outline: none;
-      border-color: var(--award-gold);
+      border-color: var(--school-pink);
       box-shadow: 0 0 0 3px rgba(255, 159, 28, 0.1);
     }
 
@@ -195,7 +195,7 @@
     }
 
     .parent-info strong {
-      color: var(--blazer-navy);
+      color: var(--school-navy);
     }
 
     .back-link {
@@ -210,7 +210,7 @@
     }
 
     .back-link a:hover {
-      color: var(--award-gold);
+      color: var(--school-pink);
     }
 
     /* Footer Badge */
@@ -223,7 +223,7 @@
     }
 
     .footer-badge span {
-      color: var(--award-gold);
+      color: var(--school-pink);
       font-weight: 600;
     }
   </style>
