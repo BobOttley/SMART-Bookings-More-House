@@ -1683,7 +1683,8 @@ app.post('/api/bookings', async (req, res) => {
       preferred_language,
       booking_type,
       preferred_date,
-      preferred_time
+      preferred_time,
+      source  // Track source: 'emily_chatbot' or 'website'
     } = req.body;
 
     console.log('[CREATE BOOKING] Parsed data:', {
@@ -1799,15 +1800,16 @@ app.post('/api/bookings', async (req, res) => {
         email, phone, student_first_name, student_last_name,
         num_attendees, special_requirements, preferred_language,
         booking_type, status, cancellation_token, feedback_token,
-        scheduled_date, scheduled_time
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+        scheduled_date, scheduled_time, source
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
       RETURNING *`,
       [
         school_id, event_id, finalInquiryId, parent_first_name, parent_last_name,
         email, phone, student_first_name, student_last_name,
         num_attendees, special_requirements, preferred_language,
         booking_type, initialStatus, cancellationToken, feedbackToken,
-        preferred_date || null, preferred_time || null
+        preferred_date || null, preferred_time || null,
+        source || 'website'  // Default to 'website' if not specified
       ]
     );
 
@@ -2074,15 +2076,16 @@ app.post('/api/bookings/staff-create', requireAdminOrApiKey, async (req, res) =>
         email, phone, student_first_name, student_last_name,
         num_attendees, special_requirements,
         booking_type, status, cancellation_token, feedback_token,
-        scheduled_date, scheduled_time, assigned_guide_id
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+        scheduled_date, scheduled_time, assigned_guide_id, source
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
       RETURNING *`,
       [
         schoolId, finalEventId, inquiryId, parentFirstName, parentLastName,
         email, phone, studentFirstName, studentLastName,
         numAttendees || 1, specialRequirements || null,
         bookingType, initialStatus, cancellationToken, feedbackToken,
-        finalScheduledDate, finalScheduledTime, assignedGuideId || null
+        finalScheduledDate, finalScheduledTime, assignedGuideId || null,
+        'admin'  // Staff-created bookings are marked as 'admin'
       ]
     );
 
