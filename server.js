@@ -6306,6 +6306,37 @@ app.get('/api/bookings/:id/taster-feedback', requireAdminAuth, async (req, res) 
   }
 });
 
+// Get all SMART feedback for an inquiry (used by analytics)
+app.get('/api/inquiry/:id/feedback', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Get all feedback for bookings linked to this inquiry
+    const result = await pool.query(
+      `SELECT
+         tgf.id,
+         tgf.booking_id,
+         tgf.guide_id,
+         tgf.submission_number,
+         tgf.responses,
+         tgf.submitted_at,
+         b.booking_type,
+         tg.name as guide_name
+       FROM tour_guide_feedback tgf
+       JOIN bookings b ON b.id = tgf.booking_id
+       LEFT JOIN tour_guides tg ON tg.id = tgf.guide_id
+       WHERE b.inquiry_id = $1
+       ORDER BY tgf.submitted_at DESC`,
+      [id]
+    );
+
+    res.json({ success: true, feedback: result.rows });
+  } catch (error) {
+    console.error('Get inquiry feedback error:', error);
+    res.status(500).json({ success: false, error: 'Failed to fetch feedback' });
+  }
+});
+
 // ============================================
 // TOUR GUIDE BRIEFING CARDS
 // ============================================
