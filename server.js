@@ -161,7 +161,7 @@ function generateCalendarInvite(booking, guide) {
     `SUMMARY:${tourType}: ${parentName}`,
     `DESCRIPTION:${description}`,
     `LOCATION:More House School`,
-    `ORGANIZER;CN=More House School:MAILTO:booking@morehousemail.org.uk`,
+    `ORGANIZER;CN=More House School:MAILTO:${process.env.SCHOOL_CONTACT_EMAIL || 'registrar@morehousemail.org.uk'}`,
     `ATTENDEE;CN=${guide.name};RSVP=TRUE:MAILTO:${guide.email}`,
     'STATUS:CONFIRMED',
     'SEQUENCE:0',
@@ -5234,7 +5234,7 @@ async function sendTemplateEmail(booking, templateId, emailType, smartFeedback =
             <div class="footer">
               <p style="font-weight: 600; color: #091825; font-size: 16px;">More House School</p>
               <p>22-24 Pont Street, Knightsbridge, London, SW1X 0AA</p>
-              <p>Tel: 020 7235 2855 | Email: office@morehousemail.org.uk</p>
+              <p>Tel: 020 7235 2855 | Email: ${process.env.SCHOOL_CONTACT_EMAIL || 'registrar@morehousemail.org.uk'}</p>
             </div>
           </div>
         </body>
@@ -5386,7 +5386,7 @@ async function sendInternalTemplateEmail(templateId, recipientEmail, templateDat
             <div class="footer">
               <p>More House School<br>
               22-24 Pont Street, Knightsbridge, London, SW1X 0AA<br>
-              Tel: 020 7235 2855 | Email: office@morehousemail.org.uk</p>
+              Tel: 020 7235 2855 | Email: ${process.env.SCHOOL_CONTACT_EMAIL || 'registrar@morehousemail.org.uk'}</p>
             </div>
           </div>
         </body>
@@ -5854,7 +5854,7 @@ app.post('/api/email-templates/:id/test', requireAdminAuth, async (req, res) => 
             <div class="footer">
               <p>More House School<br>
               22-24 Pont Street, Knightsbridge, London, SW1X 0AA<br>
-              Tel: 020 7235 2855 | Email: office@morehousemail.org.uk</p>
+              Tel: 020 7235 2855 | Email: ${process.env.SCHOOL_CONTACT_EMAIL || 'registrar@morehousemail.org.uk'}</p>
             </div>
           </div>
         </body>
