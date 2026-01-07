@@ -1872,19 +1872,58 @@ app.post('/api/bookings', async (req, res) => {
       }
     }
 
-    // Send email based on booking status
+    // Send confirmation email via AI Email Worker
     try {
-      // For pending bookings (private tours and taster days), send "pending approval" email
-      // For confirmed bookings (open days), send "confirmation" email
-      const emailTemplateType = initialStatus === 'pending' ? 'booking_pending' : 'booking_confirmation';
-      const templateId = await getTemplateId(booking_type, emailTemplateType, school_id);
+      // Build booking data for the AI email worker (includes event details)
+      const bookingDataForEmail = {
+        booking_id: booking.id,
+        booking_type: booking_type,
+        parent_email: email,
+        parent_first_name: parent_first_name,
+        parent_last_name: parent_last_name,
+        parent_name: `${parent_first_name} ${parent_last_name}`.trim(),
+        student_first_name: student_first_name,
+        student_last_name: student_last_name,
+        child_name: student_first_name,
+        scheduled_date: preferred_date,
+        scheduled_time: preferred_time,
+        num_attendees: num_attendees || 1,
+        inquiry_id: finalInquiryId,
+        special_requirements: special_requirements,
+        // Event details (for open days)
+        event_id: event_id,
+        event_title: event?.title,
+        event_date: event?.event_date,
+        start_time: event?.start_time,
+        end_time: event?.end_time,
+        location: event?.location,
+        // Pass interests from the request body if available
+        music: req.body.music,
+        drama: req.body.drama,
+        art: req.body.art,
+        sport: req.body.sport,
+        sciences: req.body.sciences,
+        mathematics: req.body.mathematics,
+        english: req.body.english,
+        languages: req.body.languages,
+        humanities: req.body.humanities,
+        source: source || 'website'
+      };
 
-      if (templateId) {
-        // Use the template-based email system
-        await sendTemplateEmail(booking, templateId, emailTemplateType);
-        console.log(`✅ Booking ${emailTemplateType} email sent using template ID ${templateId}`);
+      // Trigger the AI-generated email via the email worker
+      const emailResult = await emailWorker.triggerBookingConfirmation(bookingDataForEmail);
+
+      if (emailResult.success) {
+        console.log(`✅ Booking confirmation email triggered via email worker for ${email}`);
+
+        // Log email
+        await pool.query(
+          `INSERT INTO booking_email_logs (booking_id, email_type, recipient, subject, sent_at)
+           VALUES ($1, $2, $3, $4, NOW())`,
+          [booking.id, 'ai_confirmation', email, `${booking_type} booking confirmation`]
+        );
       } else {
-        console.error(`❌ No email template found for booking_type: ${booking_type}, template_type: ${emailTemplateType}`);
+        console.error(`❌ Email worker failed:`, emailResult.error);
       }
     } catch (emailError) {
       console.error('Email send error:', emailError);
