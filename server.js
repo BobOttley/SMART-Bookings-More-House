@@ -913,13 +913,11 @@ app.post('/api/admin/request-password-reset', async (req, res) => {
       console.log(`Reset link: ${resetLink}`);
     }
 
-    // Send email
+    // Send email via email-worker (centralised email system)
     try {
       const schoolName = process.env.SCHOOL_NAME || 'More House School';
 
-      await transporter.sendMail({
-        from: process.env.EMAIL_FROM || `${schoolName} Booking <noreply@school.org>`,
-        replyTo: process.env.GMAIL_USER,
+      const emailResult = await emailWorker.sendEmail({
         to: email,
         subject: 'Password Reset - SMART Booking',
         text: `Dear User,
@@ -957,7 +955,11 @@ ${schoolName}
         `
       });
 
-      console.log(`✓ Password reset email sent to: ${email}`);
+      if (emailResult.success) {
+        console.log(`✓ Password reset email sent to: ${email} via email-worker`);
+      } else {
+        console.error('Failed to send password reset email:', emailResult.error);
+      }
     } catch (emailError) {
       console.error('Failed to send password reset email:', emailError);
       // Don't reveal email sending failure to user for security
@@ -1672,18 +1674,21 @@ app.post('/api/bookings', async (req, res) => {
       school_id,
       event_id,
       inquiry_id,
+      parent_title,
       parent_first_name,
       parent_last_name,
       email,
       phone,
       student_first_name,
       student_last_name,
+      current_school,
       num_attendees,
       special_requirements,
       preferred_language,
       booking_type,
       preferred_date,
       preferred_time,
+      already_enquired,
       source  // Track source: 'emily_chatbot' or 'website'
     } = req.body;
 
@@ -1796,19 +1801,20 @@ app.post('/api/bookings', async (req, res) => {
     // Create booking
     const bookingResult = await pool.query(
       `INSERT INTO bookings (
-        school_id, event_id, inquiry_id, parent_first_name, parent_last_name,
-        email, phone, student_first_name, student_last_name,
+        school_id, event_id, inquiry_id, parent_title, parent_first_name, parent_last_name,
+        email, phone, student_first_name, student_last_name, current_school,
         num_attendees, special_requirements, preferred_language,
         booking_type, status, cancellation_token, feedback_token,
-        scheduled_date, scheduled_time, source
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
+        scheduled_date, scheduled_time, already_enquired, source
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
       RETURNING *`,
       [
-        school_id, event_id, finalInquiryId, parent_first_name, parent_last_name,
-        email, phone, student_first_name, student_last_name,
+        school_id, event_id, finalInquiryId, parent_title || null, parent_first_name, parent_last_name,
+        email, phone, student_first_name, student_last_name, current_school || null,
         num_attendees, special_requirements, preferred_language,
         booking_type, initialStatus, cancellationToken, feedbackToken,
         preferred_date || null, preferred_time || null,
+        already_enquired || false,
         source || 'website'  // Default to 'website' if not specified
       ]
     );
@@ -2635,15 +2641,18 @@ app.post('/api/bookings/:id/reassign-guide', requireAdminAuth, async (req, res) 
         </div>
       `;
 
-      // Send email using the transporter
-      await transporter.sendMail({
-        from: process.env.EMAIL_USER,
+      // Send email via email-worker (centralised email system)
+      const emailResult = await emailWorker.sendEmail({
         to: guide.email,
         subject: subject,
         html: body
       });
 
-      console.log(`[REASSIGN GUIDE] Email sent to ${guide.name} (${guide.email})`);
+      if (emailResult.success) {
+        console.log(`[REASSIGN GUIDE] Email sent to ${guide.name} (${guide.email}) via email-worker`);
+      } else {
+        console.error(`[REASSIGN GUIDE] Failed to send email: ${emailResult.error}`);
+      }
     };
 
     // Send email to old guide if exists
@@ -5447,11 +5456,23 @@ async function sendInternalTemplateEmail(templateId, recipientEmail, templateDat
       mailOptions.cc = ccEmail;
     }
 
-    await (await getEmailTransporter()).sendMail(mailOptions);
+    // Send via email-worker (centralised email system)
+    const emailResult = await emailWorker.sendEmail({
+      to: recipientEmail,
+      cc: ccEmail,
+      subject: subject,
+      text: body,
+      html: htmlBody
+    });
 
     const ccLog = ccEmail ? ` (CC: ${ccEmail})` : '';
-    console.log(`✓ Sent internal email (template ${templateId}) to ${recipientEmail}${ccLog}`);
-    return true;
+    if (emailResult.success) {
+      console.log(`✓ Sent internal email (template ${templateId}) to ${recipientEmail}${ccLog} via email-worker`);
+      return true;
+    } else {
+      console.error(`Failed to send internal email (template ${templateId}):`, emailResult.error);
+      return false;
+    }
   } catch (error) {
     console.error(`Failed to send internal email (template ${templateId}):`, error);
     return false;
@@ -5725,22 +5746,23 @@ async function sendGuideFinalReminders() {
   console.log('[Guide Final Reminder] Using unified automation system');
 }
 
-// Run email scheduler every hour - uses unified processAutomatedEmails()
-cron.schedule('0 * * * *', async () => {
-  console.log('\n========================================');
-  console.log(`Running automated email scheduler at ${new Date().toLocaleString()}`);
-  console.log('========================================');
-
-  await processAutomatedEmails();
-
-  console.log('========================================\n');
-});
-
-// Run once on startup (for testing/immediate execution)
-setTimeout(async () => {
-  console.log('\n[Startup] Running initial email check...');
-  await processAutomatedEmails();
-}, 5000);
+// DISABLED - All emails now handled by email-worker app
+// The email-worker has its own scheduler that processes scheduled_emails table
+// See: morehouse-email-worker/services/scheduler.js
+//
+// cron.schedule('0 * * * *', async () => {
+//   console.log('\n========================================');
+//   console.log(`Running automated email scheduler at ${new Date().toLocaleString()}`);
+//   console.log('========================================');
+//   await processAutomatedEmails();
+//   console.log('========================================\n');
+// });
+//
+// setTimeout(async () => {
+//   console.log('\n[Startup] Running initial email check...');
+//   await processAutomatedEmails();
+// }, 5000);
+console.log('[Email] Booking app email scheduler DISABLED - all emails handled by email-worker');
 
 // Test email template
 app.post('/api/email-templates/:id/test', requireAdminAuth, async (req, res) => {
@@ -6183,21 +6205,36 @@ app.post('/api/tour-feedback/submit', async (req, res) => {
       console.error('Error sending feedback notification:', err);
     });
 
-    // Send personalized follow-up email to parent (only on first submission)
+    // Send personalized follow-up email to parent via email-worker (only on first submission)
     if (submissionNumber === 1) {
       console.log(`[SMART FEEDBACK] Attempting to send follow-up email for booking #${booking.id}, submission #${submissionNumber}`);
       try {
-        const templateId = bookingDetails.booking_type === 'open_day' ? 5 : 11; // Follow-up template IDs
-        console.log(`[SMART FEEDBACK] Using template ID ${templateId} for ${bookingDetails.booking_type}`);
+        console.log(`[SMART FEEDBACK] Sending via email-worker for ${bookingDetails.booking_type}`);
         console.log(`[SMART FEEDBACK] Recipient: ${bookingDetails.email}`);
 
-        // Send personalized email with SMART Feedback data
-        await sendTemplateEmail(bookingDetails, templateId, 'followup', responses);
+        // Send via email-worker using follow_up trigger (AI-generated)
+        const axios = require('axios');
+        const EMAIL_WORKER_URL = process.env.EMAIL_WORKER_URL || 'http://localhost:3005';
 
-        console.log(`[SMART FEEDBACK] ✓ Personalized follow-up email sent to ${bookingDetails.email} for booking #${bookingDetails.id}`);
+        const emailResult = await axios.post(`${EMAIL_WORKER_URL}/api/trigger`, {
+          trigger_type: 'follow_up',
+          source: 'booking_app_feedback',
+          booking_id: bookingDetails.id,
+          inquiry_id: bookingDetails.inquiry_id,
+          parent_email: bookingDetails.email,
+          parent_name: `${bookingDetails.parent_first_name} ${bookingDetails.parent_last_name}`,
+          child_first_name: bookingDetails.student_first_name,
+          booking_type: bookingDetails.booking_type,
+          smart_feedback: responses // Include tour guide feedback for personalisation
+        }, { timeout: 30000 });
+
+        if (emailResult.data.success) {
+          console.log(`[SMART FEEDBACK] ✓ Follow-up email sent via email-worker to ${bookingDetails.email}`);
+        } else {
+          console.error('[SMART FEEDBACK] ❌ Email-worker returned error:', emailResult.data.error);
+        }
       } catch (emailError) {
-        console.error('[SMART FEEDBACK] ❌ Failed to send follow-up email:', emailError);
-        console.error('[SMART FEEDBACK] Error stack:', emailError.stack);
+        console.error('[SMART FEEDBACK] ❌ Failed to send follow-up email:', emailError.message);
         // Don't fail the whole request if email fails
       }
     } else {
@@ -6294,22 +6331,36 @@ app.post('/api/feedback/taster', async (req, res) => {
       console.error('Error sending feedback notification:', err);
     });
 
-    // Send personalized follow-up email to parent (only on first submission)
+    // Send personalized follow-up email to parent via email-worker (only on first submission)
     if (submissionNumber === 1) {
       console.log(`[SMART FEEDBACK - TASTER] Attempting to send follow-up email for booking #${booking.id}, submission #${submissionNumber}`);
       try {
-        // Template ID 14 for taster day follow-up (you may need to adjust this based on your templates)
-        const templateId = 14;
-        console.log(`[SMART FEEDBACK - TASTER] Using template ID ${templateId} for ${bookingDetails.booking_type}`);
+        console.log(`[SMART FEEDBACK - TASTER] Sending via email-worker for ${bookingDetails.booking_type}`);
         console.log(`[SMART FEEDBACK - TASTER] Recipient: ${bookingDetails.email}`);
 
-        // Send personalized email with SMART Feedback data
-        await sendTemplateEmail(bookingDetails, templateId, 'followup', responses);
+        // Send via email-worker using follow_up trigger (AI-generated)
+        const axios = require('axios');
+        const EMAIL_WORKER_URL = process.env.EMAIL_WORKER_URL || 'http://localhost:3005';
 
-        console.log(`[SMART FEEDBACK - TASTER] ✓ Personalized follow-up email sent to ${bookingDetails.email} for booking #${bookingDetails.id}`);
+        const emailResult = await axios.post(`${EMAIL_WORKER_URL}/api/trigger`, {
+          trigger_type: 'follow_up',
+          source: 'booking_app_feedback',
+          booking_id: bookingDetails.id,
+          inquiry_id: bookingDetails.inquiry_id,
+          parent_email: bookingDetails.email,
+          parent_name: `${bookingDetails.parent_first_name} ${bookingDetails.parent_last_name}`,
+          child_first_name: bookingDetails.student_first_name,
+          booking_type: bookingDetails.booking_type,
+          smart_feedback: responses // Include taster day feedback for personalisation
+        }, { timeout: 30000 });
+
+        if (emailResult.data.success) {
+          console.log(`[SMART FEEDBACK - TASTER] ✓ Follow-up email sent via email-worker to ${bookingDetails.email}`);
+        } else {
+          console.error('[SMART FEEDBACK - TASTER] ❌ Email-worker returned error:', emailResult.data.error);
+        }
       } catch (emailError) {
-        console.error('[SMART FEEDBACK - TASTER] ❌ Failed to send follow-up email:', emailError);
-        console.error('[SMART FEEDBACK - TASTER] Error stack:', emailError.stack);
+        console.error('[SMART FEEDBACK - TASTER] ❌ Failed to send follow-up email:', emailError.message);
         // Don't fail the whole request if email fails
       }
     } else {

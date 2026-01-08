@@ -359,7 +359,7 @@
     </div>
 
     <div class="tabs">
-      <button class="tab-btn active" data-tab="open-days">Open Days</button>
+      <button class="tab-btn active" data-tab="open-days">Open Events</button>
       <button class="tab-btn" data-tab="private-tour">Private Tour</button>
     </div>
 
@@ -369,7 +369,7 @@
         <div id="alert-container"></div>
 
         <div id="events-container">
-          <h3 style="color: var(--school-navy); margin-bottom: 1.5rem;">Select an Open Day</h3>
+          <h3 style="color: var(--school-navy); margin-bottom: 1.5rem;">Select an Open Event</h3>
           <div class="events-grid" id="events-list"></div>
         </div>
 
@@ -377,12 +377,23 @@
           <div class="form-section">
             <h3>Parent/Guardian Information</h3>
             <div class="form-row">
+              <div class="form-group" style="flex: 0 0 120px;">
+                <label class="form-label">Title *</label>
+                <select class="form-select" name="parent_title" required>
+                  <option value="">Select</option>
+                  <option value="Mr">Mr</option>
+                  <option value="Mrs">Mrs</option>
+                  <option value="Ms">Ms</option>
+                  <option value="Miss">Miss</option>
+                  <option value="Dr">Dr</option>
+                </select>
+              </div>
               <div class="form-group">
                 <label class="form-label">First Name *</label>
                 <input type="text" class="form-input" name="parent_first_name" required>
               </div>
               <div class="form-group">
-                <label class="form-label">Last Name *</label>
+                <label class="form-label">Surname *</label>
                 <input type="text" class="form-input" name="parent_last_name" required>
               </div>
             </div>
@@ -396,21 +407,31 @@
                 <input type="tel" class="form-input" name="phone">
               </div>
             </div>
+            <div class="form-group">
+              <label class="form-label" style="display: flex; align-items: center; gap: 8px;">
+                <input type="checkbox" name="already_enquired" style="width: auto;">
+                Have you already enquired with More House School?
+              </label>
+            </div>
           </div>
 
           <div class="form-section">
-            <h3>Student Information</h3>
+            <h3>Pupil Information</h3>
             <div class="form-row">
               <div class="form-group">
-                <label class="form-label">Student First Name</label>
+                <label class="form-label">Pupil First Name</label>
                 <input type="text" class="form-input" name="student_first_name">
               </div>
               <div class="form-group">
-                <label class="form-label">Student Last Name</label>
+                <label class="form-label">Pupil Surname</label>
                 <input type="text" class="form-input" name="student_last_name">
               </div>
             </div>
             <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Current School</label>
+                <input type="text" class="form-input" name="current_school" placeholder="Name of current school">
+              </div>
               <div class="form-group">
                 <label class="form-label">Age Group <span style="color: #EF4444;">*</span></label>
                 <select class="form-select" name="age_group" required>
@@ -463,12 +484,23 @@
           <div class="form-section">
             <h3>Parent/Guardian Information</h3>
             <div class="form-row">
+              <div class="form-group" style="flex: 0 0 120px;">
+                <label class="form-label">Title *</label>
+                <select class="form-select" name="parent_title" required>
+                  <option value="">Select</option>
+                  <option value="Mr">Mr</option>
+                  <option value="Mrs">Mrs</option>
+                  <option value="Ms">Ms</option>
+                  <option value="Miss">Miss</option>
+                  <option value="Dr">Dr</option>
+                </select>
+              </div>
               <div class="form-group">
                 <label class="form-label">First Name *</label>
                 <input type="text" class="form-input" name="parent_first_name" required>
               </div>
               <div class="form-group">
-                <label class="form-label">Last Name *</label>
+                <label class="form-label">Surname *</label>
                 <input type="text" class="form-input" name="parent_last_name" required>
               </div>
             </div>
@@ -482,21 +514,31 @@
                 <input type="tel" class="form-input" name="phone" required>
               </div>
             </div>
+            <div class="form-group">
+              <label class="form-label" style="display: flex; align-items: center; gap: 8px;">
+                <input type="checkbox" name="already_enquired" style="width: auto;">
+                Have you already enquired with More House School?
+              </label>
+            </div>
           </div>
 
           <div class="form-section">
-            <h3>Student Information</h3>
+            <h3>Pupil Information</h3>
             <div class="form-row">
               <div class="form-group">
-                <label class="form-label">Student First Name</label>
+                <label class="form-label">Pupil First Name</label>
                 <input type="text" class="form-input" name="student_first_name">
               </div>
               <div class="form-group">
-                <label class="form-label">Student Last Name</label>
+                <label class="form-label">Pupil Surname</label>
                 <input type="text" class="form-input" name="student_last_name">
               </div>
             </div>
             <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Current School</label>
+                <input type="text" class="form-input" name="current_school" placeholder="Name of current school">
+              </div>
               <div class="form-group">
                 <label class="form-label">Age Group <span style="color: #EF4444;">*</span></label>
                 <select class="form-select" name="age_group" required>
@@ -757,17 +799,20 @@
       const data = {
         school_id: SCHOOL_ID,
         event_id: selectedEvent,
+        parent_title: formData.get('parent_title'),
         parent_first_name: formData.get('parent_first_name'),
         parent_last_name: formData.get('parent_last_name'),
         email: formData.get('email'),
         phone: formData.get('phone'),
         student_first_name: formData.get('student_first_name'),
         student_last_name: formData.get('student_last_name'),
+        current_school: formData.get('current_school') || null,
         num_attendees: parseInt(formData.get('num_attendees')),
         special_requirements: formData.get('special_requirements'),
         booking_type: 'open_day',
         inquiry_id: inquiryId || null,
-        age_group: formData.get('age_group') || null
+        age_group: formData.get('age_group') || null,
+        already_enquired: formData.get('already_enquired') === 'on'
       };
 
       submitBtn.disabled = true;
@@ -823,19 +868,22 @@ ${formData.get('special_requirements') || ''}
 
       const data = {
         school_id: SCHOOL_ID,
+        parent_title: formData.get('parent_title'),
         parent_first_name: formData.get('parent_first_name'),
         parent_last_name: formData.get('parent_last_name'),
         email: formData.get('email'),
         phone: formData.get('phone'),
         student_first_name: formData.get('student_first_name'),
         student_last_name: formData.get('student_last_name'),
+        current_school: formData.get('current_school') || null,
         num_attendees: parseInt(formData.get('num_attendees')),
         special_requirements: specialReqs,
         booking_type: 'private_tour',
         inquiry_id: inquiryId || null,
         preferred_date: preferredDate || null,
         preferred_time: preferredTime || null,
-        age_group: formData.get('age_group') || null
+        age_group: formData.get('age_group') || null,
+        already_enquired: formData.get('already_enquired') === 'on'
       };
 
       submitBtn.disabled = true;
