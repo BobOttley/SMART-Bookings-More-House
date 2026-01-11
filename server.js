@@ -212,6 +212,8 @@ async function sendTourGuideNotification(booking, guide, notificationType = 'ass
     let templateId;
     if (notificationType === 'assignment') {
       templateId = 28; // Tour Guide - Assignment
+    } else if (notificationType === 'removal') {
+      templateId = 44; // Tour Guide - Removal
     } else if (notificationType === 'reminder_first') {
       templateId = 29; // Tour Guide - First Reminder
     } else if (notificationType === 'reminder_final') {
