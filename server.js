@@ -5349,120 +5349,13 @@ async function sendInternalTemplateEmail(templateId, recipientEmail, templateDat
       }
     });
 
-    // Convert plain text body to formatted HTML
-    const htmlBody = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="utf-8">
-          <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-            .container { max-width: 600px; margin: 0 auto; padding: 20px; background: white; }
-            .header { background: #091825; color: white; padding: 30px; text-align: center; border-bottom: 3px solid #FF9F1C; }
-            .header h1 { margin: 0; font-size: 24px; }
-            .content { padding: 20px; }
-            p { margin: 10px 0; }
-            a.button { display: inline-block; background: #FF9F1C; color: white !important; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 15px 0; font-weight: 600; }
-            a.button:hover { background: #e68a0f; }
-            .footer { text-align: center; margin-top: 30px; padding: 20px; border-top: 1px solid #eee; color: #666; font-size: 12px; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <h1>More House School</h1>
-            </div>
-            <div class="content">
-              ${body.split('\n\n').map((para, index, array) => {
-                const trimmed = para.trim();
-                if (!trimmed) return '';
-
-                // Convert URLs to clickable buttons with smart label extraction
-                const urlMatch = trimmed.match(/(https?:\/\/[^\s]+)/);
-                if (urlMatch) {
-                  const url = urlMatch[1];
-                  let buttonText = 'Click Here';
-                  let descriptionText = '';
-
-                  // Check if there's text before the URL in the same paragraph
-                  const textBeforeUrl = trimmed.substring(0, trimmed.indexOf(urlMatch[0])).trim();
-
-                  // If no text before URL in current paragraph, check previous paragraph
-                  if (!textBeforeUrl && index > 0) {
-                    const previousPara = array[index - 1].trim();
-                    if (previousPara) {
-                      const sentences = previousPara.split(/[.!?]\s+/);
-                      descriptionText = sentences[sentences.length - 1].trim();
-                    }
-                  } else if (textBeforeUrl) {
-                    // Extract the last sentence or phrase before the URL as description
-                    const sentences = textBeforeUrl.split(/[.!?]\s+/);
-                    descriptionText = sentences[sentences.length - 1].trim();
-                  }
-
-                  // Common patterns for button text extraction
-                  if (descriptionText.toLowerCase().includes('submit feedback') ||
-                      descriptionText.toLowerCase().includes('share your feedback') ||
-                      descriptionText.toLowerCase().includes('share feedback')) {
-                    buttonText = 'Submit Feedback';
-                  } else if (descriptionText.toLowerCase().includes('complete our feedback') ||
-                             descriptionText.toLowerCase().includes('feedback survey')) {
-                    buttonText = 'Complete Survey';
-                  } else if (descriptionText.toLowerCase().includes('view') && descriptionText.toLowerCase().includes('crm')) {
-                    buttonText = 'View in CRM';
-                  } else if (descriptionText.toLowerCase().includes('application') ||
-                             descriptionText.toLowerCase().includes('apply')) {
-                    buttonText = 'Apply Now';
-                  } else if (descriptionText.toLowerCase().includes('read more') ||
-                             descriptionText.toLowerCase().includes('learn more')) {
-                    buttonText = 'Learn More';
-                  }
-
-                  // Build the output - only show description text if it's in the same paragraph
-                  let output = '';
-                  if (textBeforeUrl) {
-                    output += `<p>${textBeforeUrl}</p>`;
-                  }
-                  output += `<p style="text-align: center; margin-top: 15px;"><a href="${url}" class="button">${buttonText}</a></p>`;
-
-                  return output;
-                }
-
-                return `<p>${trimmed.replace(/\n/g, '<br>')}</p>`;
-              }).join('')}
-            </div>
-            <div class="footer">
-              <p>More House School<br>
-              22-24 Pont Street, Knightsbridge, London, SW1X 0AA<br>
-              Tel: 020 7235 2855 | Email: ${process.env.SCHOOL_CONTACT_EMAIL || 'registrar@morehousemail.org.uk'}</p>
-            </div>
-          </div>
-        </body>
-      </html>
-    `;
-
-    // Send email
-    const mailOptions = {
-      from: `"More House School" <${process.env.GMAIL_USER}>`,
-      to: recipientEmail,
-      subject: subject,
-      text: body,
-      html: htmlBody,
-      attachments: attachments
-    };
-
-    // Add CC if provided
-    if (ccEmail) {
-      mailOptions.cc = ccEmail;
-    }
-
     // Send via email-worker (centralised email system)
+    // Only send plain text - the email worker will wrap in branded template
     const emailResult = await emailWorker.sendEmail({
       to: recipientEmail,
       cc: ccEmail,
       subject: subject,
-      text: body,
-      html: htmlBody
+      text: body
     });
 
     const ccLog = ccEmail ? ` (CC: ${ccEmail})` : '';
