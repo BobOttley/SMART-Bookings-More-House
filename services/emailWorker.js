@@ -208,6 +208,7 @@ async function sendPolicy(policyData) {
  * @param {string} options.text - Plain text body (will be wrapped in branded template)
  * @param {string} options.html - HTML body (optional, will be wrapped in branded template)
  * @param {string} options.cc - CC recipient (optional)
+ * @param {Array} options.attachments - Attachments array (optional)
  */
 async function sendEmail(options) {
   try {
@@ -216,7 +217,8 @@ async function sendEmail(options) {
       cc: options.cc,
       subject: options.subject,
       text: options.text,
-      html: options.html
+      html: options.html,
+      attachments: options.attachments
     }, { timeout: 30000 });
 
     return response.data;

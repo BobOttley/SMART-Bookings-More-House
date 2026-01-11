@@ -2327,8 +2327,8 @@ app.post('/api/bookings/:id/reassign-guide', requireAdminAuth, async (req, res) 
 
     const booking = bookingRes.rows[0];
 
-    // Helper function to send tour guide email
-    const sendGuideEmail = async (guideId, isNew) => {
+    // Helper function to send tour guide notification using simple template format
+    const sendGuideNotification = async (guideId, notificationType) => {
       if (!guideId) return;
 
       const guideRes = await pool.query(
@@ -2341,328 +2341,19 @@ app.post('/api/bookings/:id/reassign-guide', requireAdminAuth, async (req, res) 
       const guide = guideRes.rows[0];
       if (!guide.email) return;
 
-      const templateType = isNew ? 'guide_assigned' : 'guide_removed';
-      const subject = isNew
-        ? `New Tour Assignment: ${booking.parent_first_name} ${booking.parent_last_name}`
-        : `Tour Assignment Removed: ${booking.parent_first_name} ${booking.parent_last_name}`;
-
-      // Fetch AI Summary
-      let aiSummary = null;
-      if (booking.inquiry_id) {
-        const summaryRes = await pool.query(
-          `SELECT summary_text, recommendations, insights
-           FROM ai_summaries
-           WHERE inquiry_id = $1 AND summary_type = 'overall'
-           ORDER BY generated_at DESC
-           LIMIT 1`,
-          [booking.inquiry_id]
-        );
-        if (summaryRes.rows.length > 0) {
-          const summary = summaryRes.rows[0];
-          aiSummary = {
-            overview: summary.summary_text,
-            recommendations: summary.recommendations,
-            strategy: summary.insights?.strategy || null
-          };
-        }
-      }
-
-      // Fetch email history
-      let emailHistory = [];
-      if (booking.inquiry_id) {
-        const emailRes = await pool.query(
-          `SELECT template_type, parent_name, created_at, ai_service, generated_email, original_email_text
-           FROM email_generation_history
-           WHERE inquiry_id = $1
-           ORDER BY created_at DESC
-           LIMIT 10`,
-          [booking.inquiry_id]
-        );
-        emailHistory = emailRes.rows;
-      }
-
-      // Fetch booking notes
-      const notesRes = await pool.query(
-        `SELECT bn.note, bn.created_at, CONCAT(au.first_name, ' ', au.last_name) as created_by_name
-         FROM booking_notes bn
-         LEFT JOIN admin_users au ON bn.created_by = au.id
-         WHERE bn.booking_id = $1
-         ORDER BY bn.created_at DESC
-         LIMIT 10`,
-        [booking.id]
-      );
-      const notes = notesRes.rows;
-
-      // Fetch session history
-      let sessions = [];
-      let moduleViews = [];
-      if (booking.inquiry_id) {
-        const sessionRes = await pool.query(
-          `SELECT start_time, duration_seconds, engagement_score, sections_visited, videos_played
-           FROM session_summaries
-           WHERE inquiry_id = $1
-           ORDER BY start_time DESC
-           LIMIT 5`,
-          [booking.inquiry_id]
-        );
-        sessions = sessionRes.rows;
-
-        const moduleRes = await pool.query(
-          `SELECT module_name, started_at, time_spent_seconds, scroll_depth_percent
-           FROM module_view_sessions
-           WHERE enquiry_id = $1
-           ORDER BY started_at DESC
-           LIMIT 10`,
-          [booking.inquiry_id]
-        );
-        moduleViews = moduleRes.rows;
-      }
-
-      // Build comprehensive email with ALL booking details - show everything with checkmarks
-
-      const body = `
-        <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; background: #f9f9f9;">
-          <div style="background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-            <h2 style="color: #091825; border-bottom: 3px solid #FF9F1C; padding-bottom: 10px;">
-              ${isNew ? 'New Tour Assignment' : 'Tour Assignment Removed'}
-            </h2>
-
-            <div style="background: #F0F9FF; padding: 20px; border-left: 4px solid #034674; margin: 20px 0;">
-              <h3 style="margin-top: 0; color: #034674;">Booking Information</h3>
-              <table style="width: 100%; border-collapse: collapse;">
-                <tr><td style="padding: 8px 0;"><strong>Booking ID:</strong></td><td>#${booking.id}</td></tr>
-                <tr><td style="padding: 8px 0;"><strong>Type:</strong></td><td>${booking.booking_type === 'open_day' ? 'Open Day' : booking.booking_type === 'taster_day' ? 'Taster Day' : 'Private Tour'}</td></tr>
-                <tr><td style="padding: 8px 0;"><strong>Status:</strong></td><td>${booking.status.toUpperCase()}</td></tr>
-                ${booking.event_title ? `<tr><td style="padding: 8px 0;"><strong>Event:</strong></td><td>${booking.event_title}</td></tr>` : ''}
-                ${booking.event_date ? `<tr><td style="padding: 8px 0;"><strong>Date:</strong></td><td>${new Date(booking.event_date).toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</td></tr>` : ''}
-                ${booking.start_time ? `<tr><td style="padding: 8px 0;"><strong>Time:</strong></td><td>${booking.start_time}</td></tr>` : ''}
-                ${booking.scheduled_date ? `<tr><td style="padding: 8px 0;"><strong>Scheduled:</strong></td><td>${new Date(booking.scheduled_date).toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} at ${booking.scheduled_time || 'TBC'}</td></tr>` : ''}
-                <tr><td style="padding: 8px 0;"><strong>Booked At:</strong></td><td>${new Date(booking.booked_at).toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</td></tr>
-              </table>
-            </div>
-
-            <div style="background: #FFF9F0; padding: 20px; border-left: 4px solid #FF9F1C; margin: 20px 0;">
-              <h3 style="margin-top: 0; color: #FF9F1C;">Family Contact Information</h3>
-              <table style="width: 100%; border-collapse: collapse;">
-                <tr><td style="padding: 8px 0;"><strong>Parent Name:</strong></td><td>${booking.parent_first_name} ${booking.parent_last_name}</td></tr>
-                <tr><td style="padding: 8px 0;"><strong>Email:</strong></td><td><a href="mailto:${booking.email}">${booking.email}</a></td></tr>
-                <tr><td style="padding: 8px 0;"><strong>Phone:</strong></td><td><a href="tel:${booking.phone}">${booking.phone}</a></td></tr>
-                <tr><td style="padding: 8px 0;"><strong>Number of Attendees:</strong></td><td>${booking.num_attendees}</td></tr>
-                ${booking.preferred_language ? `<tr><td style="padding: 8px 0;"><strong>Preferred Language:</strong></td><td>${booking.preferred_language}</td></tr>` : ''}
-              </table>
-            </div>
-
-            <div style="background: #F0FFF4; padding: 20px; border-left: 4px solid #10B981; margin: 20px 0;">
-              <h3 style="margin-top: 0; color: #10B981;">Student Information</h3>
-              <table style="width: 100%; border-collapse: collapse;">
-                <tr><td style="padding: 8px 0;"><strong>Student Name:</strong></td><td>${booking.student_first_name} ${booking.student_last_name || ''}</td></tr>
-                ${booking.age_group ? `<tr><td style="padding: 8px 0;"><strong>Age Group:</strong></td><td>${booking.age_group}</td></tr>` : ''}
-                ${booking.entry_year ? `<tr><td style="padding: 8px 0;"><strong>Entry Year:</strong></td><td>${booking.entry_year}</td></tr>` : ''}
-              </table>
-            </div>
-
-            ${(() => {
-              const subjects = [];
-              if (booking.sciences) subjects.push('Sciences');
-              if (booking.mathematics) subjects.push('Mathematics');
-              if (booking.english) subjects.push('English');
-              if (booking.languages) subjects.push('Languages');
-              if (booking.humanities) subjects.push('Humanities');
-              if (booking.business) subjects.push('Business');
-              if (booking.drama) subjects.push('Drama');
-              if (booking.music) subjects.push('Music');
-              if (booking.art) subjects.push('Art');
-              if (booking.creative_writing) subjects.push('Creative Writing');
-              if (booking.sport) subjects.push('Sport');
-
-              return subjects.length > 0 ? `
-            <div style="background: #FFF0F5; padding: 20px; border-left: 4px solid #EC4899; margin: 20px 0;">
-              <h3 style="margin-top: 0; color: #EC4899;">Subject Interests</h3>
-              <ul style="margin: 0; padding-left: 20px;">
-                ${subjects.map(s => `<li style="padding: 4px 0;">${s}</li>`).join('')}
-              </ul>
-            </div>
-              ` : '';
-            })()}
-
-            ${(() => {
-              const priorities = [];
-              if (booking.leadership) priorities.push('Leadership');
-              if (booking.community_service) priorities.push('Community Service');
-              if (booking.outdoor_education) priorities.push('Outdoor Education');
-              if (booking.academic_excellence) priorities.push('Academic Excellence');
-              if (booking.pastoral_care) priorities.push('Pastoral Care');
-              if (booking.university_preparation) priorities.push('University Preparation');
-              if (booking.personal_development) priorities.push('Personal Development');
-              if (booking.career_guidance) priorities.push('Career Guidance');
-              if (booking.extracurricular_opportunities) priorities.push('Extracurricular Opportunities');
-
-              return priorities.length > 0 ? `
-            <div style="background: #F5F0FF; padding: 20px; border-left: 4px solid #8B5CF6; margin: 20px 0;">
-              <h3 style="margin-top: 0; color: #8B5CF6;">Family Priorities & Values</h3>
-              <ul style="margin: 0; padding-left: 20px;">
-                ${priorities.map(p => `<li style="padding: 4px 0;">${p}</li>`).join('')}
-              </ul>
-            </div>
-              ` : '';
-            })()}
-
-            ${booking.special_requirements ? `
-            <div style="background: #FFFBEB; padding: 20px; border-left: 4px solid #F59E0B; margin: 20px 0;">
-              <h3 style="margin-top: 0; color: #F59E0B;">Special Requirements</h3>
-              <p style="margin: 0; white-space: pre-wrap;">${booking.special_requirements}</p>
-            </div>
-            ` : ''}
-
-            ${aiSummary ? `
-            <div style="background: #ECFDF5; padding: 20px; border-left: 4px solid #10B981; margin: 20px 0;">
-              <h3 style="margin-top: 0; color: #10B981;">SMART AI Summary & Recommendations</h3>
-              ${aiSummary.overview ? `
-                <div style="margin-bottom: 15px;">
-                  <p style="margin: 0 0 5px 0; font-size: 13px; font-weight: 600; color: #065F46;">Overview:</p>
-                  <div style="background: white; padding: 12px; border-radius: 4px; font-size: 13px; line-height: 1.6;">${aiSummary.overview}</div>
-                </div>
-              ` : ''}
-              ${aiSummary.recommendations && aiSummary.recommendations.length > 0 ? `
-                <div style="margin-bottom: 15px;">
-                  <p style="margin: 0 0 5px 0; font-size: 13px; font-weight: 600; color: #065F46;">Recommended Actions:</p>
-                  <ul style="margin: 0; padding-left: 20px; background: white; padding: 12px 12px 12px 32px; border-radius: 4px;">
-                    ${aiSummary.recommendations.map(r => `<li style="padding: 4px 0; font-size: 13px; line-height: 1.6;">${r}</li>`).join('')}
-                  </ul>
-                </div>
-              ` : ''}
-              ${aiSummary.strategy ? `
-                <div>
-                  <p style="margin: 0 0 5px 0; font-size: 13px; font-weight: 600; color: #065F46;">Engagement Strategy:</p>
-                  <div style="background: white; padding: 12px; border-radius: 4px; font-size: 13px; line-height: 1.6;">${aiSummary.strategy}</div>
-                </div>
-              ` : ''}
-            </div>
-            ` : ''}
-
-            ${notes.length > 0 ? `
-            <div style="background: #F0F9FF; padding: 20px; border-left: 4px solid #0284C7; margin: 20px 0;">
-              <h3 style="margin-top: 0; color: #0284C7;">Admin Notes</h3>
-              ${notes.map(note => `
-                <div style="background: white; padding: 12px; margin-bottom: 10px; border-radius: 4px; border: 1px solid #E0F2FE;">
-                  <p style="margin: 0; font-size: 14px;">${note.note.replace(/\n/g, '<br>')}</p>
-                  <p style="margin: 8px 0 0 0; font-size: 12px; color: #666;">
-                    <strong>${note.created_by_name || 'Admin'}</strong> • ${new Date(note.created_at).toLocaleString('en-GB')}
-                  </p>
-                </div>
-              `).join('')}
-            </div>
-            ` : ''}
-
-            ${emailHistory.length > 0 ? `
-            <div style="background: #FEF3C7; padding: 20px; border-left: 4px solid #F59E0B; margin: 20px 0;">
-              <h3 style="margin-top: 0; color: #F59E0B;">Email History</h3>
-              ${emailHistory.map((email, idx) => `
-                <div style="background: white; padding: 15px; margin-bottom: 15px; border-radius: 4px; border: 1px solid #FDE68A;">
-                  <div style="border-bottom: 1px solid #FDE68A; padding-bottom: 10px; margin-bottom: 10px;">
-                    <p style="margin: 0; font-size: 14px;">
-                      <strong>${idx + 1}. ${email.template_type || 'Email'}</strong>
-                    </p>
-                    <p style="margin: 5px 0 0 0; font-size: 12px; color: #666;">
-                      ${new Date(email.created_at).toLocaleString('en-GB')}
-                    </p>
-                  </div>
-                  ${email.original_email_text ? `
-                    <div style="margin-bottom: 15px;">
-                      <p style="margin: 0 0 5px 0; font-size: 13px; font-weight: 600; color: #0284C7;">Parent's Email:</p>
-                      <div style="background: #F0F9FF; padding: 10px; border-left: 3px solid #0284C7; font-size: 13px; white-space: pre-wrap; line-height: 1.5;">${email.original_email_text}</div>
-                    </div>
-                  ` : ''}
-                  ${email.generated_email ? `
-                    <div>
-                      <p style="margin: 0 0 5px 0; font-size: 13px; font-weight: 600; color: #10B981;">Our Response:</p>
-                      <div style="background: #F0FFF4; padding: 10px; border-left: 3px solid #10B981; font-size: 13px; white-space: pre-wrap; line-height: 1.5;">${email.generated_email}</div>
-                    </div>
-                  ` : ''}
-                </div>
-              `).join('')}
-            </div>
-            ` : ''}
-
-            ${sessions.length > 0 || moduleViews.length > 0 ? `
-            <div style="background: #F3E8FF; padding: 20px; border-left: 4px solid #9333EA; margin: 20px 0;">
-              <h3 style="margin-top: 0; color: #9333EA;">Prospectus Viewing History</h3>
-              ${sessions.length > 0 ? `
-                <h4 style="margin: 15px 0 10px 0; font-size: 14px; color: #7C3AED;">Session Summaries</h4>
-                ${sessions.map(session => `
-                  <div style="background: white; padding: 12px; margin-bottom: 10px; border-radius: 4px; border: 1px solid #E9D5FF;">
-                    <p style="margin: 0; font-size: 14px;">
-                      <strong>${new Date(session.start_time).toLocaleDateString('en-GB')}</strong> •
-                      ${Math.round(session.duration_seconds / 60)} mins •
-                      Engagement: ${session.engagement_score}/100
-                    </p>
-                    <p style="margin: 8px 0 0 0; font-size: 12px; color: #666;">
-                      Sections: ${session.sections_visited} • Videos: ${session.videos_played}
-                    </p>
-                  </div>
-                `).join('')}
-              ` : ''}
-              ${moduleViews.length > 0 ? `
-                <h4 style="margin: 15px 0 10px 0; font-size: 14px; color: #7C3AED;">Module Views</h4>
-                ${moduleViews.map(view => `
-                  <div style="background: white; padding: 12px; margin-bottom: 10px; border-radius: 4px; border: 1px solid #E9D5FF;">
-                    <p style="margin: 0; font-size: 14px;">
-                      <strong>${view.module_name}</strong>
-                    </p>
-                    <p style="margin: 8px 0 0 0; font-size: 12px; color: #666;">
-                      ${new Date(view.started_at).toLocaleString('en-GB')} •
-                      ${Math.round(view.time_spent_seconds / 60)} mins •
-                      Scroll: ${view.scroll_depth_percent}%
-                    </p>
-                  </div>
-                `).join('')}
-              ` : ''}
-            </div>
-            ` : ''}
-
-            ${isNew && booking.feedback_token ? `
-            <div style="background: #FEF3C7; padding: 20px; border-left: 4px solid #F59E0B; margin: 20px 0; border-radius: 4px;">
-              <h3 style="margin: 0 0 10px 0; color: #92400E;">📝 Submit SMART Feedback After ${booking.booking_type === 'taster_day' ? 'Taster Day' : 'Tour'}</h3>
-              <p style="margin: 0 0 15px 0;">After completing the ${booking.booking_type === 'taster_day' ? 'taster day' : 'tour'}, please share your observations about the student and parent using our SMART feedback system.</p>
-              <div style="text-align: center; margin-top: 15px;">
-                <a href="${process.env.APP_URL || 'https://smart-bookings-more-house.onrender.com'}/${booking.booking_type === 'taster_day' ? 'taster-feedback-form.html' : 'tour-feedback-form.html'}?token=${booking.feedback_token}"
-                   style="display: inline-block; background: #FF9F1C; color: #091825; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">
-                  Submit ${booking.booking_type === 'taster_day' ? 'Taster Day' : 'Tour'} Feedback
-                </a>
-              </div>
-            </div>
-            ` : ''}
-
-            <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #e5e7eb; color: #666; font-size: 14px;">
-              <p style="margin: 0;">This is an automated notification from the More House School booking system.</p>
-              <p style="margin: 10px 0 0 0;">If you have any questions, please contact the admissions team.</p>
-            </div>
-          </div>
-        </div>
-      `;
-
-      // Send email via email-worker (centralised email system)
-      const emailResult = await emailWorker.sendEmail({
-        to: guide.email,
-        subject: subject,
-        html: body
-      });
-
-      if (emailResult.success) {
-        console.log(`[REASSIGN GUIDE] Email sent to ${guide.name} (${guide.email}) via email-worker`);
-      } else {
-        console.error(`[REASSIGN GUIDE] Failed to send email: ${emailResult.error}`);
-      }
+      // Use sendTourGuideNotification for simple template format with calendar invite
+      await sendTourGuideNotification(booking, guide, notificationType);
+      console.log(`[REASSIGN GUIDE] ${notificationType} notification sent to ${guide.name} (${guide.email})`);
     };
 
-    // Send email to old guide if exists
+    // Send removal notification to old guide if exists
     if (oldGuideId) {
-      await sendGuideEmail(oldGuideId, false);
+      await sendGuideNotification(oldGuideId, 'removal');
     }
 
-    // Send email to new guide if exists
+    // Send assignment notification to new guide if exists
     if (newGuideId) {
-      await sendGuideEmail(newGuideId, true);
+      await sendGuideNotification(newGuideId, 'assignment');
     }
 
     res.json({ success: true, message: 'Guide reassignment emails sent' });
@@ -5355,7 +5046,8 @@ async function sendInternalTemplateEmail(templateId, recipientEmail, templateDat
       to: recipientEmail,
       cc: ccEmail,
       subject: subject,
-      text: body
+      text: body,
+      attachments: attachments.length > 0 ? attachments : undefined
     });
 
     const ccLog = ccEmail ? ` (CC: ${ccEmail})` : '';
