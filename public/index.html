@@ -807,8 +807,8 @@
         <div class="form-group">
           <label class="form-label">Event Type</label>
           <select class="form-select" name="event_type" required>
-            <option value="open_day">Open Day</option>
-            <option value="private_tour">Private Tour</option>
+            <option value="open_day">Open Morning</option>
+            <option value="open_evening">Open Evening</option>
           </select>
         </div>
         <div class="form-group">
@@ -856,8 +856,8 @@
         <div class="form-group">
           <label class="form-label">Event Type</label>
           <select class="form-select" id="edit-event-type" required>
-            <option value="open_day">Open Day</option>
-            <option value="private_tour">Private Tour</option>
+            <option value="open_day">Open Morning</option>
+            <option value="open_evening">Open Evening</option>
           </select>
         </div>
         <div class="form-group">
@@ -1235,10 +1235,10 @@
           <label class="form-label">Booking Type *</label>
           <select class="form-select" id="template-booking-type" required>
             <option value="">Select booking type...</option>
-            <option value="open_day">Open Day</option>
+            <option value="open_day">Open Event</option>
             <option value="private_tour">Private Tour</option>
             <option value="taster_day">Taster Day</option>
-            <option value="both">Both (Open Day & Private Tour)</option>
+            <option value="both">Both (Open Event & Private Tour)</option>
           </select>
         </div>
 
@@ -1800,22 +1800,22 @@
         eventsMap[e.id] = e;
       });
 
-      // ============ OPEN DAYS SECTION ============
-      const openDayEvents = Object.values(eventsMap).filter(e => e.event_type === 'open_day').sort((a, b) =>
+      // ============ OPEN EVENTS SECTION ============
+      const openDayEvents = Object.values(eventsMap).filter(e => e.event_type === 'open_day' || e.event_type === 'open_evening').sort((a, b) =>
         new Date(a.event_date) - new Date(b.event_date)
       );
 
       let openDaysHTML = `
         <div class="booking-section" style="margin-bottom: 2rem;">
           <div style="background: linear-gradient(135deg, #FF9F1C 0%, #F4A020 100%); color: white; padding: 1rem 1.5rem; border-radius: 8px 8px 0 0; display: flex; justify-content: space-between; align-items: center;">
-            <h2 style="margin: 0; font-size: 1.25rem; font-weight: 600;">OPEN DAYS</h2>
+            <h2 style="margin: 0; font-size: 1.25rem; font-weight: 600;">OPEN EVENTS</h2>
             <span style="background: rgba(255,255,255,0.2); padding: 0.5rem 1rem; border-radius: 4px; font-weight: 600;">${openDayBookings.length} bookings</span>
           </div>
           <div style="background: white; border: 1px solid #e0e0e0; border-top: none; border-radius: 0 0 8px 8px;">
       `;
 
       if (openDayEvents.length === 0) {
-        openDaysHTML += `<div style="padding: 2rem; text-align: center; color: #666;">No upcoming open days scheduled</div>`;
+        openDaysHTML += `<div style="padding: 2rem; text-align: center; color: #666;">No upcoming open events scheduled</div>`;
       } else {
         openDayEvents.forEach(event => {
           const eventBookings = openDayBookings.filter(b => b.event_id === event.id);
