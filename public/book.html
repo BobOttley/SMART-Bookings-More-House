@@ -407,12 +407,6 @@
                 <input type="tel" class="form-input" name="phone">
               </div>
             </div>
-            <div class="form-group">
-              <label class="form-label" style="display: flex; align-items: center; gap: 8px;">
-                <input type="checkbox" name="already_enquired" style="width: auto;">
-                Have you already enquired with More House School?
-              </label>
-            </div>
           </div>
 
           <div class="form-section">
@@ -513,12 +507,6 @@
                 <label class="form-label">Phone *</label>
                 <input type="tel" class="form-input" name="phone" required>
               </div>
-            </div>
-            <div class="form-group">
-              <label class="form-label" style="display: flex; align-items: center; gap: 8px;">
-                <input type="checkbox" name="already_enquired" style="width: auto;">
-                Have you already enquired with More House School?
-              </label>
             </div>
           </div>
 
@@ -678,6 +666,69 @@
         } catch (error) {
           console.error('Error loading verified parent data:', error);
         }
+      }
+    }
+
+    // Load data from URL parameters (from prospectus direct links)
+    function loadFromUrlParams() {
+      const params = new URLSearchParams(window.location.search);
+      console.log('=== CHECKING URL PARAMETERS ===');
+      console.log('URL params:', Object.fromEntries(params));
+
+      // Check if there are any relevant params
+      if (!params.has('email') && !params.has('firstName')) {
+        console.log('No URL params found');
+        return;
+      }
+
+      // Pre-populate both forms
+      ['openday-form', 'private-tour-form'].forEach(formId => {
+        const form = document.getElementById(formId);
+        if (!form) return;
+
+        // Title dropdown
+        const titleField = form.querySelector('[name="parent_title"]');
+        if (titleField && params.get('title')) {
+          titleField.value = params.get('title');
+        }
+
+        // Parent name fields
+        const parentFirstField = form.querySelector('[name="parent_first_name"]');
+        const parentLastField = form.querySelector('[name="parent_last_name"]');
+        if (parentFirstField && params.get('firstName')) parentFirstField.value = params.get('firstName');
+        if (parentLastField && params.get('surname')) parentLastField.value = params.get('surname');
+
+        // Contact fields
+        const emailField = form.querySelector('[name="email"]');
+        const phoneField = form.querySelector('[name="phone"]');
+        if (emailField && params.get('email')) emailField.value = params.get('email');
+        if (phoneField && params.get('phone')) phoneField.value = params.get('phone');
+
+        // Pupil fields
+        const studentFirstField = form.querySelector('[name="student_first_name"]');
+        const studentLastField = form.querySelector('[name="student_last_name"]');
+        const currentSchoolField = form.querySelector('[name="current_school"]');
+        const ageGroupField = form.querySelector('[name="age_group"]');
+
+        if (studentFirstField && params.get('pupilFirstName')) studentFirstField.value = params.get('pupilFirstName');
+        if (studentLastField && params.get('pupilSurname')) studentLastField.value = params.get('pupilSurname');
+        if (currentSchoolField && params.get('currentSchool')) currentSchoolField.value = params.get('currentSchool');
+        if (ageGroupField && params.get('ageGroup')) ageGroupField.value = params.get('ageGroup');
+
+        console.log(`Pre-populated ${formId} from URL params`);
+      });
+
+      // Store inquiry ID if provided
+      if (params.get('inquiryId')) {
+        inquiryId = params.get('inquiryId');
+        console.log('Set inquiry ID from URL:', inquiryId);
+      }
+
+      // Switch to correct tab based on URL param
+      const tab = params.get('tab');
+      if (tab === 'private_tour') {
+        const privateTourBtn = document.querySelector('[data-tab="private-tour"]');
+        if (privateTourBtn) privateTourBtn.click();
       }
     }
 
@@ -1002,6 +1053,7 @@ ${formData.get('special_requirements') || ''}
     checkInquiryId();
     loadEvents();
     loadVerifiedParentData();
+    loadFromUrlParams();
     checkProspectusUrl();
   </script>
 
