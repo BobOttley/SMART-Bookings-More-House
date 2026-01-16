@@ -1208,9 +1208,12 @@
           <textarea class="form-input" id="edit-outcome-notes" rows="3" placeholder="Additional notes about this family's journey..."></textarea>
         </div>
 
-        <div style="display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 1.5rem;">
-          <button type="button" class="btn btn-secondary" onclick="closeModal('editBookingModal')">Cancel</button>
-          <button type="submit" class="btn btn-primary">Save Changes</button>
+        <div style="display: flex; gap: 0.5rem; justify-content: space-between; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 2px solid var(--border-grey);">
+          <button type="button" class="btn" style="background: #DC2626; color: white;" onclick="deleteBooking()">Delete Booking</button>
+          <div style="display: flex; gap: 0.5rem;">
+            <button type="button" class="btn btn-secondary" onclick="closeModal('editBookingModal')">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+          </div>
         </div>
       </form>
     </div>
@@ -4259,6 +4262,36 @@
       await saveBookingEdits();
     });
 
+    // Delete booking
+    async function deleteBooking() {
+      const bookingId = document.getElementById('edit-booking-id').value;
+      const bookingRef = document.getElementById('edit-booking-reference').textContent;
+
+      if (!confirm(`Are you sure you want to delete booking ${bookingRef}?\n\nThis will remove it from the list but the data can be recovered if needed.`)) {
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_URL}/api/bookings/${bookingId}`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' }
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+          closeModal('editBookingModal');
+          await loadDashboard();
+          alert('Booking deleted successfully.');
+        } else {
+          alert('Failed to delete booking: ' + (data.error || 'Unknown error'));
+        }
+      } catch (error) {
+        console.error('Delete booking error:', error);
+        alert('Failed to delete booking. Please try again.');
+      }
+    }
+
     // Tour Guides
     async function loadGuides() {
       try {
@@ -5483,9 +5516,45 @@
 
           <button type="submit" class="btn btn-primary">Save Booking Settings</button>
         </form>
+
+        <div style="margin-top: 3rem; padding-top: 2rem; border-top: 2px solid #DC2626;">
+          <h3 style="color: #DC2626; margin-bottom: 1rem;">Data Management</h3>
+          <p style="color: #6B7280; margin-bottom: 1rem;">Use this to clear all test booking data. Events will be kept but all bookings will be soft-deleted (can be recovered if needed).</p>
+          <button type="button" class="btn" style="background: #DC2626; color: white;" onclick="clearAllBookings()">Clear All Bookings</button>
+        </div>
       `;
 
       document.getElementById('settingsForm').addEventListener('submit', saveSettings);
+    }
+
+    // Clear all bookings
+    async function clearAllBookings() {
+      if (!confirm('Are you sure you want to delete ALL bookings?\n\nThis will soft-delete all booking data but keep your events.\n\nThis action cannot be easily undone.')) {
+        return;
+      }
+
+      if (!confirm('SECOND CONFIRMATION: Really delete ALL bookings for this school?')) {
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_URL}/api/bookings/all/${SCHOOL_ID}`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' }
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+          alert(`${data.count} bookings deleted successfully.`);
+          await loadDashboard();
+        } else {
+          alert('Failed to delete bookings: ' + (data.error || 'Unknown error'));
+        }
+      } catch (error) {
+        console.error('Clear all bookings error:', error);
+        alert('Failed to delete bookings. Please try again.');
+      }
     }
 
     let currentSettings = null; // Store current settings for reference

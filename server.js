@@ -1603,6 +1603,7 @@ app.get('/api/bookings', requireAdminAuth, async (req, res) => {
       LEFT JOIN tour_guides tg ON b.assigned_guide_id = tg.id
       LEFT JOIN inquiries i ON (b.inquiry_id = i.id OR (b.email = i.parent_email AND i.first_name = b.student_first_name))
       WHERE b.school_id = $1
+        AND (b.is_deleted IS NULL OR b.is_deleted = false)
     `;
     const params = [schoolId];
     let paramCount = 1;
@@ -2046,6 +2047,51 @@ app.put('/api/bookings/:id', requireAdminAuth, async (req, res) => {
   } catch (error) {
     console.error('[UPDATE BOOKING] Error:', error);
     res.status(500).json({ success: false, error: 'Failed to update booking' });
+  }
+});
+
+// Delete booking (soft delete)
+app.delete('/api/bookings/:id', requireAdminAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    console.log(`[DELETE BOOKING] Soft deleting booking #${id}`);
+
+    // Soft delete: set is_deleted flag instead of actually deleting
+    const result = await pool.query(
+      'UPDATE bookings SET is_deleted = true, updated_at = NOW() WHERE id = $1 RETURNING id',
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Booking not found' });
+    }
+
+    console.log(`[DELETE BOOKING] Successfully soft deleted booking #${id}`);
+    res.json({ success: true, message: 'Booking deleted successfully' });
+  } catch (error) {
+    console.error('[DELETE BOOKING] Error:', error);
+    res.status(500).json({ success: false, error: 'Failed to delete booking' });
+  }
+});
+
+// Delete all bookings for a school (soft delete - for cleanup)
+app.delete('/api/bookings/all/:schoolId', requireAdminAuth, async (req, res) => {
+  try {
+    const { schoolId } = req.params;
+    console.log(`[DELETE ALL BOOKINGS] Soft deleting all bookings for school #${schoolId}`);
+
+    // Soft delete all bookings for this school
+    const result = await pool.query(
+      'UPDATE bookings SET is_deleted = true, updated_at = NOW() WHERE school_id = $1 AND (is_deleted IS NULL OR is_deleted = false) RETURNING id',
+      [schoolId]
+    );
+
+    const count = result.rows.length;
+    console.log(`[DELETE ALL BOOKINGS] Soft deleted ${count} bookings for school #${schoolId}`);
+    res.json({ success: true, message: `${count} bookings deleted successfully`, count });
+  } catch (error) {
+    console.error('[DELETE ALL BOOKINGS] Error:', error);
+    res.status(500).json({ success: false, error: 'Failed to delete bookings' });
   }
 });
 
@@ -6437,6 +6483,20 @@ app.get('/api/bookings/:id/briefing-card', requireAdminAuth, async (req, res) =>
 // Start server
 app.listen(PORT, async () => {
   console.log(`Booking server running on http://localhost:${PORT}`);
+
+  // Add is_deleted column to bookings table if not exists
+  try {
+    await pool.query(`
+      ALTER TABLE bookings
+      ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT false
+    `);
+    console.log('[BOOKING APP] Ensured is_deleted column exists on bookings table');
+  } catch (error) {
+    // Column might already exist, that's ok
+    if (!error.message.includes('already exists')) {
+      console.error('[BOOKING APP] Failed to add is_deleted column:', error.message);
+    }
+  }
 
   // Sync admin users from environment variables to database
   try {
