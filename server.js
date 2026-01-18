@@ -1843,7 +1843,8 @@ app.post('/api/bookings', async (req, res) => {
               has_booking = true,
               booking_type = $2,
               booking_event_id = $3,
-              priority = true
+              priority = true,
+              status = 'open-day-booked'
             WHERE id = $1`,
             [finalInquiryId, 'open_day', event_id]
           );
@@ -1856,7 +1857,8 @@ app.post('/api/bookings', async (req, res) => {
               has_booking = true,
               booking_type = $2,
               booking_event_id = NULL,
-              priority = true
+              priority = true,
+              status = 'tour-booked'
             WHERE id = $1`,
             [finalInquiryId, 'private_tour']
           );
@@ -1869,7 +1871,8 @@ app.post('/api/bookings', async (req, res) => {
               has_booking = true,
               booking_type = $2,
               booking_event_id = NULL,
-              priority = true
+              priority = true,
+              status = 'taster-day'
             WHERE id = $1`,
             [finalInquiryId, 'taster_day']
           );
