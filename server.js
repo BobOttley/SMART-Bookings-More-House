@@ -1728,44 +1728,25 @@ app.post('/api/bookings', async (req, res) => {
       }
     }
 
-    // Cross-check parent details against inquiries database
+    // Cross-check parent details against inquiries database (match by EMAIL only - it's unique per family)
     let matchedInquiry = null;
     const parentFullName = `${parent_first_name} ${parent_last_name}`.trim();
 
-    if (email && phone && parentFullName) {
+    if (email) {
       try {
-        let inquiryQuery = `
-          SELECT id, parent_email, parent_name, contact_number, first_name, family_surname
-          FROM inquiries
-          WHERE deleted_at IS NULL
-        `;
-        const inquiryParams = [];
-        let paramCount = 0;
-
-        // Check parent name (partial match)
-        paramCount++;
-        inquiryQuery += ` AND LOWER(parent_name) LIKE LOWER($${paramCount})`;
-        inquiryParams.push(`%${parentFullName}%`);
-
-        // Check email
-        paramCount++;
-        inquiryQuery += ` AND LOWER(parent_email) = LOWER($${paramCount})`;
-        inquiryParams.push(email);
-
-        // Check phone
-        paramCount++;
-        inquiryQuery += ` AND contact_number LIKE $${paramCount}`;
-        inquiryParams.push(`%${phone}%`);
-
-        inquiryQuery += ` ORDER BY created_at DESC LIMIT 1`;
-
-        const inquiryResult = await pool.query(inquiryQuery, inquiryParams);
+        const inquiryResult = await pool.query(
+          `SELECT id, parent_email, parent_name, contact_number, first_name, family_surname
+           FROM inquiries
+           WHERE deleted_at IS NULL AND LOWER(parent_email) = LOWER($1)
+           ORDER BY created_at DESC LIMIT 1`,
+          [email]
+        );
 
         if (inquiryResult.rows.length > 0) {
           matchedInquiry = inquiryResult.rows[0];
           console.log('Matched inquiry found:', matchedInquiry.id, 'for booking by', parentFullName, email);
         } else {
-          console.log('No matching inquiry found for', parentFullName, email, phone);
+          console.log('No matching inquiry found for email:', email);
         }
       } catch (error) {
         console.error('Error checking inquiries:', error);
@@ -3798,12 +3779,12 @@ app.post('/api/form-submit', async (req, res) => {
     // Generate unique inquiry ID
     const inquiryId = `INQ-${Date.now()}${Math.floor(Math.random() * 10000)}`;
 
-    // Insert basic info into inquiries table
+    // Insert basic info into inquiries table (status = 'new' so it shows in CRM dashboard)
     const result = await pool.query(
       `INSERT INTO inquiries (
         inquiry_id, school_id, parent_name, parent_email, contact_number,
-        first_name, family_surname, age_group, entry_year
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        first_name, family_surname, age_group, entry_year, status
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
       RETURNING inquiry_id`,
       [
         inquiryId,
@@ -3814,7 +3795,8 @@ app.post('/api/form-submit', async (req, res) => {
         formData.first_name || null,
         formData.family_surname || null,
         formData.age_group || null,
-        formData.entry_year || null
+        formData.entry_year || null,
+        'new'
       ]
     );
 
