@@ -1833,6 +1833,8 @@ app.post('/api/bookings', async (req, res) => {
     }
 
     // Update inquiry record to mark that they've booked
+    // NOTE: We do NOT change the status - they should stay as 'new' until contacted
+    // The open_day_booked/tour_booked flags track the booking separately
     if (finalInquiryId) {
       try {
         if (booking_type === 'open_day') {
@@ -1843,12 +1845,11 @@ app.post('/api/bookings', async (req, res) => {
               has_booking = true,
               booking_type = $2,
               booking_event_id = $3,
-              priority = true,
-              status = 'open-day-booked'
+              priority = true
             WHERE id = $1`,
             [finalInquiryId, 'open_day', event_id]
           );
-          console.log(`Marked inquiry ${finalInquiryId} as having booked an open day`);
+          console.log(`Marked inquiry ${finalInquiryId} as having booked an open day (status unchanged)`);
         } else if (booking_type === 'private_tour') {
           await pool.query(
             `UPDATE inquiries SET
@@ -1857,12 +1858,11 @@ app.post('/api/bookings', async (req, res) => {
               has_booking = true,
               booking_type = $2,
               booking_event_id = NULL,
-              priority = true,
-              status = 'tour-booked'
+              priority = true
             WHERE id = $1`,
             [finalInquiryId, 'private_tour']
           );
-          console.log(`Marked inquiry ${finalInquiryId} as having booked a private tour`);
+          console.log(`Marked inquiry ${finalInquiryId} as having booked a private tour (status unchanged)`);
         } else if (booking_type === 'taster_day') {
           await pool.query(
             `UPDATE inquiries SET
@@ -1871,12 +1871,11 @@ app.post('/api/bookings', async (req, res) => {
               has_booking = true,
               booking_type = $2,
               booking_event_id = NULL,
-              priority = true,
-              status = 'taster-day'
+              priority = true
             WHERE id = $1`,
             [finalInquiryId, 'taster_day']
           );
-          console.log(`Marked inquiry ${finalInquiryId} as having booked a taster day`);
+          console.log(`Marked inquiry ${finalInquiryId} as having booked a taster day (status unchanged)`);
         }
       } catch (error) {
         console.error('Error updating inquiry booking status:', error);
@@ -2208,6 +2207,7 @@ app.post('/api/bookings/staff-create', requireAdminOrApiKey, async (req, res) =>
 
     // Update inquiry record
     if (inquiryId) {
+      // NOTE: We do NOT change the status - they should stay as 'new' until contacted
       try {
         if (bookingType === 'open_day') {
           await pool.query(
@@ -2217,8 +2217,7 @@ app.post('/api/bookings/staff-create', requireAdminOrApiKey, async (req, res) =>
               has_booking = true,
               booking_type = $2,
               booking_event_id = $3,
-              priority = true,
-              status = 'open-day-booked'
+              priority = true
             WHERE id = $1`,
             [inquiryId, 'open_day', eventId]
           );
@@ -2229,8 +2228,7 @@ app.post('/api/bookings/staff-create', requireAdminOrApiKey, async (req, res) =>
               tour_booked_at = NOW(),
               has_booking = true,
               booking_type = $2,
-              priority = true,
-              status = 'tour-booked'
+              priority = true
             WHERE id = $1`,
             [inquiryId, 'private_tour']
           );
@@ -2241,8 +2239,7 @@ app.post('/api/bookings/staff-create', requireAdminOrApiKey, async (req, res) =>
               tour_booked_at = NOW(),
               has_booking = true,
               booking_type = $2,
-              priority = true,
-              status = 'taster-day'
+              priority = true
             WHERE id = $1`,
             [inquiryId, 'taster_day']
           );
