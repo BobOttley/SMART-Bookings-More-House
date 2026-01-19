@@ -867,7 +867,9 @@
       };
 
       submitBtn.disabled = true;
-      submitBtn.innerHTML = '<span class="loading-spinner"></span>Processing...';
+      submitBtn.style.background = '#6B7280';
+      submitBtn.style.cursor = 'wait';
+      submitBtn.innerHTML = '<span class="loading-spinner"></span>Booking... Please wait';
 
       try {
         const res = await fetch(`${API_URL}/api/bookings`, {
@@ -886,12 +888,16 @@
         } else {
           showAlert('error', result.error || 'Failed to create booking. Please try again.');
           submitBtn.disabled = false;
+          submitBtn.style.background = '';
+          submitBtn.style.cursor = '';
           submitBtn.innerHTML = 'Complete Booking';
         }
       } catch (error) {
         console.error('Booking error:', error);
         showAlert('error', 'Connection error. Please try again later.');
         submitBtn.disabled = false;
+        submitBtn.style.background = '';
+        submitBtn.style.cursor = '';
         submitBtn.innerHTML = 'Complete Booking';
       }
     });
@@ -938,7 +944,9 @@ ${formData.get('special_requirements') || ''}
       };
 
       submitBtn.disabled = true;
-      submitBtn.innerHTML = '<span class="loading-spinner"></span>Submitting...';
+      submitBtn.style.background = '#6B7280';
+      submitBtn.style.cursor = 'wait';
+      submitBtn.innerHTML = '<span class="loading-spinner"></span>Submitting... Please wait';
 
       try {
         const res = await fetch(`${API_URL}/api/bookings`, {
@@ -957,12 +965,16 @@ ${formData.get('special_requirements') || ''}
         } else {
           showTourAlert('error', result.error || 'Failed to submit request. Please try again.');
           submitBtn.disabled = false;
+          submitBtn.style.background = '';
+          submitBtn.style.cursor = '';
           submitBtn.innerHTML = 'Submit Tour Request';
         }
       } catch (error) {
         console.error('Tour request error:', error);
         showTourAlert('error', 'Connection error. Please try again later.');
         submitBtn.disabled = false;
+        submitBtn.style.background = '';
+        submitBtn.style.cursor = '';
         submitBtn.innerHTML = 'Submit Tour Request';
       }
     });
