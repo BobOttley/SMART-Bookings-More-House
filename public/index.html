@@ -2835,10 +2835,11 @@
 
       // Send Reminder button for confirmed bookings with future dates
       const eventDate = b.scheduled_date || b.event_date;
-      if (b.status === 'confirmed' && eventDate && new Date(eventDate) > new Date()) {
-        const email = b.email || b.parent_email || '';
+      const isFuture = eventDate && new Date(eventDate) > new Date();
+      if (b.status === 'confirmed' && isFuture) {
+        const email = (b.email || b.parent_email || '').replace(/'/g, "\\'");
         buttons += `
-          <button class="btn btn-sm" id="reminder-btn-${b.id}" onclick="event.stopPropagation(); sendAdHocReminder(${b.id}, ${b.inquiry_id || 'null'}, '${b.booking_type}', '${email}')" style="background: #FF9F1C; color: #091825; font-weight: 600;">📧 Send Reminder</button>
+          <button class="btn btn-sm" id="reminder-btn-${b.id}" onclick="event.stopPropagation(); sendAdHocReminder(${b.id}, ${b.inquiry_id || null}, '${b.booking_type}', '${email}')" style="background: #FF9F1C; color: #091825; font-weight: 600;">📧 Send Reminder</button>
         `;
       }
 
