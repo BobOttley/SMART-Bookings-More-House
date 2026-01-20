@@ -2128,24 +2128,8 @@ app.post('/api/bookings/staff-create', requireAdminOrApiKey, async (req, res) =>
       return res.status(400).json({ success: false, error: 'Missing required fields' });
     }
 
-    // Check for duplicate booking (same email + same event for open_day bookings)
-    if (eventId && email) {
-      const duplicateCheck = await pool.query(
-        `SELECT id, created_at FROM bookings
-         WHERE event_id = $1 AND LOWER(email) = LOWER($2) AND status != 'cancelled'
-         LIMIT 1`,
-        [eventId, email]
-      );
-
-      if (duplicateCheck.rows.length > 0) {
-        console.log('[STAFF CREATE BOOKING] Duplicate booking detected for', email, 'event', eventId);
-        return res.status(400).json({
-          success: false,
-          error: 'This family already has a booking for this event.',
-          duplicate: true
-        });
-      }
-    }
+    // Staff can create bookings freely - no duplicate check
+    // They know what they're doing and may need to re-book families
 
     // Generate tokens
     const cancellationToken = crypto.randomBytes(32).toString('hex');
