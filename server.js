@@ -5924,8 +5924,8 @@ app.post('/api/send-adhoc-reminder', requireAdminAuth, async (req, res) => {
   try {
     // Get booking details from database
     const bookingResult = await pool.query(`
-      SELECT b.*, i.parent_email as inquiry_email, i.parent_first_name, i.parent_surname, i.parent_title,
-             i.child_first_name, i.family_surname, i.current_school, i.age_group, i.entry_year
+      SELECT b.*, i.parent_email as inquiry_email, i.parent_name as inquiry_parent_name, i.parent_surname, i.parent_title,
+             i.first_name as inquiry_child_name, i.family_surname, i.current_school, i.age_group, i.entry_year
       FROM bookings b
       LEFT JOIN inquiries i ON b.inquiry_id = i.id
       WHERE b.id = $1
@@ -5948,6 +5948,12 @@ app.post('/api/send-adhoc-reminder', requireAdminAuth, async (req, res) => {
                         booking_type === 'private_tour' ? 'private_tour' :
                         booking_type === 'taster_day' ? 'taster_day' : 'event';
 
+    // Extract parent first name - booking has parent_first_name, inquiry has parent_name (full name)
+    let parentFirstName = booking.parent_first_name;
+    if (!parentFirstName && booking.inquiry_parent_name) {
+      parentFirstName = booking.inquiry_parent_name.split(' ')[0];
+    }
+
     // Build the trigger payload
     const triggerPayload = {
       trigger_type: 'event_reminder',
@@ -5958,9 +5964,10 @@ app.post('/api/send-adhoc-reminder', requireAdminAuth, async (req, res) => {
       event_date: eventDate,
       event_time: booking.scheduled_time || booking.start_time,
       event_title: booking.event_title,
-      child_name: booking.student_first_name || booking.child_first_name,
+      child_name: booking.student_first_name || booking.inquiry_child_name,
       parent_title: booking.parent_title,
-      parent_first_name: booking.parent_first_name,
+      parent_first_name: parentFirstName,
+      parent_name: booking.inquiry_parent_name,
       parent_surname: booking.parent_surname,
       family_surname: booking.family_surname,
       current_school: booking.current_school,
