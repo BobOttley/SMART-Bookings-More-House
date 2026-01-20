@@ -5929,6 +5929,83 @@ app.get('/api/bookings/:id/tour-feedback', requireAdminAuth, async (req, res) =>
   }
 });
 
+// Send Ad-Hoc Event Reminder
+app.post('/api/send-adhoc-reminder', requireAdminAuth, async (req, res) => {
+  const { booking_id, inquiry_id, booking_type, parent_email } = req.body;
+
+  if (!booking_id || !booking_type) {
+    return res.status(400).json({ success: false, error: 'Missing booking_id or booking_type' });
+  }
+
+  try {
+    // Get booking details from database
+    const bookingResult = await pool.query(`
+      SELECT b.*, i.parent_email as inquiry_email, i.parent_first_name, i.parent_surname, i.parent_title,
+             i.child_first_name, i.family_surname, i.current_school, i.age_group, i.entry_year
+      FROM bookings b
+      LEFT JOIN inquiries i ON b.inquiry_id = i.id
+      WHERE b.id = $1
+    `, [booking_id]);
+
+    if (bookingResult.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Booking not found' });
+    }
+
+    const booking = bookingResult.rows[0];
+    const eventDate = booking.scheduled_date || booking.event_date;
+
+    // Check if event is in the future
+    if (new Date(eventDate) < new Date()) {
+      return res.status(400).json({ success: false, error: 'Cannot send reminder for past events' });
+    }
+
+    // Map booking_type to reminder_for
+    const reminderFor = booking_type === 'open_day' ? 'open_day' :
+                        booking_type === 'private_tour' ? 'private_tour' :
+                        booking_type === 'taster_day' ? 'taster_day' : 'event';
+
+    // Build the trigger payload
+    const triggerPayload = {
+      trigger_type: 'event_reminder',
+      booking_id: booking_id,
+      inquiry_id: inquiry_id || booking.inquiry_id,
+      parent_email: parent_email || booking.inquiry_email || booking.email,
+      reminder_for: reminderFor,
+      event_date: eventDate,
+      event_time: booking.scheduled_time || booking.start_time,
+      event_title: booking.event_title,
+      child_name: booking.student_first_name || booking.child_first_name,
+      parent_title: booking.parent_title,
+      parent_first_name: booking.parent_first_name,
+      parent_surname: booking.parent_surname,
+      family_surname: booking.family_surname,
+      current_school: booking.current_school,
+      age_group: booking.age_group,
+      entry_year: booking.entry_year,
+      is_adhoc: true,
+      source: 'booking_app_adhoc'
+    };
+
+    // Log the action
+    console.log(`[ADHOC REMINDER] Sending ${reminderFor} reminder for booking ${booking_id}`);
+
+    // Call the email worker trigger endpoint
+    const axios = require('axios');
+    const EMAIL_WORKER_URL = process.env.EMAIL_WORKER_URL || 'http://localhost:3005';
+
+    const emailResult = await axios.post(`${EMAIL_WORKER_URL}/api/trigger`, triggerPayload, { timeout: 60000 });
+
+    if (emailResult.data && emailResult.data.success) {
+      res.json({ success: true, message: 'Reminder sent successfully' });
+    } else {
+      res.status(500).json({ success: false, error: emailResult.data?.error || 'Email worker returned error' });
+    }
+  } catch (error) {
+    console.error('[ADHOC REMINDER] Error:', error.message);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // Submit taster day feedback
 app.post('/api/feedback/taster', async (req, res) => {
   try {

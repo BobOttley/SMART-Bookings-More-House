@@ -2833,6 +2833,15 @@
         `;
       }
 
+      // Send Reminder button for confirmed bookings with future dates
+      const eventDate = b.scheduled_date || b.event_date;
+      if (b.status === 'confirmed' && eventDate && new Date(eventDate) > new Date()) {
+        const email = b.email || b.parent_email || '';
+        buttons += `
+          <button class="btn btn-sm" id="reminder-btn-${b.id}" onclick="event.stopPropagation(); sendAdHocReminder(${b.id}, ${b.inquiry_id || 'null'}, '${b.booking_type}', '${email}')" style="background: #FF9F1C; color: #091825; font-weight: 600;">📧 Send Reminder</button>
+        `;
+      }
+
       return buttons;
     }
 
@@ -3472,6 +3481,62 @@
         }
       } catch (error) {
         console.error('Mark as no-show error:', error);
+      }
+    }
+
+    // Send Ad-Hoc Event Reminder
+    async function sendAdHocReminder(bookingId, inquiryId, bookingType, parentEmail) {
+      const btn = document.getElementById(`reminder-btn-${bookingId}`);
+      const originalText = btn.innerHTML;
+      const bookingTypeLabel = bookingType.replace('_', ' ');
+
+      if (!confirm(`Send a reminder email to ${parentEmail || 'the parent'} for this ${bookingTypeLabel}?`)) {
+        return;
+      }
+
+      try {
+        btn.disabled = true;
+        btn.innerHTML = '⏳ Sending...';
+        btn.style.background = '#94a3b8';
+
+        const response = await fetch(`${API_URL}/api/send-adhoc-reminder`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            booking_id: bookingId,
+            inquiry_id: inquiryId,
+            booking_type: bookingType,
+            parent_email: parentEmail
+          })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          btn.innerHTML = '✅ Sent!';
+          btn.style.background = '#10b981';
+          btn.style.color = 'white';
+          setTimeout(() => {
+            btn.innerHTML = originalText;
+            btn.style.background = '#FF9F1C';
+            btn.style.color = '#091825';
+            btn.disabled = false;
+          }, 3000);
+        } else {
+          throw new Error(result.error || 'Failed to send reminder');
+        }
+      } catch (error) {
+        console.error('Error sending reminder:', error);
+        btn.innerHTML = '❌ Failed';
+        btn.style.background = '#ef4444';
+        btn.style.color = 'white';
+        alert('Failed to send reminder: ' + error.message);
+        setTimeout(() => {
+          btn.innerHTML = originalText;
+          btn.style.background = '#FF9F1C';
+          btn.style.color = '#091825';
+          btn.disabled = false;
+        }, 3000);
       }
     }
 
