@@ -1689,10 +1689,18 @@
         return eventDate >= today;
       });
 
-      // Filter bookings - exclude declined/cancelled and completed private tours/taster days with past dates
+      // Filter bookings - exclude declined/cancelled and past events (moved to archive)
       const activeBookings = bookings.filter(b => {
         // Exclude declined and cancelled
         if (b.status === 'declined' || b.status === 'cancelled') return false;
+
+        // For open_day bookings, check if event date has passed
+        if (b.booking_type === 'open_day' && b.event_date) {
+          const eventDate = new Date(b.event_date);
+          eventDate.setHours(0, 0, 0, 0);
+          // Exclude if event date has passed, UNLESS it's a no-show (keep visible for follow-up)
+          if (eventDate < today && !b.no_show_at) return false;
+        }
 
         // For private tours and taster days, check if scheduled date has passed
         if ((b.booking_type === 'private_tour' || b.booking_type === 'taster_day') && b.scheduled_date) {
@@ -2126,10 +2134,17 @@
         return eventDate < today;
       });
 
-      // Filter bookings - include declined/cancelled and completed past private tours/taster days
+      // Filter bookings - include declined/cancelled, past open_day events, and completed past private tours/taster days
       const archivedBookings = bookings.filter(b => {
         // Include declined and cancelled
         if (b.status === 'declined' || b.status === 'cancelled') return true;
+
+        // For open_day bookings, include if event date has passed (and not a no-show - those stay on dashboard)
+        if (b.booking_type === 'open_day' && b.event_date && !b.no_show_at) {
+          const eventDate = new Date(b.event_date);
+          eventDate.setHours(0, 0, 0, 0);
+          return eventDate < today;
+        }
 
         // For private tours and taster days, check if completed and past
         if ((b.booking_type === 'private_tour' || b.booking_type === 'taster_day') && b.scheduled_date && b.checked_in_at) {
