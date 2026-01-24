@@ -1694,12 +1694,11 @@
         // Exclude declined and cancelled
         if (b.status === 'declined' || b.status === 'cancelled') return false;
 
-        // For open_day bookings, check if event date has passed
+        // For open_day bookings, check if event date has passed - ALL past bookings go to Archive
         if (b.booking_type === 'open_day' && b.event_date) {
           const eventDate = new Date(b.event_date);
           eventDate.setHours(0, 0, 0, 0);
-          // Exclude if event date has passed, UNLESS it's a no-show (keep visible for follow-up)
-          if (eventDate < today && !b.no_show_at) return false;
+          if (eventDate < today) return false;
         }
 
         // For private tours and taster days, check if scheduled date has passed
@@ -2139,8 +2138,8 @@
         // Include declined and cancelled
         if (b.status === 'declined' || b.status === 'cancelled') return true;
 
-        // For open_day bookings, include if event date has passed (and not a no-show - those stay on dashboard)
-        if (b.booking_type === 'open_day' && b.event_date && !b.no_show_at) {
+        // For open_day bookings, include ALL if event date has passed (attended + no-shows)
+        if (b.booking_type === 'open_day' && b.event_date) {
           const eventDate = new Date(b.event_date);
           eventDate.setHours(0, 0, 0, 0);
           return eventDate < today;
