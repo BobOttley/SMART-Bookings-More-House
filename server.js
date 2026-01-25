@@ -373,15 +373,26 @@ async function sendAdmissionsBookingNotification(booking) {
     // Get admin email from environment
     const adminEmail = process.env.ADMIN_EMAIL;
 
-    // Determine booking type title
-    const bookingTypeTitle = booking.booking_type === 'private_tour' ? 'Private Tour Request' :
+    // Determine booking type title and whether action is required
+    const isPrivateTour = booking.booking_type === 'private_tour';
+    const bookingTypeTitle = isPrivateTour ? 'Private Tour Request' :
                             booking.booking_type === 'taster_day' ? 'Taster Day Request' :
                             'Open Day Booking';
 
+    // Private tours require staff confirmation - make this VERY clear
+    const actionRequiredBanner = isPrivateTour ? `
+      <div style="background: #DC2626; color: white; padding: 16px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
+        <strong style="font-size: 16px;">⚠️ ACTION REQUIRED</strong><br>
+        <span>This private tour request needs your confirmation. The parent has NOT been sent any email yet.</span><br>
+        <span style="font-size: 14px; margin-top: 8px; display: block;">Please review and schedule the tour in the CRM to send confirmation to the parent.</span>
+      </div>
+    ` : '';
+
     // Build HTML content for admin notification
     const htmlContent = `
+      ${actionRequiredBanner}
       <h2>New ${bookingTypeTitle}</h2>
-      <p>A new ${booking.booking_type.replace('_', ' ')} booking has been made.</p>
+      <p>A new ${booking.booking_type.replace('_', ' ')} ${isPrivateTour ? 'request' : 'booking'} has been made.</p>
 
       <h3>Booking Details</h3>
       <table style="border-collapse: collapse; width: 100%; max-width: 500px;">
@@ -408,19 +419,20 @@ async function sendAdmissionsBookingNotification(booking) {
       ` : ''}
 
       <p style="margin-top: 24px;">
-        <a href="https://smart-crm-more-house.onrender.com/bookings.html" style="display: inline-block; background: #FF9F1C; color: #091825; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600;">View in CRM</a>
+        <a href="https://smart-bookings-more-house.onrender.com/" style="display: inline-block; background: #FF9F1C; color: #091825; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600;">${isPrivateTour ? 'Review & Schedule Tour' : 'View in CRM'}</a>
       </p>
     `;
 
     // Send via email worker for branded template
+    // IMPORTANT: Do NOT CC the parent for private tours - they only get email when staff confirms
     await emailWorker.sendEmail({
       to: adminEmail,
-      cc: booking.email,
-      subject: `New ${bookingTypeTitle} - ${parentName}`,
+      cc: isPrivateTour ? undefined : booking.email,  // No CC to parent for private tours!
+      subject: isPrivateTour ? `⚠️ ACTION REQUIRED: Private Tour Request - ${parentName}` : `New ${bookingTypeTitle} - ${parentName}`,
       html: htmlContent
     });
 
-    console.log(`✓ Admissions booking notification sent via email worker to ${adminEmail} (CC: ${booking.email}) for ${booking.booking_type} booking`);
+    console.log(`✓ Admissions booking notification sent via email worker to ${adminEmail}${isPrivateTour ? ' (NO CC - awaiting staff confirmation)' : ' (CC: ' + booking.email + ')'} for ${booking.booking_type} booking`);
     return true;
   } catch (error) {
     console.error('Error sending admissions booking notification:', error);
@@ -1883,61 +1895,81 @@ app.post('/api/bookings', async (req, res) => {
       }
     }
 
-    // Send confirmation email via AI Email Worker
+    // Send email based on booking status
+    // For pending bookings (private tours): Use database template "booking_pending" (ID 41)
+    // For confirmed bookings (open days): Use AI email worker
     try {
-      // Build booking data for the AI email worker (includes event details)
-      const bookingDataForEmail = {
-        booking_id: booking.id,
-        booking_type: booking_type,
-        parent_email: email,
-        parent_title: parent_title,
-        parent_first_name: parent_first_name,
-        parent_last_name: parent_last_name,
-        parent_surname: parent_last_name,
-        family_surname: parent_last_name,
-        parent_name: `${parent_first_name} ${parent_last_name}`.trim(),
-        student_first_name: student_first_name,
-        student_last_name: student_last_name,
-        child_name: student_first_name,
-        scheduled_date: preferred_date,
-        scheduled_time: preferred_time,
-        num_attendees: num_attendees || 1,
-        inquiry_id: finalInquiryId,
-        special_requirements: special_requirements,
-        // Event details (for open days)
-        event_id: event_id,
-        event_title: event?.title,
-        event_date: event?.event_date,
-        start_time: event?.start_time,
-        end_time: event?.end_time,
-        location: event?.location,
-        // Pass interests from the request body if available
-        music: req.body.music,
-        drama: req.body.drama,
-        art: req.body.art,
-        sport: req.body.sport,
-        sciences: req.body.sciences,
-        mathematics: req.body.mathematics,
-        english: req.body.english,
-        languages: req.body.languages,
-        humanities: req.body.humanities,
-        source: source || 'website'
-      };
+      if (booking_type === 'private_tour') {
+        // Private tours: Use database templates (as originally designed)
+        // Template ID 41 = "Your Private Tour Request Has Been Received"
+        const emailTemplateType = 'booking_pending';
+        const templateId = await getTemplateId(booking_type, emailTemplateType, school_id);
 
-      // Trigger the AI-generated email via the email worker
-      const emailResult = await emailWorker.triggerBookingConfirmation(bookingDataForEmail);
-
-      if (emailResult.success) {
-        console.log(`✅ Booking confirmation email triggered via email worker for ${email}`);
-
-        // Log email
-        await pool.query(
-          `INSERT INTO booking_email_logs (booking_id, email_type, recipient, subject, sent_at)
-           VALUES ($1, $2, $3, $4, NOW())`,
-          [booking.id, 'ai_confirmation', email, `${booking_type} booking confirmation`]
-        );
+        if (templateId) {
+          // Add event details to booking for template
+          const bookingWithDetails = {
+            ...booking,
+            event_title: event?.title,
+            event_date: event?.event_date || preferred_date,
+            start_time: event?.start_time || preferred_time,
+            scheduled_date: preferred_date,
+            scheduled_time: preferred_time
+          };
+          await sendTemplateEmail(bookingWithDetails, templateId, emailTemplateType);
+          console.log(`✅ Private tour ${emailTemplateType} email sent using template ID ${templateId}`);
+        } else {
+          console.error(`❌ No email template found for booking_type: ${booking_type}, template_type: ${emailTemplateType}`);
+        }
       } else {
-        console.error(`❌ Email worker failed:`, emailResult.error);
+        // Open days and other types: Use AI email worker
+        const bookingDataForEmail = {
+          booking_id: booking.id,
+          booking_type: booking_type,
+          parent_email: email,
+          parent_title: parent_title,
+          parent_first_name: parent_first_name,
+          parent_last_name: parent_last_name,
+          parent_surname: parent_last_name,
+          family_surname: parent_last_name,
+          parent_name: `${parent_first_name} ${parent_last_name}`.trim(),
+          student_first_name: student_first_name,
+          student_last_name: student_last_name,
+          child_name: student_first_name,
+          scheduled_date: preferred_date,
+          scheduled_time: preferred_time,
+          num_attendees: num_attendees || 1,
+          inquiry_id: finalInquiryId,
+          special_requirements: special_requirements,
+          event_id: event_id,
+          event_title: event?.title,
+          event_date: event?.event_date,
+          start_time: event?.start_time,
+          end_time: event?.end_time,
+          location: event?.location,
+          music: req.body.music,
+          drama: req.body.drama,
+          art: req.body.art,
+          sport: req.body.sport,
+          sciences: req.body.sciences,
+          mathematics: req.body.mathematics,
+          english: req.body.english,
+          languages: req.body.languages,
+          humanities: req.body.humanities,
+          source: source || 'website'
+        };
+
+        const emailResult = await emailWorker.triggerBookingConfirmation(bookingDataForEmail);
+
+        if (emailResult.success) {
+          console.log(`✅ Booking confirmation email triggered via email worker for ${email}`);
+          await pool.query(
+            `INSERT INTO booking_email_logs (booking_id, email_type, recipient, subject, sent_at)
+             VALUES ($1, $2, $3, $4, NOW())`,
+            [booking.id, 'ai_confirmation', email, `${booking_type} booking confirmation`]
+          );
+        } else {
+          console.error(`❌ Email worker failed:`, emailResult.error);
+        }
       }
     } catch (emailError) {
       console.error('Email send error:', emailError);
