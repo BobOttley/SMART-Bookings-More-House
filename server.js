@@ -2152,7 +2152,8 @@ app.post('/api/bookings/staff-create', requireAdminOrApiKey, async (req, res) =>
       phone,
       studentFirstName,
       studentLastName,
-      assignedGuideId
+      assignedGuideId,
+      skipEmail
     } = req.body;
 
     // Validate required fields
@@ -2270,70 +2271,74 @@ app.post('/api/bookings/staff-create', requireAdminOrApiKey, async (req, res) =>
       }
     }
 
-    // Send confirmation email via AI Email Worker
-    try {
-      // Get event details if applicable
-      let event = null;
-      if (finalEventId) {
-        const eventResult = await pool.query('SELECT * FROM events WHERE id = $1', [finalEventId]);
-        event = eventResult.rows[0];
+    // Send confirmation email via AI Email Worker (unless skipEmail is set)
+    if (skipEmail) {
+      console.log(`[STAFF CREATE BOOKING] Skipping confirmation email (staff requested no email)`);
+    } else {
+      try {
+        // Get event details if applicable
+        let event = null;
+        if (finalEventId) {
+          const eventResult = await pool.query('SELECT * FROM events WHERE id = $1', [finalEventId]);
+          event = eventResult.rows[0];
+        }
+
+        // Build booking data for the AI email worker
+        const bookingDataForEmail = {
+          booking_id: booking.id,
+          booking_type: bookingType,
+          parent_email: email,
+          parent_title: parentTitle,
+          parent_first_name: parentFirstName,
+          parent_last_name: parentLastName,
+          parent_surname: parentLastName,
+          family_surname: parentLastName,
+          parent_name: `${parentFirstName} ${parentLastName}`,
+          student_first_name: studentFirstName,
+          student_last_name: studentLastName,
+          child_name: studentFirstName,
+          scheduled_date: finalScheduledDate,
+          scheduled_time: finalScheduledTime,
+          num_attendees: numAttendees || 1,
+          inquiry_id: inquiryId,
+          event_id: finalEventId,
+          event_title: event?.title,
+          event_date: event?.event_date,
+          start_time: event?.start_time,
+          end_time: event?.end_time,
+          location: event?.location,
+          // Pass interests from the booking form
+          music: req.body.music,
+          drama: req.body.drama,
+          art: req.body.art,
+          sport: req.body.sport,
+          sciences: req.body.sciences,
+          mathematics: req.body.mathematics,
+          english: req.body.english,
+          languages: req.body.languages,
+          humanities: req.body.humanities,
+          source: 'staff_booking'
+        };
+
+        // Trigger the AI-generated email via the email worker
+        const emailResult = await emailWorker.triggerBookingConfirmation(bookingDataForEmail);
+
+        if (emailResult.success) {
+          console.log(`[STAFF CREATE BOOKING] AI email triggered for ${email}`);
+
+          // Log email
+          await pool.query(
+            `INSERT INTO booking_email_logs (booking_id, email_type, recipient, subject, sent_at)
+             VALUES ($1, $2, $3, $4, NOW())`,
+            [booking.id, 'ai_confirmation', email, `${bookingType} booking confirmation`]
+          );
+        } else {
+          console.error('[STAFF CREATE BOOKING] AI email failed:', emailResult.error);
+        }
+      } catch (emailError) {
+        console.error('[STAFF CREATE BOOKING] Email send error:', emailError);
+        // Don't fail the booking if email fails
       }
-
-      // Build booking data for the AI email worker
-      const bookingDataForEmail = {
-        booking_id: booking.id,
-        booking_type: bookingType,
-        parent_email: email,
-        parent_title: parentTitle,
-        parent_first_name: parentFirstName,
-        parent_last_name: parentLastName,
-        parent_surname: parentLastName,
-        family_surname: parentLastName,
-        parent_name: `${parentFirstName} ${parentLastName}`,
-        student_first_name: studentFirstName,
-        student_last_name: studentLastName,
-        child_name: studentFirstName,
-        scheduled_date: finalScheduledDate,
-        scheduled_time: finalScheduledTime,
-        num_attendees: numAttendees || 1,
-        inquiry_id: inquiryId,
-        event_id: finalEventId,
-        event_title: event?.title,
-        event_date: event?.event_date,
-        start_time: event?.start_time,
-        end_time: event?.end_time,
-        location: event?.location,
-        // Pass interests from the booking form
-        music: req.body.music,
-        drama: req.body.drama,
-        art: req.body.art,
-        sport: req.body.sport,
-        sciences: req.body.sciences,
-        mathematics: req.body.mathematics,
-        english: req.body.english,
-        languages: req.body.languages,
-        humanities: req.body.humanities,
-        source: 'staff_booking'
-      };
-
-      // Trigger the AI-generated email via the email worker
-      const emailResult = await emailWorker.triggerBookingConfirmation(bookingDataForEmail);
-
-      if (emailResult.success) {
-        console.log(`[STAFF CREATE BOOKING] AI email triggered for ${email}`);
-
-        // Log email
-        await pool.query(
-          `INSERT INTO booking_email_logs (booking_id, email_type, recipient, subject, sent_at)
-           VALUES ($1, $2, $3, $4, NOW())`,
-          [booking.id, 'ai_confirmation', email, `${bookingType} booking confirmation`]
-        );
-      } else {
-        console.error('[STAFF CREATE BOOKING] AI email failed:', emailResult.error);
-      }
-    } catch (emailError) {
-      console.error('[STAFF CREATE BOOKING] Email send error:', emailError);
-      // Don't fail the booking if email fails
     }
 
     console.log('[STAFF CREATE BOOKING] Successfully created booking:', booking.id);
