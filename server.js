@@ -612,6 +612,23 @@ const requireAdmin = async (req, res, next) => {
 };
 
 // ============================================================================
+// HEALTH CHECK ENDPOINT
+// ============================================================================
+
+/**
+ * GET /health
+ * Health check endpoint for monitoring
+ */
+app.get('/health', async (req, res) => {
+  try {
+    // Check database connection
+    await pool.query('SELECT 1');
+    res.json({ status: 'healthy', database: 'connected' });
+  } catch (error) {
+    res.status(503).json({ status: 'unhealthy', database: 'disconnected', error: error.message });
+  }
+});
+
 // ADMIN AUTHENTICATION ROUTES
 // ============================================================================
 
@@ -633,7 +650,7 @@ app.post('/api/admin/login', async (req, res) => {
 
     if (result.rows.length === 0) {
       console.log(`[BOOKING APP] Failed login attempt - user not found: ${email}`);
-      return res.json({ success: false, error: 'Invalid email or password' });
+      return res.status(401).json({ success: false, error: 'Invalid email or password' });
     }
 
     const user = result.rows[0];
@@ -641,7 +658,7 @@ app.post('/api/admin/login', async (req, res) => {
     // Check if user is active
     if (!user.is_active) {
       console.log(`[BOOKING APP] Failed login attempt - user inactive: ${email}`);
-      return res.json({ success: false, error: 'Account is inactive' });
+      return res.status(401).json({ success: false, error: 'Account is inactive' });
     }
 
     // Check password
@@ -650,14 +667,14 @@ app.post('/api/admin/login', async (req, res) => {
 
     if (!passwordMatch) {
       console.log(`[BOOKING APP] Failed login attempt - invalid password: ${email}`);
-      return res.json({ success: false, error: 'Invalid email or password' });
+      return res.status(401).json({ success: false, error: 'Invalid email or password' });
     }
 
     // Check permissions - user must have can_access_booking permission
     const permissions = user.permissions || {};
     if (!permissions.can_access_booking) {
       console.log(`[BOOKING APP] Failed login attempt - no booking access permission: ${email}`);
-      return res.json({ success: false, error: 'You do not have permission to access the booking app' });
+      return res.status(403).json({ success: false, error: 'You do not have permission to access the booking app' });
     }
 
     // Login successful
@@ -1797,9 +1814,19 @@ app.post('/api/bookings', async (req, res) => {
 
       event = eventResult.rows[0];
 
-      // Check capacity
-      if (event.current_bookings + num_attendees > event.max_capacity) {
-        return res.status(400).json({ success: false, error: 'Event is fully booked' });
+      // Check capacity using real-time count from bookings table (more reliable than counter)
+      if (event.max_capacity) {
+        const capacityCheck = await pool.query(
+          `SELECT COALESCE(SUM(num_attendees), 0) as total_attendees
+           FROM bookings
+           WHERE event_id = $1 AND status NOT IN ('cancelled', 'no_show') AND (is_deleted IS NULL OR is_deleted = false)`,
+          [event_id]
+        );
+        const currentAttendees = parseInt(capacityCheck.rows[0].total_attendees) || 0;
+        if (currentAttendees + num_attendees > event.max_capacity) {
+          console.log(`[BOOKING] Event ${event_id} at capacity: ${currentAttendees}/${event.max_capacity}, rejecting ${num_attendees} attendees`);
+          return res.status(400).json({ success: false, error: 'Event is fully booked' });
+        }
       }
 
       // Determine initial status based on settings
@@ -2191,13 +2218,23 @@ app.post('/api/bookings/staff-create', requireAdminOrApiKey, async (req, res) =>
 
       const event = eventResult.rows[0];
 
-      // Check capacity
+      // Check capacity using real-time count from bookings table (more reliable than counter)
       const attendeeCount = numAttendees || 1;
-      if (event.current_bookings + attendeeCount > event.max_capacity) {
-        return res.status(400).json({ success: false, error: 'Event is fully booked' });
+      if (event.max_capacity) {
+        const capacityCheck = await pool.query(
+          `SELECT COALESCE(SUM(num_attendees), 0) as total_attendees
+           FROM bookings
+           WHERE event_id = $1 AND status NOT IN ('cancelled', 'no_show') AND (is_deleted IS NULL OR is_deleted = false)`,
+          [eventId]
+        );
+        const currentAttendees = parseInt(capacityCheck.rows[0].total_attendees) || 0;
+        if (currentAttendees + attendeeCount > event.max_capacity) {
+          console.log(`[STAFF BOOKING] Event ${eventId} at capacity: ${currentAttendees}/${event.max_capacity}, rejecting ${attendeeCount} attendees`);
+          return res.status(400).json({ success: false, error: 'Event is fully booked' });
+        }
       }
 
-      // Update event booking count
+      // Update event booking count (for backwards compatibility with counter)
       await pool.query(
         'UPDATE events SET current_bookings = current_bookings + $1 WHERE id = $2',
         [attendeeCount, eventId]
