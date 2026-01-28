@@ -888,6 +888,10 @@
           <label class="form-label">Max Capacity</label>
           <input type="number" class="form-input" id="edit-event-max-capacity" required>
         </div>
+        <div class="form-group" style="display: flex; align-items: center; gap: 0.75rem;">
+          <input type="checkbox" id="edit-event-show-capacity" checked style="width: 18px; height: 18px; cursor: pointer;">
+          <label for="edit-event-show-capacity" class="form-label" style="margin: 0; cursor: pointer;">Show available spots on booking page</label>
+        </div>
         <div class="form-group">
           <label class="form-label">Status</label>
           <select class="form-select" id="edit-event-status" required>
@@ -2551,6 +2555,7 @@
         document.getElementById('edit-event-end-time').value = event.end_time;
         document.getElementById('edit-event-location').value = event.location || '';
         document.getElementById('edit-event-max-capacity').value = event.max_capacity;
+        document.getElementById('edit-event-show-capacity').checked = event.show_capacity !== false;
         document.getElementById('edit-event-status').value = event.status;
 
         // Show the modal
@@ -2573,6 +2578,7 @@
           end_time: document.getElementById('edit-event-end-time').value,
           location: document.getElementById('edit-event-location').value,
           max_capacity: parseInt(document.getElementById('edit-event-max-capacity').value),
+          show_capacity: document.getElementById('edit-event-show-capacity').checked,
           status: document.getElementById('edit-event-status').value
         };
 

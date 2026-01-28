@@ -789,6 +789,12 @@
           badgeText = 'Fully Booked';
         }
 
+        // Only show capacity details if show_capacity is true (or not set for backwards compatibility)
+        const showCapacity = e.show_capacity !== false;
+        const capacityBadge = showCapacity
+          ? `<span class="badge badge-${badge}">${badgeText} (${capacity} spots left)</span>`
+          : (capacity <= 0 ? `<span class="badge badge-full">Fully Booked</span>` : '');
+
         return `
           <div class="event-card" onclick="selectEvent(${e.id}, ${capacity})" data-event-id="${e.id}">
             <div class="event-title">${e.title}</div>
@@ -801,9 +807,7 @@
                 <strong>Time:</strong> ${e.start_time} - ${e.end_time}
               </div>
               ${e.location ? `<div class="event-detail"><strong>Location:</strong> ${e.location}</div>` : ''}
-              <div class="event-detail">
-                <span class="badge badge-${badge}">${badgeText} (${capacity} spots left)</span>
-              </div>
+              ${capacityBadge ? `<div class="event-detail">${capacityBadge}</div>` : ''}
             </div>
           </div>
         `;

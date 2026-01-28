@@ -1441,7 +1441,8 @@ app.put('/api/events/:id', requireAdminAuth, async (req, res) => {
       end_time,
       location,
       max_capacity,
-      status
+      status,
+      show_capacity
     } = req.body;
 
     // Validate required fields
@@ -1463,10 +1464,11 @@ app.put('/api/events/:id', requireAdminAuth, async (req, res) => {
         location = $7,
         max_capacity = $8,
         status = $9,
+        show_capacity = $10,
         updated_at = NOW()
-      WHERE id = $10
+      WHERE id = $11
       RETURNING *`,
-      [event_type, title, description, event_date, start_time, end_time, location, max_capacity, status, id]
+      [event_type, title, description, event_date, start_time, end_time, location, max_capacity, status, show_capacity !== false, id]
     );
 
     if (result.rows.length === 0) {
@@ -6664,6 +6666,19 @@ app.listen(PORT, async () => {
     // Column might already exist, that's ok
     if (!error.message.includes('already exists')) {
       console.error('[BOOKING APP] Failed to add is_deleted column:', error.message);
+    }
+  }
+
+  // Add show_capacity column to events table if not exists (default true for backwards compatibility)
+  try {
+    await pool.query(`
+      ALTER TABLE events
+      ADD COLUMN IF NOT EXISTS show_capacity BOOLEAN DEFAULT true
+    `);
+    console.log('[BOOKING APP] Ensured show_capacity column exists on events table');
+  } catch (error) {
+    if (!error.message.includes('already exists')) {
+      console.error('[BOOKING APP] Failed to add show_capacity column:', error.message);
     }
   }
 
