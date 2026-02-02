@@ -543,13 +543,18 @@
             <h3>Preferred Date & Time</h3>
             <div class="form-row">
               <div class="form-group">
-                <label class="form-label">Preferred Date</label>
-                <input type="date" class="form-input" name="preferred_date">
+                <label class="form-label">Preferred Date *</label>
+                <input type="date" class="form-input" name="preferred_date" id="preferred_date" required>
+                <small id="date-error" style="color: #EF4444; margin-top: 0.25rem; display: none;">Please select a weekday (Monday-Friday only)</small>
+                <small style="color: #6B7280; margin-top: 0.25rem; display: block;">Monday to Friday only</small>
               </div>
               <div class="form-group">
-                <label class="form-label">Preferred Time</label>
-                <input type="time" class="form-input" name="preferred_time" min="09:00" max="17:00">
-                <small style="color: #6B7280; margin-top: 0.25rem; display: block;">School hours: 9am - 5pm</small>
+                <label class="form-label">Preferred Time *</label>
+                <select class="form-select" name="preferred_time" id="preferred_time" required>
+                  <option value="">Select time preference</option>
+                  <option value="Morning">Morning (9am - 12pm)</option>
+                  <option value="Afternoon">Afternoon (1pm - 4pm)</option>
+                </select>
               </div>
             </div>
             <div class="form-group">
@@ -919,9 +924,21 @@
       const preferredDate = formData.get('preferred_date');
       const preferredTime = formData.get('preferred_time');
 
+      // Format the date nicely for display
+      let formattedDate = 'Flexible';
+      if (preferredDate) {
+        const dateObj = new Date(preferredDate);
+        formattedDate = dateObj.toLocaleDateString('en-GB', {
+          weekday: 'long',
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric'
+        });
+      }
+
       const specialReqs = `
 PRIVATE TOUR REQUEST
-Preferred Date: ${preferredDate || 'Flexible'}
+Preferred Date: ${formattedDate}
 Preferred Time: ${preferredTime || 'Flexible'}
 
 ${formData.get('special_requirements') || ''}
@@ -1065,12 +1082,43 @@ ${formData.get('special_requirements') || ''}
       }
     }
 
+    // Validate weekday selection for private tour date
+    function setupDateValidation() {
+      const dateInput = document.getElementById('preferred_date');
+      const dateError = document.getElementById('date-error');
+
+      if (dateInput) {
+        // Set minimum date to today
+        const today = new Date();
+        const todayStr = today.toISOString().split('T')[0];
+        dateInput.setAttribute('min', todayStr);
+
+        // Validate on change
+        dateInput.addEventListener('change', function() {
+          const selectedDate = new Date(this.value);
+          const dayOfWeek = selectedDate.getDay(); // 0 = Sunday, 6 = Saturday
+
+          if (dayOfWeek === 0 || dayOfWeek === 6) {
+            // Weekend selected - show error and clear the field
+            dateError.style.display = 'block';
+            this.value = '';
+            this.setCustomValidity('Please select a weekday (Monday-Friday)');
+          } else {
+            // Weekday - valid
+            dateError.style.display = 'none';
+            this.setCustomValidity('');
+          }
+        });
+      }
+    }
+
     // Initial load
     checkInquiryId();
     loadEvents();
     loadVerifiedParentData();
     loadFromUrlParams();
     checkProspectusUrl();
+    setupDateValidation();
   </script>
 
   <!-- Footer -->
