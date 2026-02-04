@@ -1726,6 +1726,22 @@ app.post('/api/bookings', async (req, res) => {
       source  // Track source: 'emily_chatbot' or 'website'
     } = req.body;
 
+    // Convert text time preferences (Morning, Afternoon) to valid TIME format or NULL
+    // The scheduled_time column expects HH:MM format, not text like "Morning"
+    let scheduledTime = null;
+    if (preferred_time) {
+      const timeStr = preferred_time.toLowerCase().trim();
+      if (timeStr === 'morning' || timeStr === 'early morning') {
+        scheduledTime = '10:00';
+      } else if (timeStr === 'afternoon' || timeStr === 'late afternoon') {
+        scheduledTime = '14:00';
+      } else if (/^\d{1,2}:\d{2}/.test(preferred_time)) {
+        // Already a valid time format like "10:00" or "14:30"
+        scheduledTime = preferred_time;
+      }
+      // Otherwise leave as NULL - admissions will set the actual time
+    }
+
     console.log('[CREATE BOOKING] Parsed data:', {
       school_id,
       event_id,
@@ -1857,7 +1873,7 @@ app.post('/api/bookings', async (req, res) => {
         email, phone, student_first_name, student_last_name, current_school || null,
         num_attendees, special_requirements, preferred_language,
         booking_type, initialStatus, cancellationToken, feedbackToken,
-        preferred_date || null, preferred_time || null,
+        preferred_date || null, scheduledTime,
         already_enquired || false,
         source || 'website'  // Default to 'website' if not specified
       ]
