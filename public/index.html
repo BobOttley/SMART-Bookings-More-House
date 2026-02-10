@@ -2150,9 +2150,11 @@
           return eventDate < today;
         }
 
-        // For private tours and taster days, only archive once checked in (processed)
-        if ((b.booking_type === 'private_tour' || b.booking_type === 'taster_day') && b.checked_in_at) {
-          return true;
+        // For private tours and taster days, archive if scheduled date has passed
+        if ((b.booking_type === 'private_tour' || b.booking_type === 'taster_day') && b.scheduled_date) {
+          const scheduledDate = new Date(b.scheduled_date);
+          scheduledDate.setHours(0, 0, 0, 0);
+          return scheduledDate < today;
         }
 
         return false;
