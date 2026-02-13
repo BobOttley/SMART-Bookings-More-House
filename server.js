@@ -2008,9 +2008,9 @@ app.post('/api/bookings', async (req, res) => {
         if (emailResult.success) {
           console.log(`✅ Booking confirmation email triggered via email worker for ${email}`);
           await pool.query(
-            `INSERT INTO booking_email_logs (booking_id, email_type, recipient, subject, sent_at)
-             VALUES ($1, $2, $3, $4, NOW())`,
-            [booking.id, 'ai_confirmation', email, `${booking_type} booking confirmation`]
+            `INSERT INTO booking_email_logs (booking_id, email_type, sent_to, recipient, subject, sent_at, status)
+             VALUES ($1, $2, $3, $4, $5, NOW(), 'sent')`,
+            [booking.id, 'ai_confirmation', email, email, `${booking_type} booking confirmation`]
           );
         } else {
           console.error(`❌ Email worker failed:`, emailResult.error);
@@ -2383,9 +2383,9 @@ app.post('/api/bookings/staff-create', requireAdminOrApiKey, async (req, res) =>
 
           // Log email
           await pool.query(
-            `INSERT INTO booking_email_logs (booking_id, email_type, recipient, subject, sent_at)
-             VALUES ($1, $2, $3, $4, NOW())`,
-            [booking.id, 'ai_confirmation', email, `${bookingType} booking confirmation`]
+            `INSERT INTO booking_email_logs (booking_id, email_type, sent_to, recipient, subject, sent_at, status)
+             VALUES ($1, $2, $3, $4, $5, NOW(), 'sent')`,
+            [booking.id, 'ai_confirmation', email, email, `${bookingType} booking confirmation`]
           );
         } else {
           console.error('[STAFF CREATE BOOKING] AI email failed:', emailResult.error);
@@ -2665,9 +2665,9 @@ app.put('/api/bookings/:id/status', requireAdminAuth, async (req, res) => {
       });
 
       await pool.query(
-        `INSERT INTO booking_email_logs (booking_id, email_type, recipient, subject, sent_at)
-         VALUES ($1, $2, $3, $4, NOW())`,
-        [booking.id, 'status_update', booking.email, emailSubject]
+        `INSERT INTO booking_email_logs (booking_id, email_type, sent_to, recipient, subject, sent_at, status)
+         VALUES ($1, $2, $3, $4, $5, NOW(), 'sent')`,
+        [booking.id, 'status_update', booking.email, booking.email, emailSubject]
       );
     } catch (emailError) {
       console.error('Email send error:', emailError);
@@ -3149,9 +3149,9 @@ More House School Admissions Team`;
 
       // Log email
       await pool.query(
-        `INSERT INTO booking_email_logs (booking_id, email_type, recipient, subject, sent_at)
-         VALUES ($1, $2, $3, $4, NOW())`,
-        [booking.id, 'tour_scheduled', booking.email, emailSubject]
+        `INSERT INTO booking_email_logs (booking_id, email_type, sent_to, recipient, subject, sent_at, status)
+         VALUES ($1, $2, $3, $4, $5, NOW(), 'sent')`,
+        [booking.id, 'tour_scheduled', booking.email, booking.email, emailSubject]
       );
     } catch (emailError) {
       console.error('Email send error:', emailError);
@@ -3285,9 +3285,9 @@ More House School Admissions Team`;
 
       // Log email
       await pool.query(
-        `INSERT INTO booking_email_logs (booking_id, email_type, recipient, subject, sent_at)
-         VALUES ($1, $2, $3, $4, NOW())`,
-        [booking.id, 'tour_declined', booking.email, emailSubject]
+        `INSERT INTO booking_email_logs (booking_id, email_type, sent_to, recipient, subject, sent_at, status)
+         VALUES ($1, $2, $3, $4, $5, NOW(), 'sent')`,
+        [booking.id, 'tour_declined', booking.email, booking.email, emailSubject]
       );
     } catch (emailError) {
       console.error('Email send error:', emailError);
@@ -3362,9 +3362,9 @@ More House School Admissions Team`;
 
       // Log email
       await pool.query(
-        `INSERT INTO booking_email_logs (booking_id, email_type, recipient, subject, sent_at)
-         VALUES ($1, $2, $3, $4, NOW())`,
-        [booking.id, 'alternative_accepted', booking.email, emailSubject]
+        `INSERT INTO booking_email_logs (booking_id, email_type, sent_to, recipient, subject, sent_at, status)
+         VALUES ($1, $2, $3, $4, $5, NOW(), 'sent')`,
+        [booking.id, 'alternative_accepted', booking.email, booking.email, emailSubject]
       );
     } catch (emailError) {
       console.error('Email send error:', emailError);
@@ -3452,9 +3452,9 @@ Please call them at your earliest convenience.`;
 
       // Log the email
       await pool.query(
-        `INSERT INTO booking_email_logs (booking_id, email_type, recipient, subject, sent_at)
-         VALUES ($1, $2, $3, $4, NOW())`,
-        [booking.id, 'call_requested', process.env.ADMIN_EMAIL, adminSubject]
+        `INSERT INTO booking_email_logs (booking_id, email_type, sent_to, recipient, subject, sent_at, status)
+         VALUES ($1, $2, $3, $4, $5, NOW(), 'sent')`,
+        [booking.id, 'call_requested', process.env.ADMIN_EMAIL, process.env.ADMIN_EMAIL, adminSubject]
       );
     } catch (emailError) {
       console.error('Email send error:', emailError);

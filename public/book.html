@@ -760,11 +760,11 @@
     async function loadEvents() {
       try {
         const today = new Date().toISOString().split('T')[0];
-        const res = await fetch(`${API_URL}/api/events?schoolId=${SCHOOL_ID}&eventType=open_day&status=published&startDate=${today}`);
+        const res = await fetch(`${API_URL}/api/events?schoolId=${SCHOOL_ID}&status=published&startDate=${today}`);
         const data = await res.json();
 
         const events = data.events || [];
-        const futureEvents = events.filter(e => new Date(e.event_date) >= new Date());
+        const futureEvents = events.filter(e => new Date(e.event_date) >= new Date() && (e.event_type === 'open_day' || e.event_type === 'open_evening'));
 
         renderEvents(futureEvents);
       } catch (error) {
