@@ -1005,6 +1005,7 @@ ${formData.get('special_requirements') || ''}
     function showAlert(type, message) {
       const container = document.getElementById('alert-container');
       container.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+      container.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
     function clearAlert() {
