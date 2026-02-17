@@ -2148,6 +2148,15 @@ app.delete('/api/bookings/:id', requireAdminAuth, async (req, res) => {
       return res.status(404).json({ success: false, error: 'Booking not found' });
     }
 
+    // Cancel any pending scheduled emails for this booking
+    const cancelledEmails = await pool.query(
+      "UPDATE scheduled_emails SET status = 'cancelled' WHERE booking_id = $1 AND status = 'pending' RETURNING id",
+      [id]
+    );
+    if (cancelledEmails.rows.length > 0) {
+      console.log(`[DELETE BOOKING] Cancelled ${cancelledEmails.rows.length} pending scheduled email(s) for booking #${id}`);
+    }
+
     console.log(`[DELETE BOOKING] Successfully soft deleted booking #${id}`);
     res.json({ success: true, message: 'Booking deleted successfully' });
   } catch (error) {
@@ -3533,6 +3542,12 @@ app.post('/api/bookings/cancel', async (req, res) => {
     }
 
     const booking = result.rows[0];
+
+    // Cancel any pending scheduled emails for this booking
+    await pool.query(
+      "UPDATE scheduled_emails SET status = 'cancelled' WHERE booking_id = $1 AND status = 'pending'",
+      [booking.id]
+    );
 
     // Update event booking count
     await pool.query(
