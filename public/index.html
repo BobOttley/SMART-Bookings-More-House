@@ -1708,8 +1708,11 @@
         // For private tours and taster days, keep on dashboard until processed (checked in or no-show)
         // Past bookings that haven't been processed yet stay here so staff can still check them in
         if ((b.booking_type === 'private_tour' || b.booking_type === 'taster_day') && b.scheduled_date) {
-          // Already checked in = move to archive
-          if (b.checked_in_at) return false;
+          const scheduledDate = new Date(b.scheduled_date);
+          scheduledDate.setHours(0, 0, 0, 0);
+          // Already checked in AND date has passed = move to archive
+          // If checked in but date is still future, keep on dashboard (likely accidental, staff can undo)
+          if (b.checked_in_at && scheduledDate < today) return false;
           // Otherwise keep on dashboard (even if past date) so staff can process them
           return true;
         }
@@ -2834,6 +2837,12 @@
         `;
       }
 
+      if (b.checked_in_at) {
+        buttons += `
+          <button class="btn btn-sm" onclick="event.stopPropagation(); undoCheckIn(${b.id})" style="background: #6B7280; color: white;">Undo Check-In</button>
+        `;
+      }
+
       if (b.status === 'confirmed' && !b.checked_in_at && !b.no_show_at) {
         buttons += `
           <button class="btn btn-sm btn-warning" onclick="event.stopPropagation(); markAsNoShow(${b.id})">No Show</button>
@@ -3471,19 +3480,47 @@
       }
     }
 
-    async function checkInBooking(id) {
+    async function checkInBooking(id, force = false) {
       try {
         const res = await fetch(`${API_URL}/api/bookings/${id}/checkin`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ force })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          loadDashboard();
+        } else if (data.requiresConfirmation) {
+          // Future booking - ask staff to confirm
+          if (confirm('⚠️ This booking is scheduled for a future date.\n\nAre you sure you want to check in now?')) {
+            checkInBooking(id, true);
+          }
+        } else {
+          alert('Failed to check in: ' + (data.error || 'Unknown error'));
+        }
+      } catch (error) {
+        console.error('Check-in error:', error);
+      }
+    }
+
+    async function undoCheckIn(id) {
+      if (!confirm('Undo check-in for this booking? It will be moved back to the active list.')) {
+        return;
+      }
+      try {
+        const res = await fetch(`${API_URL}/api/bookings/${id}/undo-checkin`, {
           method: 'POST'
         });
 
         if (res.ok) {
           loadDashboard();
         } else {
-          alert('Failed to check in');
+          alert('Failed to undo check-in');
         }
       } catch (error) {
-        console.error('Check-in error:', error);
+        console.error('Undo check-in error:', error);
       }
     }
 
@@ -6128,6 +6165,7 @@
     window.deleteBooking = deleteBooking;
     window.clearAllBookings = clearAllBookings;
     window.checkInBooking = checkInBooking;
+    window.undoCheckIn = undoCheckIn;
     window.markAsNoShow = markAsNoShow;
     window.updateBookingStatus = updateBookingStatus;
     window.showAssignGuideModal = showAssignGuideModal;

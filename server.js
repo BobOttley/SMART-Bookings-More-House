@@ -2693,6 +2693,31 @@ app.put('/api/bookings/:id/status', requireAdminAuth, async (req, res) => {
 app.post('/api/bookings/:id/checkin', requireAdminAuth, async (req, res) => {
   try {
     const { id } = req.params;
+    const { force } = req.body || {};
+
+    // Guard: prevent checking in future bookings unless forced
+    const bookingCheck = await pool.query(
+      'SELECT scheduled_date, event_id FROM bookings WHERE id = $1',
+      [id]
+    );
+    if (bookingCheck.rows.length > 0) {
+      const booking = bookingCheck.rows[0];
+      const bookingDate = booking.scheduled_date;
+      if (bookingDate && !force) {
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        tomorrow.setHours(0, 0, 0, 0);
+        const scheduled = new Date(bookingDate);
+        scheduled.setHours(0, 0, 0, 0);
+        if (scheduled >= tomorrow) {
+          return res.status(400).json({
+            success: false,
+            error: 'This booking is scheduled for a future date. Are you sure you want to check in?',
+            requiresConfirmation: true
+          });
+        }
+      }
+    }
 
     const result = await pool.query(
       `UPDATE bookings SET
@@ -2717,6 +2742,34 @@ app.post('/api/bookings/:id/checkin', requireAdminAuth, async (req, res) => {
   } catch (error) {
     console.error('Check-in error:', error);
     res.status(500).json({ success: false, error: 'Failed to check in' });
+  }
+});
+
+// Undo check-in (reverse accidental check-in)
+app.post('/api/bookings/:id/undo-checkin', requireAdminAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await pool.query(
+      `UPDATE bookings SET
+        checked_in_at = NULL,
+        checked_in_by = NULL,
+        checked_in = false,
+        updated_at = NOW()
+      WHERE id = $1
+      RETURNING *`,
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Booking not found' });
+    }
+
+    console.log(`[UNDO CHECK-IN] Booking #${id} check-in reversed by user ${req.session.userId}`);
+    res.json({ success: true, booking: result.rows[0] });
+  } catch (error) {
+    console.error('Undo check-in error:', error);
+    res.status(500).json({ success: false, error: 'Failed to undo check-in' });
   }
 });
 
