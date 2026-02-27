@@ -5063,7 +5063,17 @@ async function sendTemplateEmail(booking, templateId, emailType, smartFeedback =
       }
     });
 
-    // Step 3: Convert URLs to button-ready format
+    // Step 3: School name safety guard - prevent wrong school names from going out
+    const wrongSchoolNames = ['Brighton College', 'Cheltenham College', 'Westbrook Academy'];
+    for (const wrongName of wrongSchoolNames) {
+      if (body.includes(wrongName) || subject.includes(wrongName)) {
+        console.error(`🚨 BLOCKED: Email template #${templateId} contains "${wrongName}" - replacing with "More House School"`);
+        body = body.replace(new RegExp(wrongName, 'gi'), 'More House School');
+        subject = subject.replace(new RegExp(wrongName, 'gi'), 'More House School');
+      }
+    }
+
+    // Step 4: Convert URLs to button-ready format
     // Replace standalone URLs with a special marker we can detect later
     body = body.replace(/^(https?:\/\/[^\s]+)$/gm, '|||BUTTON_LINK|||$1|||');
 
@@ -5636,6 +5646,16 @@ app.post('/api/email-templates/:id/test', requireAdminAuth, async (req, res) => 
         return elseContent || '';
       }
     });
+
+    // School name safety guard - prevent wrong school names in test emails too
+    const wrongSchoolNames = ['Brighton College', 'Cheltenham College', 'Westbrook Academy'];
+    for (const wrongName of wrongSchoolNames) {
+      if (body.includes(wrongName) || subject.includes(wrongName)) {
+        console.error(`🚨 BLOCKED: Test email template #${id} contains "${wrongName}" - replacing with "More House School"`);
+        body = body.replace(new RegExp(wrongName, 'gi'), 'More House School');
+        subject = subject.replace(new RegExp(wrongName, 'gi'), 'More House School');
+      }
+    }
 
     // Convert plain text body to formatted HTML with orange button styling
     const htmlBody = `
