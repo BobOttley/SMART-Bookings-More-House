@@ -5214,7 +5214,8 @@ async function sendTemplateEmail(booking, templateId, emailType, smartFeedback =
       to: booking.email,
       subject: subject,
       text: body,
-      html: htmlBody
+      html: htmlBody,
+      _triggerType: 'booking_' + emailType
     });
 
     // Mark as sent in scheduled_emails
@@ -6105,9 +6106,11 @@ app.post('/api/send-adhoc-reminder', requireAdminAuth, async (req, res) => {
     // Get booking details from database
     const bookingResult = await pool.query(`
       SELECT b.*, i.parent_email as inquiry_email, i.parent_name as inquiry_parent_name, i.parent_surname, i.parent_title,
-             i.first_name as inquiry_child_name, i.family_surname, i.current_school, i.age_group, i.entry_year
+             i.first_name as inquiry_child_name, i.family_surname, i.current_school, i.age_group, i.entry_year,
+             e.event_date, e.start_time, e.end_time, e.title as event_title, e.location as event_location
       FROM bookings b
       LEFT JOIN inquiries i ON b.inquiry_id = i.id
+      LEFT JOIN events e ON b.event_id = e.id
       WHERE b.id = $1
     `, [booking_id]);
 
