@@ -551,14 +551,28 @@ async function syncAdminUsersToDatabase() {
 // ============================================================================
 
 // Simple admin auth check
-const requireAdminAuth = (req, res, next) => {
-  if (req.session && req.session.adminEmail) {
-    return next();
+const requireAdminAuth = async (req, res, next) => {
+  if (!req.session || !req.session.adminEmail) {
+    return res.status(401).json({ success: false, error: 'Authentication required' });
   }
-  return res.status(401).json({
-    success: false,
-    error: 'Authentication required'
-  });
+
+  // Re-check is_active from DB, cached for 60 seconds
+  const now = Date.now();
+  if (!req.session.activeCheckedAt || now - req.session.activeCheckedAt > 60000) {
+    try {
+      const result = await pool.query('SELECT is_active FROM admin_users WHERE email = $1', [req.session.adminEmail]);
+      if (!result.rows.length || !result.rows[0].is_active) {
+        req.session.destroy(() => {});
+        return res.status(401).json({ success: false, error: 'Your account has been deactivated. Please contact an administrator.' });
+      }
+      req.session.activeCheckedAt = now;
+    } catch (error) {
+      console.error('Auth active check error:', error);
+      // On DB error, allow through rather than locking everyone out
+    }
+  }
+
+  return next();
 };
 
 // Admin auth check that also accepts API key (for cross-app communication)
@@ -853,6 +867,20 @@ app.put('/api/admin/users/:id', requireAdminAuth, async (req, res) => {
 
     if (result.rows.length === 0) {
       return res.status(404).json({ success: false, error: 'User not found' });
+    }
+
+    // If deactivating, clear all their active sessions for immediate lockout
+    if (is_active === false) {
+      try {
+        const userEmail = result.rows[0].email;
+        await pool.query(
+          `DELETE FROM session WHERE sess::text LIKE $1`,
+          [`%"adminEmail":"${userEmail}"%`]
+        );
+        console.log(`[USER MGMT] Cleared sessions for deactivated user: ${userEmail}`);
+      } catch (sessionError) {
+        console.error('Failed to clear sessions on deactivation:', sessionError);
+      }
     }
 
     console.log(`[USER MGMT] Updated user ID: ${id}`);
