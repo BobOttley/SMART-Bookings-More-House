@@ -2678,7 +2678,7 @@
 
               <div style="display: flex; gap: 0.5rem; align-items: center;">
                 <span class="badge badge-${b.status}">${b.status}</span>
-                ${b.checked_in_at ? `<span class="badge badge-primary">${b.booking_type === 'private_tour' || b.booking_type === 'taster_day' ? 'Attended' : 'Checked In'}</span>` : b.no_show_at ? '<span class="badge badge-no-show">No Show</span>' : ''}
+                ${b.checked_in_at ? `<span class="badge badge-primary">Attended</span>` : b.no_show_at ? '<span class="badge badge-no-show">No Show</span>' : ''}
               </div>
             </div>
 
@@ -2824,7 +2824,7 @@
           <div id="booking-${b.id}-feedback-container" style="min-height: 50px;">
             <div style="text-align: center; padding: 1rem; color: #999;">Loading SMART feedback...</div>
           </div>
-          ${b.checked_in_at && (b.booking_type === 'private_tour' || b.booking_type === 'taster_day') ? `
+          ${b.checked_in_at && (b.booking_type === 'open_day' || b.booking_type === 'private_tour' || b.booking_type === 'taster_day') ? `
           <div id="booking-${b.id}-feedback-form" style="display: none; margin-top: 1rem; padding: 1rem; background: #f0f0ff; border-radius: 6px; border: 1px solid #c4b5fd;">
             <textarea id="booking-${b.id}-feedback-text" rows="3" placeholder="Enter visit feedback..." style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; resize: vertical; font-family: inherit; font-size: 14px; box-sizing: border-box;"></textarea>
             <div style="display: flex; gap: 8px; margin-top: 8px;">
@@ -2901,8 +2901,8 @@
         `;
       }
 
-      // Feedback button for attended private tours and taster days
-      if (b.checked_in_at && (b.booking_type === 'private_tour' || b.booking_type === 'taster_day')) {
+      // Feedback button for attended bookings (open days, private tours, taster days)
+      if (b.checked_in_at && (b.booking_type === 'open_day' || b.booking_type === 'private_tour' || b.booking_type === 'taster_day')) {
         buttons += `
           <button class="btn btn-sm" id="feedback-btn-${b.id}" onclick="event.stopPropagation(); toggleFeedbackForm(${b.id})" style="background: #8b5cf6; color: white;">Add Feedback</button>
         `;
@@ -3015,7 +3015,7 @@
                       ${b.special_requirements && b.special_requirements.trim() ? '<br><span class="requirements">Special Req.</span>' : ''}
                     </td>
                     <td class="status ${b.checked_in_at ? 'status-checked-in' : b.status === 'confirmed' ? 'status-confirmed' : 'status-pending'}">
-                      ${b.checked_in_at ? (b.booking_type === 'private_tour' || b.booking_type === 'taster_day' ? 'ATTENDED' : 'CHECKED IN') : b.status.toUpperCase()}
+                      ${b.checked_in_at ? 'ATTENDED' : b.status.toUpperCase()}
                     </td>
                   </tr>
                 `).join('')}
