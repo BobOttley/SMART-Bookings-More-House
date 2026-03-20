@@ -218,7 +218,11 @@ async function sendEmail(options) {
       subject: options.subject,
       text: options.text,
       html: options.html,
-      attachments: options.attachments
+      attachments: options.attachments,
+      _triggerType: options._triggerType,
+      _recipientType: options._recipientType,
+      _inquiryId: options._inquiryId,
+      _source: options._source || 'booking_app'
     }, { timeout: 30000 });
 
     return response.data;

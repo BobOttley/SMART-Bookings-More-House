@@ -2633,7 +2633,10 @@ app.put('/api/bookings/:id/no-show', requireAdminAuth, async (req, res) => {
         await emailWorker.sendEmail({
           to: booking.email,
           subject: subject,
-          text: body
+          text: body,
+          _triggerType: 'booking_no_show',
+          _recipientType: 'parent',
+          _inquiryId: booking.inquiry_id
         });
 
         console.log(`[NO-SHOW] No-show follow-up email sent to ${booking.email} for booking #${id}`);
@@ -2698,7 +2701,10 @@ app.put('/api/bookings/:id/status', requireAdminAuth, async (req, res) => {
       await emailWorker.sendEmail({
         to: booking.email,
         subject: emailSubject,
-        html: emailHtml
+        html: emailHtml,
+        _triggerType: 'booking_status_update',
+        _recipientType: 'parent',
+        _inquiryId: booking.inquiry_id
       });
 
       await pool.query(
@@ -3234,7 +3240,10 @@ More House School Admissions Team`;
         to: booking.email,
         subject: emailSubject,
         text: emailText,
-        html: emailHtml
+        html: emailHtml,
+        _triggerType: 'booking_tour_scheduled',
+        _recipientType: 'parent',
+        _inquiryId: booking.inquiry_id
       });
 
       // Log email
@@ -3370,7 +3379,10 @@ More House School Admissions Team`;
         to: booking.email,
         subject: emailSubject,
         text: emailText,
-        html: emailHtml
+        html: emailHtml,
+        _triggerType: 'booking_tour_declined',
+        _recipientType: 'parent',
+        _inquiryId: booking.inquiry_id
       });
 
       // Log email
@@ -3447,7 +3459,10 @@ More House School Admissions Team`;
         to: booking.email,
         subject: emailSubject,
         text: emailText,
-        html: emailHtml
+        html: emailHtml,
+        _triggerType: 'booking_alternative_accepted',
+        _recipientType: 'parent',
+        _inquiryId: booking.inquiry_id
       });
 
       // Log email
@@ -3567,7 +3582,10 @@ More House School Admissions Team`;
       await emailWorker.sendEmail({
         to: booking.email,
         subject: parentSubject,
-        text: parentText
+        text: parentText,
+        _triggerType: 'booking_call_request',
+        _recipientType: 'parent',
+        _inquiryId: booking.inquiry_id
       });
     } catch (emailError) {
       console.error('Confirmation email error:', emailError);
@@ -5243,7 +5261,9 @@ async function sendTemplateEmail(booking, templateId, emailType, smartFeedback =
       subject: subject,
       text: body,
       html: htmlBody,
-      _triggerType: 'booking_' + emailType
+      _triggerType: 'booking_' + emailType,
+      _recipientType: 'parent',
+      _inquiryId: booking.inquiry_id
     });
 
     // Mark as sent in scheduled_emails
