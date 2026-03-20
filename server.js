@@ -6230,6 +6230,39 @@ app.get('/api/bookings/:id/tour-feedback', requireAdminAuth, async (req, res) =>
   }
 });
 
+// Submit staff feedback for a booking (admin-initiated)
+app.post('/api/bookings/:id/staff-feedback', requireAdminAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { feedback_text, submitted_by } = req.body;
+
+    if (!feedback_text || !feedback_text.trim()) {
+      return res.status(400).json({ success: false, error: 'Feedback text is required' });
+    }
+
+    // Count existing submissions
+    const countResult = await pool.query(
+      'SELECT COUNT(*) as count FROM tour_guide_feedback WHERE booking_id = $1',
+      [id]
+    );
+    const submissionNumber = parseInt(countResult.rows[0].count) + 1;
+
+    // Insert as staff feedback (guide_id null, responses stores the text)
+    const result = await pool.query(
+      `INSERT INTO tour_guide_feedback (booking_id, guide_id, submission_number, responses)
+       VALUES ($1, NULL, $2, $3)
+       RETURNING *`,
+      [id, submissionNumber, JSON.stringify({ staff_feedback: feedback_text.trim(), submitted_by: submitted_by || 'Staff' })]
+    );
+
+    console.log(`[FEEDBACK] Staff feedback added for booking #${id}`);
+    res.json({ success: true, feedback: result.rows[0] });
+  } catch (error) {
+    console.error('Staff feedback error:', error);
+    res.status(500).json({ success: false, error: 'Failed to save feedback' });
+  }
+});
+
 // Send Ad-Hoc Event Reminder
 app.post('/api/send-adhoc-reminder', requireAdminAuth, async (req, res) => {
   const { booking_id, inquiry_id, booking_type, parent_email } = req.body;

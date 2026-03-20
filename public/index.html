@@ -2824,6 +2824,15 @@
           <div id="booking-${b.id}-feedback-container" style="min-height: 50px;">
             <div style="text-align: center; padding: 1rem; color: #999;">Loading SMART feedback...</div>
           </div>
+          ${b.checked_in_at && (b.booking_type === 'private_tour' || b.booking_type === 'taster_day') ? `
+          <div id="booking-${b.id}-feedback-form" style="display: none; margin-top: 1rem; padding: 1rem; background: #f0f0ff; border-radius: 6px; border: 1px solid #c4b5fd;">
+            <textarea id="booking-${b.id}-feedback-text" rows="3" placeholder="Enter visit feedback..." style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; resize: vertical; font-family: inherit; font-size: 14px; box-sizing: border-box;"></textarea>
+            <div style="display: flex; gap: 8px; margin-top: 8px;">
+              <button onclick="submitStaffFeedback(${b.id})" class="btn btn-sm" style="background: #8b5cf6; color: white;">Save Feedback</button>
+              <button onclick="toggleFeedbackForm(${b.id})" class="btn btn-sm" style="background: #6b7280; color: white;">Cancel</button>
+            </div>
+          </div>
+          ` : ''}
         </div>
       `;
     }
@@ -2889,6 +2898,13 @@
         const inquiryId = b.inquiry_id ? `'${b.inquiry_id}'` : 'null';
         buttons += `
           <button class="btn btn-sm" id="reminder-btn-${b.id}" onclick="event.stopPropagation(); sendAdHocReminder(${b.id}, ${inquiryId}, '${b.booking_type}', '${email}')" style="background: #FF9F1C; color: #091825; font-weight: 600;">📧 Send Reminder</button>
+        `;
+      }
+
+      // Feedback button for attended private tours and taster days
+      if (b.checked_in_at && (b.booking_type === 'private_tour' || b.booking_type === 'taster_day')) {
+        buttons += `
+          <button class="btn btn-sm" id="feedback-btn-${b.id}" onclick="event.stopPropagation(); toggleFeedbackForm(${b.id})" style="background: #8b5cf6; color: white;">Add Feedback</button>
         `;
       }
 
@@ -3455,6 +3471,42 @@
       } catch (error) {
         console.error('Load tour feedback error:', error);
         container.innerHTML = '<div style="text-align: center; padding: 1rem; color: #dc3545;">Failed to load SMART feedback</div>';
+      }
+    }
+
+    function toggleFeedbackForm(bookingId) {
+      const form = document.getElementById(`booking-${bookingId}-feedback-form`);
+      if (form) {
+        form.style.display = form.style.display === 'none' ? 'block' : 'none';
+        if (form.style.display === 'block') {
+          document.getElementById(`booking-${bookingId}-feedback-text`).focus();
+        }
+      }
+    }
+
+    async function submitStaffFeedback(bookingId) {
+      const textarea = document.getElementById(`booking-${bookingId}-feedback-text`);
+      const text = textarea.value.trim();
+      if (!text) return;
+
+      try {
+        const res = await fetch(`${API_URL}/api/bookings/${bookingId}/staff-feedback`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ feedback_text: text })
+        });
+
+        const result = await res.json();
+        if (result.success) {
+          textarea.value = '';
+          toggleFeedbackForm(bookingId);
+          loadTourFeedback(bookingId);
+        } else {
+          alert('Failed to save feedback: ' + (result.error || 'Unknown error'));
+        }
+      } catch (error) {
+        console.error('Submit feedback error:', error);
+        alert('Failed to save feedback. Please try again.');
       }
     }
 
@@ -6226,6 +6278,8 @@
     window.showScheduleModal = showScheduleModal;
     window.showDeclineModal = showDeclineModal;
     window.showCancelBookingModal = showCancelBookingModal;
+    window.toggleFeedbackForm = toggleFeedbackForm;
+    window.submitStaffFeedback = submitStaffFeedback;
     window.showEditBookingModal = showEditBookingModal;
     window.deleteBooking = deleteBooking;
     window.clearAllBookings = clearAllBookings;
