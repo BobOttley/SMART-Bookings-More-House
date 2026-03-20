@@ -2677,49 +2677,140 @@ app.put('/api/bookings/:id/status', requireAdminAuth, async (req, res) => {
 
     const booking = result.rows[0];
 
-    // Send status update email
-    try {
-      let emailSubject = '';
-      let emailBody = '';
+    // Send status update email (only for non-cancel statuses — cancel has its own endpoint)
+    if (status !== 'cancelled') {
+      try {
+        let emailSubject = '';
+        let emailBody = '';
 
-      if (status === 'confirmed') {
-        emailSubject = 'Booking Confirmed';
-        emailBody = '<p>Great news! Your booking has been confirmed.</p>';
-      } else if (status === 'cancelled') {
-        emailSubject = 'Booking Cancelled';
-        emailBody = '<p>Your booking has been cancelled.</p>';
+        if (status === 'confirmed') {
+          emailSubject = 'Booking Confirmed';
+          emailBody = '<p>Great news! Your booking has been confirmed.</p>';
+        }
+
+        if (emailSubject) {
+          const emailHtml = `
+              <h2>${emailSubject}</h2>
+              <p>Dear ${booking.parent_first_name} ${booking.parent_last_name},</p>
+              ${emailBody}
+              <p>Booking Reference: #${booking.id}</p>
+            `;
+
+          await emailWorker.sendEmail({
+            to: booking.email,
+            subject: emailSubject,
+            html: emailHtml,
+            _triggerType: 'booking_status_update',
+            _recipientType: 'parent',
+            _inquiryId: booking.inquiry_id
+          });
+
+          await pool.query(
+            `INSERT INTO booking_email_logs (booking_id, email_type, sent_to, recipient, subject, sent_at, status)
+             VALUES ($1, $2, $3, $4, $5, NOW(), 'sent')`,
+            [booking.id, 'status_update', booking.email, booking.email, emailSubject]
+          );
+        }
+      } catch (emailError) {
+        console.error('Email send error:', emailError);
       }
-
-      const emailHtml = `
-          <h2>${emailSubject}</h2>
-          <p>Dear ${booking.parent_first_name} ${booking.parent_last_name},</p>
-          ${emailBody}
-          <p>Booking Reference: #${booking.id}</p>
-        `;
-
-      // Send via email worker for branded template
-      await emailWorker.sendEmail({
-        to: booking.email,
-        subject: emailSubject,
-        html: emailHtml,
-        _triggerType: 'booking_status_update',
-        _recipientType: 'parent',
-        _inquiryId: booking.inquiry_id
-      });
-
-      await pool.query(
-        `INSERT INTO booking_email_logs (booking_id, email_type, sent_to, recipient, subject, sent_at, status)
-         VALUES ($1, $2, $3, $4, $5, NOW(), 'sent')`,
-        [booking.id, 'status_update', booking.email, booking.email, emailSubject]
-      );
-    } catch (emailError) {
-      console.error('Email send error:', emailError);
     }
 
     res.json({ success: true, booking });
   } catch (error) {
     console.error('Update booking status error:', error);
     res.status(500).json({ success: false, error: 'Failed to update booking status' });
+  }
+});
+
+// Cancel booking (admin-initiated) with personalised cancellation email
+app.put('/api/bookings/:id/cancel', requireAdminAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { reason } = req.body;
+
+    const result = await pool.query(
+      `UPDATE bookings SET
+        status = 'cancelled',
+        cancelled_at = NOW(),
+        cancellation_reason = $1,
+        updated_at = NOW()
+      WHERE id = $2 AND status != 'cancelled'
+      RETURNING *`,
+      [reason || 'Cancelled by school', id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Booking not found or already cancelled' });
+    }
+
+    const booking = result.rows[0];
+
+    // Cancel any pending scheduled emails for this booking
+    await pool.query(
+      "UPDATE scheduled_emails SET status = 'cancelled' WHERE booking_id = $1 AND status = 'pending'",
+      [booking.id]
+    );
+
+    // Update event booking count if linked to an event
+    if (booking.event_id) {
+      await pool.query(
+        'UPDATE events SET current_bookings = GREATEST(current_bookings - $1, 0) WHERE id = $2',
+        [booking.num_attendees || 1, booking.event_id]
+      );
+    }
+
+    // Send personalised cancellation email via email worker trigger
+    try {
+      // Look up event details if available
+      let eventTitle = null;
+      let eventDate = null;
+      if (booking.event_id) {
+        const eventResult = await pool.query('SELECT title, event_date FROM events WHERE id = $1', [booking.event_id]);
+        if (eventResult.rows.length > 0) {
+          eventTitle = eventResult.rows[0].title;
+          eventDate = eventResult.rows[0].event_date;
+        }
+      }
+
+      const triggerPayload = {
+        trigger_type: 'booking_cancelled',
+        source: 'booking_app',
+        booking_id: booking.id,
+        inquiry_id: booking.inquiry_id,
+        parent_email: booking.email,
+        parent_title: booking.parent_title,
+        parent_first_name: booking.parent_first_name,
+        parent_last_name: booking.parent_last_name,
+        student_first_name: booking.student_first_name,
+        student_last_name: booking.student_last_name,
+        student_age_group: booking.age_group || booking.student_age_group,
+        booking_type: booking.booking_type,
+        event_title: eventTitle,
+        event_date: eventDate || booking.scheduled_date,
+        cancellation_reason: reason || null
+      };
+
+      const axios = require('axios');
+      const emailResult = await axios.post(`${emailWorker.EMAIL_WORKER_URL}/api/trigger`, triggerPayload, { timeout: 30000 });
+
+      console.log(`[CANCEL] Cancellation email triggered for booking #${id} to ${booking.email}`);
+
+      await pool.query(
+        `INSERT INTO booking_email_logs (booking_id, email_type, sent_to, recipient, subject, sent_at, status)
+         VALUES ($1, $2, $3, $4, $5, NOW(), 'sent')`,
+        [booking.id, 'cancellation', booking.email, booking.email, 'Booking Cancelled']
+      );
+    } catch (emailError) {
+      console.error('[CANCEL] Email trigger error:', emailError.message);
+      // Don't fail the cancellation if email fails
+    }
+
+    console.log(`[CANCEL] Booking #${id} cancelled by admin. Reason: ${reason || 'No reason given'}`);
+    res.json({ success: true, booking });
+  } catch (error) {
+    console.error('Cancel booking error:', error);
+    res.status(500).json({ success: false, error: 'Failed to cancel booking' });
   }
 });
 
@@ -6078,38 +6169,28 @@ app.post('/api/tour-feedback/submit', async (req, res) => {
       console.error('Error sending feedback notification:', err);
     });
 
-    // Send personalized follow-up email to parent via email-worker (only on first submission)
+    // DISABLED: Follow-up email to parent after feedback (disabled per school request)
+    // if (submissionNumber === 1) {
+    //   try {
+    //     const axios = require('axios');
+    //     const EMAIL_WORKER_URL = process.env.EMAIL_WORKER_URL || 'http://localhost:3005';
+    //     const emailResult = await axios.post(`${EMAIL_WORKER_URL}/api/trigger`, {
+    //       trigger_type: 'follow_up',
+    //       source: 'booking_app_feedback',
+    //       booking_id: bookingDetails.id,
+    //       inquiry_id: bookingDetails.inquiry_id,
+    //       parent_email: bookingDetails.email,
+    //       parent_name: `${bookingDetails.parent_first_name} ${bookingDetails.parent_last_name}`,
+    //       child_first_name: bookingDetails.student_first_name,
+    //       booking_type: bookingDetails.booking_type,
+    //       smart_feedback: responses
+    //     }, { timeout: 30000 });
+    //   } catch (emailError) {
+    //     console.error('[SMART FEEDBACK] ❌ Failed to send follow-up email:', emailError.message);
+    //   }
+    // }
     if (submissionNumber === 1) {
-      console.log(`[SMART FEEDBACK] Attempting to send follow-up email for booking #${booking.id}, submission #${submissionNumber}`);
-      try {
-        console.log(`[SMART FEEDBACK] Sending via email-worker for ${bookingDetails.booking_type}`);
-        console.log(`[SMART FEEDBACK] Recipient: ${bookingDetails.email}`);
-
-        // Send via email-worker using follow_up trigger (AI-generated)
-        const axios = require('axios');
-        const EMAIL_WORKER_URL = process.env.EMAIL_WORKER_URL || 'http://localhost:3005';
-
-        const emailResult = await axios.post(`${EMAIL_WORKER_URL}/api/trigger`, {
-          trigger_type: 'follow_up',
-          source: 'booking_app_feedback',
-          booking_id: bookingDetails.id,
-          inquiry_id: bookingDetails.inquiry_id,
-          parent_email: bookingDetails.email,
-          parent_name: `${bookingDetails.parent_first_name} ${bookingDetails.parent_last_name}`,
-          child_first_name: bookingDetails.student_first_name,
-          booking_type: bookingDetails.booking_type,
-          smart_feedback: responses // Include tour guide feedback for personalisation
-        }, { timeout: 30000 });
-
-        if (emailResult.data.success) {
-          console.log(`[SMART FEEDBACK] ✓ Follow-up email sent via email-worker to ${bookingDetails.email}`);
-        } else {
-          console.error('[SMART FEEDBACK] ❌ Email-worker returned error:', emailResult.data.error);
-        }
-      } catch (emailError) {
-        console.error('[SMART FEEDBACK] ❌ Failed to send follow-up email:', emailError.message);
-        // Don't fail the whole request if email fails
-      }
+      console.log(`[SMART FEEDBACK] Follow-up email DISABLED - skipping for booking #${booking.id}`);
     } else {
       console.log(`[SMART FEEDBACK] Skipping follow-up email - not first submission (submission #${submissionNumber})`);
     }
@@ -6290,38 +6371,28 @@ app.post('/api/feedback/taster', async (req, res) => {
       console.error('Error sending feedback notification:', err);
     });
 
-    // Send personalized follow-up email to parent via email-worker (only on first submission)
+    // DISABLED: Follow-up email to parent after taster day feedback (disabled per school request)
+    // if (submissionNumber === 1) {
+    //   try {
+    //     const axios = require('axios');
+    //     const EMAIL_WORKER_URL = process.env.EMAIL_WORKER_URL || 'http://localhost:3005';
+    //     const emailResult = await axios.post(`${EMAIL_WORKER_URL}/api/trigger`, {
+    //       trigger_type: 'follow_up',
+    //       source: 'booking_app_feedback',
+    //       booking_id: bookingDetails.id,
+    //       inquiry_id: bookingDetails.inquiry_id,
+    //       parent_email: bookingDetails.email,
+    //       parent_name: `${bookingDetails.parent_first_name} ${bookingDetails.parent_last_name}`,
+    //       child_first_name: bookingDetails.student_first_name,
+    //       booking_type: bookingDetails.booking_type,
+    //       smart_feedback: responses
+    //     }, { timeout: 30000 });
+    //   } catch (emailError) {
+    //     console.error('[SMART FEEDBACK - TASTER] ❌ Failed to send follow-up email:', emailError.message);
+    //   }
+    // }
     if (submissionNumber === 1) {
-      console.log(`[SMART FEEDBACK - TASTER] Attempting to send follow-up email for booking #${booking.id}, submission #${submissionNumber}`);
-      try {
-        console.log(`[SMART FEEDBACK - TASTER] Sending via email-worker for ${bookingDetails.booking_type}`);
-        console.log(`[SMART FEEDBACK - TASTER] Recipient: ${bookingDetails.email}`);
-
-        // Send via email-worker using follow_up trigger (AI-generated)
-        const axios = require('axios');
-        const EMAIL_WORKER_URL = process.env.EMAIL_WORKER_URL || 'http://localhost:3005';
-
-        const emailResult = await axios.post(`${EMAIL_WORKER_URL}/api/trigger`, {
-          trigger_type: 'follow_up',
-          source: 'booking_app_feedback',
-          booking_id: bookingDetails.id,
-          inquiry_id: bookingDetails.inquiry_id,
-          parent_email: bookingDetails.email,
-          parent_name: `${bookingDetails.parent_first_name} ${bookingDetails.parent_last_name}`,
-          child_first_name: bookingDetails.student_first_name,
-          booking_type: bookingDetails.booking_type,
-          smart_feedback: responses // Include taster day feedback for personalisation
-        }, { timeout: 30000 });
-
-        if (emailResult.data.success) {
-          console.log(`[SMART FEEDBACK - TASTER] ✓ Follow-up email sent via email-worker to ${bookingDetails.email}`);
-        } else {
-          console.error('[SMART FEEDBACK - TASTER] ❌ Email-worker returned error:', emailResult.data.error);
-        }
-      } catch (emailError) {
-        console.error('[SMART FEEDBACK - TASTER] ❌ Failed to send follow-up email:', emailError.message);
-        // Don't fail the whole request if email fails
-      }
+      console.log(`[SMART FEEDBACK - TASTER] Follow-up email DISABLED - skipping for booking #${booking.id}`);
     } else {
       console.log(`[SMART FEEDBACK - TASTER] Skipping follow-up email - not first submission (submission #${submissionNumber})`);
     }

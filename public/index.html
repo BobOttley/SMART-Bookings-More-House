@@ -1042,6 +1042,25 @@
     </div>
   </div>
 
+  <!-- Cancel Booking Modal -->
+  <div class="modal" id="cancelBookingModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Cancel Booking: <span id="cancel-parent-name"></span></h3>
+        <button class="close-btn" onclick="closeModal('cancelBookingModal')">&times;</button>
+      </div>
+      <form id="cancelBookingForm">
+        <input type="hidden" id="cancel-booking-id">
+        <p style="margin-bottom: 15px; color: #64748b;">This will cancel the booking and send a personalised cancellation email to the parent (via the outbox for approval).</p>
+        <div class="form-group">
+          <label class="form-label">Reason for Cancellation (optional — for internal records only)</label>
+          <textarea class="form-input" id="cancel-reason" rows="3" placeholder="e.g., Event cancelled, family requested cancellation"></textarea>
+        </div>
+        <button type="submit" class="btn btn-danger">Cancel Booking</button>
+      </form>
+    </div>
+  </div>
+
   <!-- Assign Guide Modal -->
   <div class="modal" id="assignGuideModal">
     <div class="modal-content">
@@ -2827,7 +2846,6 @@
       if (b.status === 'pending' && b.booking_type === 'open_day') {
         buttons += `
           <button class="btn btn-sm btn-success" onclick="event.stopPropagation(); updateBookingStatus(${b.id}, 'confirmed')">Approve</button>
-          <button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); updateBookingStatus(${b.id}, 'cancelled')">Reject</button>
         `;
       }
 
@@ -2871,6 +2889,14 @@
         const inquiryId = b.inquiry_id ? `'${b.inquiry_id}'` : 'null';
         buttons += `
           <button class="btn btn-sm" id="reminder-btn-${b.id}" onclick="event.stopPropagation(); sendAdHocReminder(${b.id}, ${inquiryId}, '${b.booking_type}', '${email}')" style="background: #FF9F1C; color: #091825; font-weight: 600;">📧 Send Reminder</button>
+        `;
+      }
+
+      // Cancel button for active bookings (pending or confirmed, not already cancelled/declined)
+      if (b.status === 'pending' || b.status === 'confirmed') {
+        const parentName = `${b.parent_first_name} ${b.parent_last_name}`.replace(/'/g, "\\'");
+        buttons += `
+          <button class="btn btn-sm" onclick="event.stopPropagation(); showCancelBookingModal(${b.id}, '${parentName}')" style="background: #dc2626; color: white;">Cancel</button>
         `;
       }
 
@@ -4068,6 +4094,44 @@
 
       document.getElementById('declineTourModal').classList.add('show');
     }
+
+    function showCancelBookingModal(bookingId, parentName) {
+      document.getElementById('cancel-booking-id').value = bookingId;
+      document.getElementById('cancel-parent-name').textContent = parentName;
+      document.getElementById('cancel-reason').value = '';
+      document.getElementById('cancelBookingModal').classList.add('show');
+    }
+
+    document.getElementById('cancelBookingForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const bookingId = document.getElementById('cancel-booking-id').value;
+      const reason = document.getElementById('cancel-reason').value.trim();
+
+      if (!confirm('Are you sure you want to cancel this booking? A cancellation email will be sent to the parent.')) {
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_URL}/api/bookings/${bookingId}/cancel`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reason })
+        });
+
+        if (res.ok) {
+          alert('Booking cancelled. Cancellation email queued for approval.');
+          closeModal('cancelBookingModal');
+          loadDashboard();
+        } else {
+          const error = await res.json();
+          alert('Failed to cancel booking: ' + (error.error || 'Unknown error'));
+        }
+      } catch (error) {
+        console.error('Cancel booking error:', error);
+        alert('Failed to cancel booking. Please try again.');
+      }
+    });
 
     function addAlternativeDateRow() {
       const container = document.getElementById('alternative-dates-container');
@@ -6161,6 +6225,7 @@
     window.testEmailSettings = testEmailSettings;
     window.showScheduleModal = showScheduleModal;
     window.showDeclineModal = showDeclineModal;
+    window.showCancelBookingModal = showCancelBookingModal;
     window.showEditBookingModal = showEditBookingModal;
     window.deleteBooking = deleteBooking;
     window.clearAllBookings = clearAllBookings;
