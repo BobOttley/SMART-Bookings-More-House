@@ -2678,7 +2678,7 @@
 
               <div style="display: flex; gap: 0.5rem; align-items: center;">
                 <span class="badge badge-${b.status}">${b.status}</span>
-                ${b.checked_in_at ? '<span class="badge badge-primary">Checked In</span>' : b.no_show_at ? '<span class="badge badge-no-show">No Show</span>' : ''}
+                ${b.checked_in_at ? `<span class="badge badge-primary">${b.booking_type === 'private_tour' || b.booking_type === 'taster_day' ? 'Attended' : 'Checked In'}</span>` : b.no_show_at ? '<span class="badge badge-no-show">No Show</span>' : ''}
               </div>
             </div>
 
@@ -2999,7 +2999,7 @@
                       ${b.special_requirements && b.special_requirements.trim() ? '<br><span class="requirements">Special Req.</span>' : ''}
                     </td>
                     <td class="status ${b.checked_in_at ? 'status-checked-in' : b.status === 'confirmed' ? 'status-confirmed' : 'status-pending'}">
-                      ${b.checked_in_at ? 'CHECKED IN' : b.status.toUpperCase()}
+                      ${b.checked_in_at ? (b.booking_type === 'private_tour' || b.booking_type === 'taster_day' ? 'ATTENDED' : 'CHECKED IN') : b.status.toUpperCase()}
                     </td>
                   </tr>
                 `).join('')}
