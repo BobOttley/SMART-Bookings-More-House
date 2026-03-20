@@ -447,6 +447,12 @@
               <input type="number" class="form-input" name="num_attendees" value="1" min="1" max="10" required>
             </div>
             <div class="form-group">
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:0.95rem;color:#1e3a5f;">
+                <input type="checkbox" name="daughter_attending" style="width:18px;height:18px;">
+                My daughter will be attending with us
+              </label>
+            </div>
+            <div class="form-group">
               <label class="form-label">Special Requirements or Dietary Needs</label>
               <textarea class="form-textarea" name="special_requirements"></textarea>
             </div>
@@ -562,6 +568,12 @@
             <div class="form-group">
               <label class="form-label">Number of Attendees *</label>
               <input type="number" class="form-input" name="num_attendees" value="1" min="1" max="10" required>
+            </div>
+            <div class="form-group">
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:0.95rem;color:#1e3a5f;">
+                <input type="checkbox" name="daughter_attending" style="width:18px;height:18px;">
+                My daughter will be attending with us
+              </label>
             </div>
             <div class="form-group">
               <label class="form-label">Additional Information or Questions</label>
@@ -870,6 +882,7 @@
         student_last_name: formData.get('student_last_name'),
         current_school: formData.get('current_school') || null,
         num_attendees: parseInt(formData.get('num_attendees')),
+        daughter_attending: formData.get('daughter_attending') === 'on',
         special_requirements: formData.get('special_requirements'),
         booking_type: 'open_day',
         inquiry_id: inquiryId || null,
@@ -957,6 +970,7 @@ ${formData.get('special_requirements') || ''}
         student_last_name: formData.get('student_last_name'),
         current_school: formData.get('current_school') || null,
         num_attendees: parseInt(formData.get('num_attendees')),
+        daughter_attending: formData.get('daughter_attending') === 'on',
         special_requirements: specialReqs,
         booking_type: 'private_tour',
         inquiry_id: inquiryId || null,

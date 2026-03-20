@@ -409,6 +409,7 @@ async function sendAdmissionsBookingNotification(booking) {
         <tr><td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Preferred Time:</strong></td><td style="padding: 8px; border-bottom: 1px solid #eee;">${preferredTimeFormatted}</td></tr>
         `}
         <tr><td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Attendees:</strong></td><td style="padding: 8px; border-bottom: 1px solid #eee;">${booking.num_attendees}</td></tr>
+        <tr><td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Daughter Attending:</strong></td><td style="padding: 8px; border-bottom: 1px solid #eee;">${booking.daughter_attending ? 'Yes' : 'No'}</td></tr>
         <tr><td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Status:</strong></td><td style="padding: 8px; border-bottom: 1px solid #eee;"><span style="background: ${booking.status === 'confirmed' ? '#10B981' : '#F59E0B'}; color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px; text-transform: uppercase;">${booking.status}</span></td></tr>
         <tr><td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Requested At:</strong></td><td style="padding: 8px; border-bottom: 1px solid #eee;">${bookedAt}</td></tr>
       </table>
@@ -1751,6 +1752,7 @@ app.post('/api/bookings', async (req, res) => {
       preferred_date,
       preferred_time,
       already_enquired,
+      daughter_attending,
       source  // Track source: 'emily_chatbot' or 'website'
     } = req.body;
 
@@ -1886,20 +1888,25 @@ app.post('/api/bookings', async (req, res) => {
     // Use matched inquiry ID if found, otherwise use the one provided
     const finalInquiryId = matchedInquiry ? matchedInquiry.id : inquiry_id;
 
+    // Ensure daughter_attending column exists
+    try {
+      await pool.query(`ALTER TABLE bookings ADD COLUMN IF NOT EXISTS daughter_attending BOOLEAN DEFAULT false`);
+    } catch (e) { /* column may already exist */ }
+
     // Create booking
     const bookingResult = await pool.query(
       `INSERT INTO bookings (
         school_id, event_id, inquiry_id, parent_title, parent_first_name, parent_last_name,
         email, phone, student_first_name, student_last_name, current_school,
-        num_attendees, special_requirements, preferred_language,
+        num_attendees, daughter_attending, special_requirements, preferred_language,
         booking_type, status, cancellation_token, feedback_token,
         scheduled_date, scheduled_time, already_enquired, source
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23)
       RETURNING *`,
       [
         school_id, event_id, finalInquiryId, parent_title || null, parent_first_name, parent_last_name,
         email, phone, student_first_name, student_last_name, current_school || null,
-        num_attendees, special_requirements, preferred_language,
+        num_attendees, daughter_attending || false, special_requirements, preferred_language,
         booking_type, initialStatus, cancellationToken, feedbackToken,
         preferred_date || null, scheduledTime,
         already_enquired || false,
